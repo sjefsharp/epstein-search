@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: epstein-worker
+    runtime: node
+    region: frankfurt
+    plan: free
+    branch: main
+    rootDir: worker
+    buildCommand: npm install && npx playwright install chromium --with-deps && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+    healthCheckPath: /health
