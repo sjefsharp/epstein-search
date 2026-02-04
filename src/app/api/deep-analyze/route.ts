@@ -1,25 +1,56 @@
 // API Route: Deep analysis via PDF worker + Groq
 import { NextRequest } from "next/server";
 import { generateDeepSummary } from "@/lib/groq";
+import { analyzeRatelimit, getClientIp, checkRateLimit } from "@/lib/ratelimit";
+import { analyzeSchema } from "@/lib/validation";
+import {
+  generateWorkerSignature,
+  getWorkerSecret,
+  enforceHttps,
+  sanitizeError,
+} from "@/lib/security";
 
 export const runtime = "nodejs"; // Node.js runtime for worker proxy
 
 export async function POST(request: NextRequest) {
-  try {
-    const encoder = new TextEncoder();
-    const body = await request.json();
-    const { fileUri, fileName, searchTerm } = body as {
-      fileUri?: string;
-      fileName?: string;
-      searchTerm?: string;
-    };
+  const encoder = new TextEncoder();
 
-    if (!fileUri || !fileName) {
+  try {
+    // Rate limiting
+    const ip = getClientIp(request);
+    const rateLimitResult = await checkRateLimit(ip, analyzeRatelimit);
+
+    if (!rateLimitResult.success) {
       return new Response(
-        JSON.stringify({ error: "fileUri en fileName zijn verplicht" }),
+        JSON.stringify({
+          error: "Rate limit exceeded. Please try again later.",
+          retryAfter: rateLimitResult.reset?.toString(),
+        }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            "Retry-After": rateLimitResult.reset?.toString() || "60",
+          },
+        },
+      );
+    }
+
+    const body = await request.json();
+
+    // Input validation
+    const validation = analyzeSchema.safeParse(body);
+    if (!validation.success) {
+      return new Response(
+        JSON.stringify({
+          error: "Invalid input",
+          details: validation.error.issues,
+        }),
         { status: 400, headers: { "Content-Type": "application/json" } },
       );
     }
+
+    const { fileUri, fileName, searchTerm } = validation.data;
 
     const workerUrl = process.env.RENDER_WORKER_URL;
     if (!workerUrl) {
@@ -29,12 +60,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // HTTPS enforcement
+    if (process.env.NODE_ENV === "production") {
+      enforceHttps(workerUrl);
+    }
+
+    // Worker authentication
+    const workerSecret = getWorkerSecret();
+    const payload = JSON.stringify({ fileUri });
+    const signature = generateWorkerSignature(payload, workerSecret);
+
     const workerResponse = await fetch(
       `${workerUrl.replace(/\/$/, "")}/analyze`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileUri }),
+        headers: {
+          "Content-Type": "application/json",
+          "X-Worker-Signature": signature,
+        },
+        body: payload,
+        signal: AbortSignal.timeout(60000), // 60s timeout for PDF processing
       },
     );
 
@@ -51,6 +96,7 @@ export async function POST(request: NextRequest) {
       metadata: { fileSize: number; extractedAt: string };
     };
 
+    const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
         try {
@@ -90,15 +136,12 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Deep analyze API error:", error);
 
-    return new Response(
-      JSON.stringify({
-        error:
-          error instanceof Error ? error.message : "Unknown error occurred",
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    const isDevelopment = process.env.NODE_ENV === "development";
+    const errorBody = sanitizeError(error, isDevelopment);
+
+    return new Response(JSON.stringify(errorBody), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }

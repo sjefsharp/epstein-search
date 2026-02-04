@@ -2,22 +2,57 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCacheKey, deduplicateDocuments } from "@/lib/doj-api";
 import { getCachedSearch, setCachedSearch, trackCacheEvent } from "@/lib/cache";
+import { searchSchema } from "@/lib/validation";
+import { checkRateLimit, getClientIp, searchRatelimit } from "@/lib/ratelimit";
+import {
+  enforceHttps,
+  generateWorkerSignature,
+  getWorkerSecret,
+  sanitizeError,
+} from "@/lib/security";
 
 export const runtime = "nodejs"; // Use Node.js runtime for Upstash Redis compatibility
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const query = searchParams.get("q");
-    const from = parseInt(searchParams.get("from") || "0", 10);
-    const size = parseInt(searchParams.get("size") || "100", 10);
+    // Rate limiting check
+    const ip = getClientIp(request);
+    const rateLimitResult = await checkRateLimit(ip, searchRatelimit);
 
-    if (!query) {
+    if (!rateLimitResult.success) {
       return NextResponse.json(
-        { error: 'Query parameter "q" is required' },
+        { error: "Rate limit exceeded. Please try again later." },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Limit": rateLimitResult.limit.toString(),
+            "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
+            "X-RateLimit-Reset": new Date(rateLimitResult.reset).toISOString(),
+          },
+        },
+      );
+    }
+
+    const searchParams = request.nextUrl.searchParams;
+    const queryParam = searchParams.get("q");
+    const fromParam = searchParams.get("from");
+    const sizeParam = searchParams.get("size");
+
+    // Validate and sanitize input
+    const validation = searchSchema.safeParse({
+      query: queryParam,
+      from: fromParam ? parseInt(fromParam, 10) : 0,
+      size: sizeParam ? parseInt(sizeParam, 10) : 100,
+    });
+
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: validation.error.issues },
         { status: 400 },
       );
     }
+
+    const { query, from, size } = validation.data;
 
     // Check cache first
     const cacheKey = getCacheKey(query, from);
@@ -33,14 +68,27 @@ export async function GET(request: NextRequest) {
 
     // Cache miss - fetch from DOJ API via Worker (bypasses Akamai blocking)
     await trackCacheEvent("miss");
-    
+
     const workerUrl = process.env.RENDER_WORKER_URL || "http://localhost:10000";
+
+    // Enforce HTTPS in production
+    if (process.env.NODE_ENV === "production") {
+      enforceHttps(workerUrl);
+    }
+
+    // Generate authentication signature
+    const workerSecret = getWorkerSecret();
+    const payload = JSON.stringify({ query, from, size });
+    const signature = generateWorkerSignature(payload, workerSecret);
+
     const workerResponse = await fetch(`${workerUrl}/search`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "X-Worker-Signature": signature,
       },
-      body: JSON.stringify({ query, from, size }),
+      body: payload,
+      signal: AbortSignal.timeout(30000), // 30 second timeout
     });
 
     if (!workerResponse.ok) {
@@ -50,34 +98,40 @@ export async function GET(request: NextRequest) {
     }
 
     const apiData = await workerResponse.json();
-    
-    // Transform worker response to our format
-    const documents = apiData.hits.hits.map((hit: { _source: Record<string, unknown>; highlight?: { content?: string[] }; _source_content?: string }) => {
-      const source = hit._source;
-      const highlights = hit.highlight?.content || [];
-      const content =
-        highlights.length > 0
-          ? highlights.join(" ... ")
-          : hit._source_content || "";
 
-      return {
-        documentId: source.documentId,
-        chunkIndex: source.chunkIndex,
-        totalChunks: source.totalChunks,
-        startPage: source.startPage,
-        endPage: source.endPage,
-        fileName: source.ORIGIN_FILE_NAME,
-        fileUri: source.ORIGIN_FILE_URI,
-        fileSize: source.fileSize,
-        totalWords: source.totalWords,
-        totalCharacters: source.totalCharacters,
-        processedAt: source.processedAt,
-        content: content,
-        highlights: highlights,
-        bucket: source.bucket,
-        key: source.key,
-      };
-    });
+    // Transform worker response to our format
+    const documents = apiData.hits.hits.map(
+      (hit: {
+        _source: Record<string, unknown>;
+        highlight?: { content?: string[] };
+        _source_content?: string;
+      }) => {
+        const source = hit._source;
+        const highlights = hit.highlight?.content || [];
+        const content =
+          highlights.length > 0
+            ? highlights.join(" ... ")
+            : hit._source_content || "";
+
+        return {
+          documentId: source.documentId,
+          chunkIndex: source.chunkIndex,
+          totalChunks: source.totalChunks,
+          startPage: source.startPage,
+          endPage: source.endPage,
+          fileName: source.ORIGIN_FILE_NAME,
+          fileUri: source.ORIGIN_FILE_URI,
+          fileSize: source.fileSize,
+          totalWords: source.totalWords,
+          totalCharacters: source.totalCharacters,
+          processedAt: source.processedAt,
+          content: content,
+          highlights: highlights,
+          bucket: source.bucket,
+          key: source.key,
+        };
+      },
+    );
 
     const results = {
       total: apiData.hits.total.value,
@@ -124,15 +178,37 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { query, from = 0, size = 100 } = body;
+    // Rate limiting check
+    const ip = getClientIp(request);
+    const rateLimitResult = await checkRateLimit(ip, searchRatelimit);
 
-    if (!query) {
+    if (!rateLimitResult.success) {
       return NextResponse.json(
-        { error: "Query is required in request body" },
+        { error: "Rate limit exceeded. Please try again later." },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Limit": rateLimitResult.limit.toString(),
+            "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
+            "X-RateLimit-Reset": new Date(rateLimitResult.reset).toISOString(),
+          },
+        },
+      );
+    }
+
+    const body = await request.json();
+
+    // Validate and sanitize input
+    const validation = searchSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: validation.error.issues },
         { status: 400 },
       );
     }
+
+    const { query, from, size } = validation.data;
 
     // Same logic as GET but with POST body
     const cacheKey = getCacheKey(query, from);
@@ -147,14 +223,27 @@ export async function POST(request: NextRequest) {
     }
 
     await trackCacheEvent("miss");
-    
+
     const workerUrl = process.env.RENDER_WORKER_URL || "http://localhost:10000";
+
+    // Enforce HTTPS in production
+    if (process.env.NODE_ENV === "production") {
+      enforceHttps(workerUrl);
+    }
+
+    // Generate authentication signature
+    const workerSecret = getWorkerSecret();
+    const payload = JSON.stringify({ query, from, size });
+    const signature = generateWorkerSignature(payload, workerSecret);
+
     const workerResponse = await fetch(`${workerUrl}/search`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "X-Worker-Signature": signature,
       },
-      body: JSON.stringify({ query, from, size }),
+      body: payload,
+      signal: AbortSignal.timeout(30000), // 30 second timeout
     });
 
     if (!workerResponse.ok) {
@@ -164,34 +253,40 @@ export async function POST(request: NextRequest) {
     }
 
     const apiData = await workerResponse.json();
-    
-    // Transform worker response to our format
-    const documents = apiData.hits.hits.map((hit: { _source: Record<string, unknown>; highlight?: { content?: string[] }; _source_content?: string }) => {
-      const source = hit._source;
-      const highlights = hit.highlight?.content || [];
-      const content =
-        highlights.length > 0
-          ? highlights.join(" ... ")
-          : hit._source_content || "";
 
-      return {
-        documentId: source.documentId,
-        chunkIndex: source.chunkIndex,
-        totalChunks: source.totalChunks,
-        startPage: source.startPage,
-        endPage: source.endPage,
-        fileName: source.ORIGIN_FILE_NAME,
-        fileUri: source.ORIGIN_FILE_URI,
-        fileSize: source.fileSize,
-        totalWords: source.totalWords,
-        totalCharacters: source.totalCharacters,
-        processedAt: source.processedAt,
-        content: content,
-        highlights: highlights,
-        bucket: source.bucket,
-        key: source.key,
-      };
-    });
+    // Transform worker response to our format
+    const documents = apiData.hits.hits.map(
+      (hit: {
+        _source: Record<string, unknown>;
+        highlight?: { content?: string[] };
+        _source_content?: string;
+      }) => {
+        const source = hit._source;
+        const highlights = hit.highlight?.content || [];
+        const content =
+          highlights.length > 0
+            ? highlights.join(" ... ")
+            : hit._source_content || "";
+
+        return {
+          documentId: source.documentId,
+          chunkIndex: source.chunkIndex,
+          totalChunks: source.totalChunks,
+          startPage: source.startPage,
+          endPage: source.endPage,
+          fileName: source.ORIGIN_FILE_NAME,
+          fileUri: source.ORIGIN_FILE_URI,
+          fileSize: source.fileSize,
+          totalWords: source.totalWords,
+          totalCharacters: source.totalCharacters,
+          processedAt: source.processedAt,
+          content: content,
+          highlights: highlights,
+          bucket: source.bucket,
+          key: source.key,
+        };
+      },
+    );
 
     const results = {
       total: apiData.hits.total.value,
@@ -215,21 +310,17 @@ export async function POST(request: NextRequest) {
       cached: false,
     });
   } catch (error) {
-    console.error("Search API error:", error);
+    // POST endpoint error handling
+    console.error("Search API POST error:", error);
 
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
+    const isDevelopment = process.env.NODE_ENV === "development";
+    const errorBody = sanitizeError(error, isDevelopment);
+
     const statusCode =
       error && typeof error === "object" && "statusCode" in error
         ? (error.statusCode as number)
         : 500;
 
-    return NextResponse.json(
-      {
-        error: errorMessage,
-        details: process.env.NODE_ENV === "development" ? error : undefined,
-      },
-      { status: statusCode },
-    );
+    return NextResponse.json(errorBody, { status: statusCode });
   }
 }

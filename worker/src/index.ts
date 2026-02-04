@@ -2,19 +2,68 @@ import express from "express";
 import type { Request, Response } from "express";
 import { chromium } from "playwright";
 import * as pdfParseModule from "pdf-parse";
+import helmet from "helmet";
+import cors from "cors";
+import crypto from "crypto";
 
 // Handle both ESM and CommonJS imports for pdf-parse
 const pdfParse = (pdfParseModule as any).default || pdfParseModule;
 
 const app = express();
+
+// Security middleware
+app.use(helmet());
+app.use(
+  cors({
+    origin:
+      process.env.ALLOWED_ORIGINS?.split(",") ||
+      "https://epstein-kappa.vercel.app",
+    methods: ["POST", "GET"],
+    allowedHeaders: ["Content-Type", "X-Worker-Signature"],
+  }),
+);
 app.use(express.json({ limit: "2mb" }));
+
+// Authentication middleware
+const verifySignature = (req: Request, res: Response, next: any) => {
+  const signature = req.headers["x-worker-signature"] as string;
+  const sharedSecret = process.env.WORKER_SHARED_SECRET;
+
+  if (!sharedSecret) {
+    console.error("WORKER_SHARED_SECRET not configured");
+    res.status(500).json({ error: "Server misconfigured" });
+    return;
+  }
+
+  if (!signature) {
+    res.status(401).json({ error: "Missing authentication signature" });
+    return;
+  }
+
+  const payload = JSON.stringify(req.body);
+  const expected = crypto
+    .createHmac("sha256", sharedSecret)
+    .update(payload)
+    .digest("hex");
+
+  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
+    res.status(403).json({ error: "Invalid signature" });
+    return;
+  }
+
+  next();
+};
 
 app.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
 
-app.post("/search", async (req: Request, res: Response) => {
-  const { query, from = 0, size = 100 } = req.body as {
+app.post("/search", verifySignature, async (req: Request, res: Response) => {
+  const {
+    query,
+    from = 0,
+    size = 100,
+  } = req.body as {
     query?: string;
     from?: number;
     size?: number;
@@ -74,11 +123,26 @@ app.post("/search", async (req: Request, res: Response) => {
   }
 });
 
-app.post("/analyze", async (req: Request, res: Response) => {
+app.post("/analyze", verifySignature, async (req: Request, res: Response) => {
   const { fileUri } = req.body as { fileUri?: string };
 
   if (!fileUri) {
     res.status(400).json({ error: "fileUri is required" });
+    return;
+  }
+
+  // SSRF Protection: Only allow justice.gov domains
+  try {
+    const url = new URL(fileUri);
+    if (
+      !url.hostname.endsWith(".justice.gov") &&
+      url.hostname !== "justice.gov"
+    ) {
+      res.status(403).json({ error: "Only justice.gov URLs are allowed" });
+      return;
+    }
+  } catch {
+    res.status(400).json({ error: "Invalid URL" });
     return;
   }
 
