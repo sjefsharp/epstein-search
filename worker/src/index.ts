@@ -7,7 +7,17 @@ import cors from "cors";
 import crypto from "crypto";
 
 // Handle both ESM and CommonJS imports for pdf-parse
-const pdfParse = (pdfParseModule as any).default || pdfParseModule;
+type PdfParseResult = {
+  text: string;
+  numpages: number;
+  info?: unknown;
+};
+
+type PdfParseFn = (data: Buffer | Uint8Array) => Promise<PdfParseResult>;
+
+const pdfParse =
+  (pdfParseModule as unknown as { default?: PdfParseFn }).default ??
+  (pdfParseModule as unknown as PdfParseFn);
 
 const app = express();
 
@@ -24,20 +34,20 @@ app.use(
 );
 app.use(express.json({ limit: "2mb" }));
 
-// Authentication middleware
-const verifySignature = (req: Request, res: Response, next: any) => {
+// Authentication helper
+const verifySignature = (req: Request, res: Response): boolean => {
   const signature = req.headers["x-worker-signature"] as string;
   const sharedSecret = process.env.WORKER_SHARED_SECRET;
 
   if (!sharedSecret) {
     console.error("WORKER_SHARED_SECRET not configured");
     res.status(500).json({ error: "Server misconfigured" });
-    return;
+    return false;
   }
 
   if (!signature) {
     res.status(401).json({ error: "Missing authentication signature" });
-    return;
+    return false;
   }
 
   const payload = JSON.stringify(req.body);
@@ -48,17 +58,21 @@ const verifySignature = (req: Request, res: Response, next: any) => {
 
   if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
     res.status(403).json({ error: "Invalid signature" });
-    return;
+    return false;
   }
 
-  next();
+  return true;
 };
 
 app.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
 
-app.post("/search", verifySignature, async (req: Request, res: Response) => {
+app.post("/search", async (req: Request, res: Response) => {
+  if (!verifySignature(req, res)) {
+    return;
+  }
+
   const {
     query,
     from = 0,
@@ -123,7 +137,11 @@ app.post("/search", verifySignature, async (req: Request, res: Response) => {
   }
 });
 
-app.post("/analyze", verifySignature, async (req: Request, res: Response) => {
+app.post("/analyze", async (req: Request, res: Response) => {
+  if (!verifySignature(req, res)) {
+    return;
+  }
+
   const { fileUri } = req.body as { fileUri?: string };
 
   if (!fileUri) {
