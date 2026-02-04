@@ -13,6 +13,67 @@ app.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
 
+app.post("/search", async (req: Request, res: Response) => {
+  const { query, from = 0, size = 100 } = req.body as {
+    query?: string;
+    from?: number;
+    size?: number;
+  };
+
+  if (!query) {
+    res.status(400).json({ error: "query is required" });
+    return;
+  }
+
+  let browser: Awaited<ReturnType<typeof chromium.launch>> | null = null;
+
+  try {
+    browser = await chromium.launch({ headless: true });
+    const context = await browser.newContext({
+      userAgent:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    });
+    const page = await context.newPage();
+
+    // Build the DOJ search URL
+    const searchUrl = new URL("https://www.justice.gov/multimedia-search");
+    searchUrl.searchParams.set("keys", query);
+    searchUrl.searchParams.set("from", from.toString());
+    searchUrl.searchParams.set("size", Math.min(size, 100).toString());
+
+    // Navigate to the search page with the browser
+    await page.goto(searchUrl.toString(), {
+      waitUntil: "networkidle",
+      timeout: 30000,
+    });
+
+    // Wait for the search results to load
+    await page.waitForTimeout(2000);
+
+    // Extract the JSON response from the page or API call
+    const apiData = await page.evaluate(async (url: string) => {
+      const response = await fetch(url, {
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+      });
+      return await response.json();
+    }, searchUrl.toString());
+
+    res.json(apiData);
+    return;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ error: message });
+    return;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+});
+
 app.post("/analyze", async (req: Request, res: Response) => {
   const { fileUri } = req.body as { fileUri?: string };
 

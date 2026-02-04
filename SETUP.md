@@ -5,6 +5,7 @@
 **Epstein Search** is a web application that enables users to search, read, and analyze the 2,000+ documents released by the U.S. Department of Justice related to the Jeffrey Epstein case.
 
 **Features**:
+
 - ✅ Full-text search via DOJ API
 - ✅ AI-powered Dutch summaries (Groq Llama 3.3)
 - ✅ PDF deep analysis with Playwright automation
@@ -35,6 +36,7 @@ epstein/                ← Next.js Frontend (Vercel deployment)
 ## 🚀 Quick Start (Development)
 
 ### Prerequisites
+
 - Node.js 18+ with npm
 - Git
 
@@ -59,6 +61,7 @@ npm run dev
 ```
 
 ### Test Search
+
 ```bash
 # Test fast search (works without worker)
 curl "http://localhost:3000/api/search?q=epstein"
@@ -104,20 +107,22 @@ curl "http://localhost:3000/api/summarize" \
 
 ### Obtained From:
 
-| Variable | Source | Status |
-|----------|--------|--------|
-| `GROQ_API_KEY` | [console.groq.com](https://console.groq.com) | ✅ Set |
-| `UPSTASH_REDIS_REST_URL` | Vercel KV dashboard | ✅ Set |
-| `UPSTASH_REDIS_REST_TOKEN` | Vercel KV dashboard | ✅ Set |
-| `RENDER_WORKER_URL` | After Render deployment | ⏳ Set later |
-| `NEXT_PUBLIC_BTC_ADDRESS` | Your wallet | ⏳ Optional |
-| `NEXT_PUBLIC_ETH_ADDRESS` | Your wallet | ⏳ Optional |
-| `NEXT_PUBLIC_ADSENSE_ID` | Google AdSense | ⏳ Optional |
+| Variable                   | Source                                       | Status       |
+| -------------------------- | -------------------------------------------- | ------------ |
+| `GROQ_API_KEY`             | [console.groq.com](https://console.groq.com) | ✅ Set       |
+| `UPSTASH_REDIS_REST_URL`   | Vercel KV dashboard                          | ✅ Set       |
+| `UPSTASH_REDIS_REST_TOKEN` | Vercel KV dashboard                          | ✅ Set       |
+| `RENDER_WORKER_URL`        | After Render deployment                      | ⏳ Set later |
+| `NEXT_PUBLIC_BTC_ADDRESS`  | Your wallet                                  | ⏳ Optional  |
+| `NEXT_PUBLIC_ETH_ADDRESS`  | Your wallet                                  | ⏳ Optional  |
+| `NEXT_PUBLIC_ADSENSE_ID`   | Google AdSense                               | ⏳ Optional  |
 
 ### Development (.env.local)
+
 Kept locally, **never committed** to Git.
 
 ### Production (Vercel Dashboard)
+
 Entered in Vercel → Project Settings → Environment Variables.
 
 ---
@@ -181,16 +186,19 @@ UI shows results
 ## 🔒 Security & Best Practices
 
 ### 1. API Keys
+
 - ✅ Never commit `.env.local`
 - ✅ Use Vercel environment variables for production
 - ✅ Rotate keys if exposed
 
 ### 2. CORS & Rate Limiting
+
 - ✅ DOJ API: Public (no auth needed)
 - ✅ Groq API: Key-based (hidden from client)
 - ✅ Redis: Upstash handles auth
 
 ### 3. Worker Service
+
 - ✅ Headless browser (no UI)
 - ✅ Timeout protection (30s max)
 - ✅ Resource limits (512MB on Render free tier)
@@ -200,6 +208,7 @@ UI shows results
 ## 🐛 Troubleshooting
 
 ### "GROQ_API_KEY not found"
+
 ```bash
 # Check .env.local exists
 cat .env.local | grep GROQ_API_KEY
@@ -209,6 +218,7 @@ echo 'GROQ_API_KEY=gsk_...' >> .env.local
 ```
 
 ### "Redis connection failed"
+
 ```bash
 # Test Redis manually
 curl -X POST \
@@ -217,6 +227,7 @@ curl -X POST \
 ```
 
 ### "Worker not responding"
+
 ```bash
 # Check if Render deployment succeeded
 curl https://epstein-worker.onrender.com/health
@@ -226,6 +237,7 @@ curl https://epstein-worker.onrender.com/health
 ```
 
 ### "PDF analysis hangs"
+
 - Render free tier has 512MB RAM + time limits
 - Worker has 30s timeout
 - Large PDFs may need chunking
@@ -235,11 +247,13 @@ curl https://epstein-worker.onrender.com/health
 ## 📊 Monitoring
 
 ### Vercel Observability
+
 - **Logs**: Vercel Dashboard → Deployments → Logs
 - **Functions**: Check which API routes are slow
 - **Errors**: Automatic Sentry integration (optional)
 
 ### Render Monitoring
+
 - **Logs**: Render Dashboard → Logs
 - **Health**: GET `/health` endpoint
 - **Resource Usage**: Memory/CPU graphs

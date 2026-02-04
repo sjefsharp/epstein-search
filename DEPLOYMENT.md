@@ -14,7 +14,7 @@
     DOJ API              UPSTASH REDIS   GROQ AI
   (Data Source)         (Cache Layer)   (Summarization)
          ✓                    ✓             ✓
-         
+
     ┌────────────────────────────────────────────┐
     │  RENDER (Worker Service - Separate Deploy) │
     │  - POST /analyze → Playwright PDF parse   │
@@ -28,6 +28,7 @@
 ## Pre-Deployment Checklist
 
 ### 1. Environment Variables Ready
+
 ```bash
 ✓ GROQ_API_KEY=gsk_... (from console.groq.com)
 ✓ UPSTASH_REDIS_REST_URL=https://... (from Vercel KV)
@@ -36,6 +37,7 @@
 ```
 
 ### 2. Local Testing
+
 ```bash
 cd epstein
 npm install
@@ -44,6 +46,7 @@ npm run dev
 ```
 
 ### 3. Git Cleanup
+
 ```bash
 # Ensure secrets are NOT in .git history
 git rm --cached .env.local  # Remove from tracking
@@ -65,14 +68,14 @@ git status # Should show no .env.local
 
 ### Step 2: Configure Project
 
-| Setting | Value |
-|---------|-------|
-| **Project Name** | `epstein-search` |
-| **Framework Preset** | Next.js |
-| **Root Directory** | `.` (root) |
-| **Build Command** | `npm run build` |
-| **Install Command** | `npm install` |
-| **Output Directory** | `.next` |
+| Setting              | Value            |
+| -------------------- | ---------------- |
+| **Project Name**     | `epstein-search` |
+| **Framework Preset** | Next.js          |
+| **Root Directory**   | `.` (root)       |
+| **Build Command**    | `npm run build`  |
+| **Install Command**  | `npm install`    |
+| **Output Directory** | `.next`          |
 
 ### Step 3: Environment Variables
 
@@ -85,6 +88,7 @@ Environments: Production, Preview, Development
 ```
 
 Repeat for:
+
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
 - `RENDER_WORKER_URL` (placeholder: `https://epstein-worker.onrender.com`)
@@ -92,6 +96,7 @@ Repeat for:
 ### Step 4: Deploy
 
 Click **Deploy** → Vercel will:
+
 1. Clone repo
 2. Run `npm install`
 3. Run `npm run build`
@@ -116,10 +121,12 @@ curl https://your-project.vercel.app/api/search?q=maxwell
 ### Step 2: Update Worker URL
 
 If worker is NOT yet deployed to Render:
+
 1. Leave `RENDER_WORKER_URL=https://epstein-worker.onrender.com` (placeholder)
 2. Deep analysis feature will show friendly error until worker is live
 
 Once worker IS live on Render:
+
 1. Get URL: `https://epstein-worker.onrender.com`
 2. Update in Vercel Environment Variables: `RENDER_WORKER_URL`
 3. Redeploy (or it auto-updates for new deployments)
@@ -127,6 +134,7 @@ Once worker IS live on Render:
 ### Step 3: Monitor
 
 **Vercel Observability**:
+
 - Dashboard → **Analytics** → Function duration, invocations
 - Dashboard → **Logs** → Real-time function logs
 - Check for errors in `/api/*` endpoints
@@ -136,11 +144,14 @@ Once worker IS live on Render:
 ## Troubleshooting
 
 ### "GROQ_API_KEY is not set"
+
 → Verify env var in Vercel dashboard  
 → Redeploy after adding
 
-###  "Upstash connection failed"  
+### "Upstash connection failed"
+
 → Test Redis manually:
+
 ```bash
 curl -X POST \
   -H "Authorization: Bearer <your-token>" \
@@ -149,11 +160,13 @@ curl -X POST \
 ```
 
 ### "Worker not responding"
+
 → Deploy worker to Render FIRST (see `worker/DEPLOYMENT.md`)  
 → Get live URL  
 → Update `RENDER_WORKER_URL` env var
 
 ### "PDFs not parsing in /api/deep-analyze"
+
 → Check worker logs in Render dashboard  
 → Ensure worker is running: `curl https://epstein-worker.onrender.com/health`  
 → Test with simpler PDF URLs first
@@ -163,11 +176,13 @@ curl -X POST \
 ## Performance Optimization
 
 ### Caching Strategy
+
 - **Search results**: 24 hours (Redis)
 - **PDF analysis**: No caching (each fresh)
 - **Groq responses**: Streamed in real-time
 
 ### Rate Limiting (Optional Future)
+
 ```typescript
 // In /api/search/route.ts
 import { Ratelimit } from "@upstash/ratelimit";
@@ -182,6 +197,7 @@ if (!success) return Response.json({ error: "Rate limited" }, { status: 429 });
 ```
 
 ### Cold Start Optimization
+
 - Node.js 20.x runtime ✓
 - API functions optimized for quick response
 - Groq streaming prevents timeout on large summaries
@@ -191,6 +207,7 @@ if (!success) return Response.json({ error: "Rate limited" }, { status: 429 });
 ## Monitoring & Alerts (Optional)
 
 ### Sentry Integration (Error Tracking)
+
 ```bash
 npm install @sentry/nextjs
 ```
