@@ -1,24 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Epstein Search
 
-## Getting Started
+AI-powered search and analysis tool for the 2,000+ DOJ documents related to the Jeffrey Epstein case.
 
-First, run the development server:
+## Features
+
+- ✅ **Full-text search** via DOJ API
+- ✅ **AI summaries** in Dutch (Groq Llama 3.3)
+- ✅ **PDF deep analysis** with Playwright automation
+- ✅ **Real-time streaming** responses
+- ✅ **Redis caching** for fast results
+- ✅ **Free hosting** on Vercel + Render
+
+## Quick Start
 
 ```bash
+# Install dependencies
+npm install
+
+# Start dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Open http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment Variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Copy `.env.example` to `.env.local` and fill in:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+GROQ_API_KEY=                    # Get from console.groq.com
+UPSTASH_REDIS_REST_URL=          # Get from Vercel KV dashboard
+UPSTASH_REDIS_REST_TOKEN=        # Get from Vercel KV dashboard
+RENDER_WORKER_URL=               # Set after deploying worker
+```
+
+## Documentation
+
+- **[SETUP.md](SETUP.md)** - Complete setup guide
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Vercel deployment
+- **[worker/DEPLOYMENT.md](worker/DEPLOYMENT.md)** - Worker deployment
+
+## Tech Stack
+
+- **Frontend**: Next.js 16 + React 19
+- **AI**: Groq (Llama 3.3)
+- **Cache**: Upstash Redis
+- **Worker**: Express + Playwright
+- **Hosting**: Vercel (frontend) + Render (worker)
 
 ## Learn More
 
