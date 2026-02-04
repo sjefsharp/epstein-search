@@ -80,7 +80,7 @@ app.post("/search", verifySignature, async (req: Request, res: Response) => {
     browser = await chromium.launch({ headless: true });
     const context = await browser.newContext({
       userAgent:
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        "Epstein-Onderzoek-Bot/1.0 (DOJ Document Research; +https://epstein-kappa.vercel.app)",
     });
     const page = await context.newPage();
 
@@ -181,7 +181,7 @@ app.post("/analyze", verifySignature, async (req: Request, res: Response) => {
       headers: {
         Cookie: cookieHeader,
         "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          "Epstein-Onderzoek-Bot/1.0 (DOJ Document Research; +https://epstein-kappa.vercel.app)",
         Accept: "application/pdf",
       },
     });
