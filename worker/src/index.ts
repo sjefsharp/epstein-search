@@ -29,14 +29,31 @@ app.use(
       process.env.ALLOWED_ORIGINS?.split(",") ||
       "https://epstein-kappa.vercel.app",
     methods: ["POST", "GET"],
-    allowedHeaders: ["Content-Type", "X-Worker-Signature"],
+    allowedHeaders: ["Content-Type", "X-Worker-Signature", "Authorization"],
   }),
 );
 app.use(express.json({ limit: "2mb" }));
 
 // Authentication helper
 const verifySignature = (req: Request, res: Response): boolean => {
-  const signature = req.headers["x-worker-signature"] as string;
+  const signatureHeader = req.headers["x-worker-signature"];
+  const authHeader = req.headers["authorization"];
+  const signatureFromHeader =
+    typeof signatureHeader === "string"
+      ? signatureHeader
+      : Array.isArray(signatureHeader)
+        ? signatureHeader[0]
+        : undefined;
+  const authValue =
+    typeof authHeader === "string"
+      ? authHeader
+      : Array.isArray(authHeader)
+        ? authHeader[0]
+        : undefined;
+  const bearerToken = authValue?.startsWith("Bearer ")
+    ? authValue.slice("Bearer ".length)
+    : undefined;
+  const signature = signatureFromHeader || bearerToken;
   const sharedSecret = process.env.WORKER_SHARED_SECRET;
 
   if (!sharedSecret) {

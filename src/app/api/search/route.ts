@@ -86,6 +86,7 @@ export async function GET(request: NextRequest) {
       headers: {
         "Content-Type": "application/json",
         "X-Worker-Signature": signature,
+        Authorization: `Bearer ${signature}`,
       },
       body: payload,
       signal: AbortSignal.timeout(30000), // 30 second timeout
@@ -241,6 +242,7 @@ export async function POST(request: NextRequest) {
       headers: {
         "Content-Type": "application/json",
         "X-Worker-Signature": signature,
+        Authorization: `Bearer ${signature}`,
       },
       body: payload,
       signal: AbortSignal.timeout(30000), // 30 second timeout

@@ -13,8 +13,6 @@ import {
 export const runtime = "nodejs"; // Node.js runtime for worker proxy
 
 export async function POST(request: NextRequest) {
-  const encoder = new TextEncoder();
-
   try {
     // Rate limiting
     const ip = getClientIp(request);
@@ -77,6 +75,7 @@ export async function POST(request: NextRequest) {
         headers: {
           "Content-Type": "application/json",
           "X-Worker-Signature": signature,
+          Authorization: `Bearer ${signature}`,
         },
         body: payload,
         signal: AbortSignal.timeout(60000), // 60s timeout for PDF processing
