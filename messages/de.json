@@ -1,0 +1,149 @@
+{
+  "Metadata": {
+    "title": "DOJ Epstein Akten KI-Suche | Jeffrey Epstein Rechtsdokumente Datenbank",
+    "description": "Durchsuchen und analysieren Sie 2.000+ DOJ Epstein-Falldokumente mit KI-Zusammenfassungen. Erkunden Sie Jeffrey Epstein Rechtsunterlagen, Gerichtsakten und offizielle Department of Justice Dokumente.",
+    "ogTitle": "DOJ Epstein Akten KI-Suchagent",
+    "ogDescription": "KI-gestützte Suchmaschine für Department of Justice Epstein-Dokumente. Erhalten Sie sofortige Zusammenfassungen und direkte Links zu Quell-PDFs."
+  },
+  "HomePage": {
+    "tagline": "Epstein Files • DOJ.gov",
+    "title": "DOJ Epstein-Dokumente suchen, analysieren und kontextualisieren",
+    "subtitle": "Ein gesprächsgesteuerter Suchagent, der DOJ-Daten direkt durchsucht, mit KI-Zusammenfassungen und direkten Links zu Quelldateien.",
+    "exampleSearches": "deutschland, jeffrey, maxwell, opfer, flugprotokolle"
+  },
+  "ChatContainer": {
+    "modeFast": "Schnell",
+    "modeDeep": "Tief",
+    "switchToFast": "Zu Schnellmodus wechseln",
+    "switchToDeep": "Zu Tiefenmodus wechseln",
+    "noStream": "Kein Stream in der Antwort verfügbar",
+    "headerTitle": "DOJ Epstein Akten Agent",
+    "headerSubtitle": "Durchsuchen Sie DOJ-Dokumente direkt und erhalten Sie eine KI-Zusammenfassung.",
+    "modeLabel": "Modus: {mode}",
+    "searchingArchive": "Suche im DOJ-Archiv...",
+    "documentsFound": "**{count} Dokument(e) gefunden**. Zusammenfassung wird erstellt...",
+    "summaryHeading": "**Zusammenfassung**",
+    "deepAnalysisHeading": "**Tiefenanalyse**",
+    "analyzeDocument": "Dokument analysieren: **{fileName}**",
+    "deepAnalyzeFetching": "Tiefenanalyse für **{fileName}** wird abgerufen...",
+    "tip": "Tipp: Klicken Sie auf „Tiefenanalyse ausführen“, um ein PDF bei Bedarf zu analysieren."
+  },
+  "ChatInput": {
+    "placeholder": "Epstein-Dokumente durchsuchen... (z.B. ''jeffrey'', ''maxwell'', ''island'')",
+    "searchButton": "Suchen",
+    "searching": "Suche läuft..."
+  },
+  "MessageList": {
+    "emptyTitle": "DOJ Epstein Akten Suche",
+    "emptyDescription": "Durchsuchen Sie die veröffentlichten Dokumente aus dem Epstein-Fall. Geben Sie ein Stichwort wie einen Namen, Ort oder Ereignis ein.",
+    "emptyExamples": "Versuchen Sie: jeffrey, island, maxwell, opfer, flugprotokolle"
+  },
+  "DonationPanel": {
+    "title": "Unterstützen Sie dieses Projekt",
+    "description": "Helfen Sie, das Hosting kostenlos zu halten. Spenden decken Scraping-, Analyse- und KI-Kosten.",
+    "bitcoin": "Bitcoin",
+    "ethereum": "Ethereum",
+    "copyAddress": "Adresse kopieren",
+    "addressCopied": "Adresse kopiert!",
+    "clickToCopy": "Zum Kopieren klicken",
+    "btcAddressNotSet": "BTC-Adresse nicht gesetzt",
+    "ethAddressNotSet": "ETH-Adresse nicht gesetzt",
+    "addAddressNote": "Fügen Sie Ihre BTC/ETH-Adresse in .env.local hinzu, um QR-Codes anzuzeigen."
+  },
+  "AboutCard": {
+    "title": "Über diesen Index",
+    "description": "Suchergebnisse basieren auf dem DOJ-Multimedia-Such-Index. PDF-Links öffnen in neuem Tab auf DOJ.gov.",
+    "feature1": "Schnellsuchmodus verwendet indexierten DOJ-Text.",
+    "feature2": "Tiefenanalyse lädt das PDF auf Anfrage herunter.",
+    "feature3": "Zusammenfassungen werden automatisch generiert."
+  },
+  "AboutPage": {
+    "title": "Über | DOJ Epstein Akten Suche",
+    "metaDescription": "Erfahren Sie mehr über das DOJ Epstein Akten KI-Suchtool, unsere Datenquellen, KI-Technologie und Mission, Rechtsdokumente zugänglich zu machen.",
+    "heading": "Über DOJ Epstein Akten Suche",
+    "intro": "Dieses Projekt bietet kostenlosen, KI-gestützten Zugang zu über 2.000 Department of Justice Dokumenten im Zusammenhang mit dem Jeffrey Epstein Fall.",
+    "missionTitle": "Unsere Mission",
+    "mission": "Rechtsdokumente für Journalisten, Forscher und die Öffentlichkeit durch fortschrittliche KI-Technologie und gesprächsbasierte Suche zugänglich machen.",
+    "dataSourceTitle": "Datenquelle",
+    "dataSource": "Alle Dokumente stammen direkt vom offiziellen DOJ.gov-Multimedia-Such-Index. Wir hosten oder ändern keine PDFs - alle Links zeigen auf ursprüngliche Regierungsquellen.",
+    "technologyTitle": "Technologie",
+    "technology": "Wir verwenden Groq''s Llama 3.3 70B Modell für KI-Zusammenfassungen, Playwright für Dokument-Scraping und Redis für Caching. Die Suchoberfläche ist mit Next.js gebaut und auf Vercel bereitgestellt.",
+    "privacyTitle": "Datenschutz & Transparenz",
+    "privacy": "Wir verfolgen keine Benutzer, verkaufen keine Daten und benötigen keine Konten. Alle Suchen sind anonym. Rate Limiting verhindert Missbrauch und hält den Service für alle kostenlos."
+  },
+  "PrivacyPage": {
+    "title": "Datenschutzerklärung | DOJ Epstein Akten Suche",
+    "metaDescription": "Datenschutzerklärung für DOJ Epstein Akten Suche. Erfahren Sie über Datenerfassung, Cookies, Drittanbieterdienste und DSGVO-Konformität.",
+    "heading": "Datenschutzerklärung",
+    "lastUpdated": "Zuletzt aktualisiert: 4. Februar 2026",
+    "introTitle": "Ihre Privatsphäre ist wichtig",
+    "intro": "Wir sind dem Schutz Ihrer Privatsphäre verpflichtet. Diese Richtlinie erklärt, welche Daten wir sammeln und wie wir sie verwenden.",
+    "dataCollectionTitle": "Datenerfassung",
+    "dataCollection": "Wir sammeln minimale Daten: IP-Adressen für Rate Limiting (temporär gespeichert), Suchanfragen (nicht mit Benutzern verknüpft) und anonymisierte Nutzungsstatistiken. Wir sammeln KEINE persönlichen Informationen, E-Mails oder erstellen Benutzerprofile.",
+    "cookiesTitle": "Cookies",
+    "cookies": "Wir verwenden localStorage, um Ihren Chat-Verlauf lokal in Ihrem Browser zu speichern. Diese Daten verlassen niemals Ihr Gerät. Keine Tracking-Cookies werden verwendet.",
+    "thirdPartyTitle": "Drittanbieterdienste",
+    "thirdParty": "Wir verwenden: Upstash (Redis-Caching), Groq (KI-Zusammenfassungen), Vercel (Hosting) und optional Google AdSense. Jeder hat seine eigene Datenschutzerklärung.",
+    "gdprTitle": "DSGVO-Konformität",
+    "gdpr": "EU-Benutzer haben das Recht, auf ihre Daten zuzugreifen, sie zu löschen oder zu exportieren. Da wir keine persönlichen Daten speichern, gibt es nichts zu exportieren. Löschen Sie den localStorage Ihres Browsers, um den Chat-Verlauf zu entfernen.",
+    "contactTitle": "Kontakt",
+    "contact": "Für Datenschutzbedenken öffnen Sie bitte ein Issue in unserem GitHub-Repository."
+  },
+  "FAQPage": {
+    "title": "FAQ | DOJ Epstein Akten Suche",
+    "metaDescription": "Häufig gestellte Fragen zur Suche in DOJ Epstein-Dokumenten, KI-Zusammenfassungen, Datenquellen und effektiver Nutzung des Suchtools.",
+    "heading": "Häufig Gestellte Fragen",
+    "q1": "Welche Dokumente kann ich durchsuchen?",
+    "a1": "Sie können über 2.000 Dokumente aus dem DOJ Epstein-Fall durchsuchen, einschließlich Gerichtsakten, Opferaussagen, Flugprotokolle und andere vom Department of Justice veröffentlichte Rechtsdokumente.",
+    "q2": "Wie funktioniert die KI-Suche?",
+    "a2": "Der Schnellmodus durchsucht den indexierten DOJ-Text und generiert eine Zusammenfassung. Der Tiefenmodus lädt das vollständige PDF herunter und führt eine umfassende Analyse durch. Beide verwenden Groq''s Llama 3.3 70B KI-Modell.",
+    "q3": "Sind die Dokumente original?",
+    "a3": "Ja. Alle PDF-Links zeigen direkt auf DOJ.gov. Wir hosten, ändern oder verändern keine Dokumente. Wir durchsuchen und fassen sie nur zusammen.",
+    "q4": "Ist dieser Service kostenlos?",
+    "a4": "Ja, völlig kostenlos. Wir verwenden Rate Limiting, um Missbrauch zu verhindern. Wenn Sie das Limit erreichen, warten Sie einige Minuten und versuchen Sie es erneut. Spenden helfen, die Hosting-Kosten zu decken.",
+    "q5": "Kann ich die Dokumente herunterladen?",
+    "a5": "Ja. Klicken Sie auf einen beliebigen PDF-Link in den Suchergebnissen, um das Originaldokument auf DOJ.gov zu öffnen. Von dort können Sie herunterladen.",
+    "q6": "Wie genau sind die KI-Zusammenfassungen?",
+    "a6": "Zusammenfassungen werden von KI generiert und können Fehler enthalten. Überprüfen Sie wichtige Informationen immer, indem Sie das Quell-PDF lesen. Zusammenfassungen sollen Ihnen helfen, relevante Dokumente schnell zu finden.",
+    "q7": "Wer hat dies erstellt?",
+    "a7": "Dies ist ein unabhängiges Open-Source-Projekt, das erstellt wurde, um Rechtsdokumente zugänglicher zu machen. Wir haben keine Verbindung zum DOJ oder Parteien, die an dem Fall beteiligt sind."
+  },
+  "LanguageSwitcher": {
+    "label": "Sprache",
+    "languages": {
+      "en": "English",
+      "nl": "Nederlands",
+      "fr": "Français",
+      "de": "Deutsch",
+      "es": "Español",
+      "pt": "Português"
+    }
+  },
+  "Message": {
+    "resultsFound": "{count} Dokument(e) gefunden:",
+    "pageRange": "Seiten {start}-{end}",
+    "wordCount": "{count} Wörter",
+    "openInNewTab": "{fileName} in neuem Tab öffnen",
+    "deepAnalyzeButton": "→ Tiefenanalyse ausführen",
+    "moreDocuments": "... und {count} weitere Dokumente"
+  },
+  "Navigation": {
+    "home": "Startseite",
+    "about": "Über",
+    "privacy": "Datenschutz",
+    "faq": "FAQ"
+  },
+  "Common": {
+    "skipToMain": "Zum Hauptinhalt springen",
+    "loading": "Laden...",
+    "error": "Ein Fehler ist aufgetreten",
+    "tryAgain": "Erneut versuchen"
+  },
+  "Errors": {
+    "searchFailed": "Suche fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "summaryFailed": "Zusammenfassungserstellung fehlgeschlagen.",
+    "rateLimitExceeded": "Rate Limit überschritten. Bitte versuchen Sie es in einigen Minuten erneut.",
+    "networkError": "Netzwerkfehler. Überprüfen Sie Ihre Verbindung.",
+    "invalidQuery": "Ungültige Suchanfrage. Bitte versuchen Sie einen anderen Suchbegriff."
+  }
+}

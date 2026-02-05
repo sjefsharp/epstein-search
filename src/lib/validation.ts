@@ -17,7 +17,7 @@ export const searchSchema = z.object({
 
 /**
  * Analyze request validation schema
- * Prevents SSRF by validating domain
+ * Prevents SSRF by validating domain and protocol
  */
 export const analyzeSchema = z.object({
   fileUri: z
@@ -27,6 +27,10 @@ export const analyzeSchema = z.object({
       (url) => {
         try {
           const parsed = new URL(url);
+          // Enforce HTTPS only
+          if (parsed.protocol !== "https:") {
+            return false;
+          }
           // Only allow justice.gov domains
           return (
             parsed.hostname.endsWith(".justice.gov") ||
@@ -36,7 +40,7 @@ export const analyzeSchema = z.object({
           return false;
         }
       },
-      { message: "Only justice.gov URLs are allowed" },
+      { message: "Only HTTPS justice.gov URLs are allowed" },
     ),
   fileName: z.string().min(1, "fileName is required").max(255),
   searchTerm: z.string().max(500).optional(),

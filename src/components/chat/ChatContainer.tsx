@@ -1,5 +1,7 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+
 import { useCallback, useMemo, useRef } from "react";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
@@ -13,10 +15,11 @@ async function readSSE(
   response: Response,
   onChunk: (text: string) => void,
   onDone: () => void,
+  noStreamMessage: string,
 ) {
   const reader = response.body?.getReader();
   if (!reader) {
-    throw new Error("Geen stream beschikbaar in response");
+    throw new Error(noStreamMessage);
   }
 
   const decoder = new TextDecoder();
@@ -64,6 +67,9 @@ async function readSSE(
 }
 
 export default function ChatContainer() {
+  const locale = useLocale();
+  const t = useTranslations("ChatContainer");
+  const tErrors = useTranslations("Errors");
   const messages = useChatStore((state) => state.messages);
   const searchMode = useChatStore((state) => state.searchMode);
   const isLoading = useChatStore((state) => state.isLoading);
@@ -77,8 +83,8 @@ export default function ChatContainer() {
   const isBusyRef = useRef(false);
 
   const modeLabel = useMemo(
-    () => (searchMode === "fast" ? "Snel" : "Diep"),
-    [searchMode],
+    () => (searchMode === "fast" ? t("modeFast") : t("modeDeep")),
+    [searchMode, t],
   );
 
   const handleSend = useCallback(
@@ -90,19 +96,19 @@ export default function ChatContainer() {
       addMessage({ role: "user", content: message });
       const assistantId = addMessage({
         role: "assistant",
-        content: "Zoeken in DOJ-archief...",
+        content: t("searchingArchive"),
         isStreaming: true,
       });
       setLoading(true);
 
       try {
         const response = await fetch(
-          `/api/search?q=${encodeURIComponent(message)}`,
+          `/api/search?q=${encodeURIComponent(message)}&locale=${encodeURIComponent(locale)}`,
         );
 
         if (!response.ok) {
           const err = await response.json();
-          throw new Error(err?.error || "Zoekopdracht mislukt");
+          throw new Error(err?.error || tErrors("searchFailed"));
         }
 
         const data = (await response.json()) as {
@@ -115,7 +121,7 @@ export default function ChatContainer() {
         const uniqueCount = data.uniqueCount ?? documents.length;
 
         updateMessage(assistantId, {
-          content: `**${uniqueCount} document(en) gevonden**. Samenvatting wordt gegenereerd...`,
+          content: t("documentsFound", { count: uniqueCount }),
           isStreaming: true,
           searchResults: documents,
         });
@@ -123,15 +129,15 @@ export default function ChatContainer() {
         const summaryResponse = await fetch("/api/summarize", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ searchTerm: message, documents }),
+          body: JSON.stringify({ searchTerm: message, documents, locale }),
         });
 
         if (!summaryResponse.ok) {
           const err = await summaryResponse.json();
-          throw new Error(err?.error || "Samenvatting mislukt");
+          throw new Error(err?.error || tErrors("summaryFailed"));
         }
 
-        let summaryText = "**Samenvatting**\n\n";
+        let summaryText = `${t("summaryHeading")}\n\n`;
         updateMessage(assistantId, {
           content: summaryText,
           isStreaming: true,
@@ -150,13 +156,14 @@ export default function ChatContainer() {
           () => {
             updateMessage(assistantId, { isStreaming: false });
           },
+          t("noStream"),
         );
       } catch (error) {
         updateMessage(assistantId, {
           content:
             error instanceof Error
-              ? `Er ging iets mis: ${error.message}`
-              : "Er ging iets mis tijdens het zoeken.",
+              ? `${tErrors("searchFailed")} ${error.message}`
+              : tErrors("searchFailed"),
           isStreaming: false,
         });
       } finally {
@@ -164,7 +171,15 @@ export default function ChatContainer() {
         isBusyRef.current = false;
       }
     },
-    [addMessage, setLoading, setCurrentQuery, updateMessage],
+    [
+      addMessage,
+      locale,
+      setLoading,
+      setCurrentQuery,
+      t,
+      tErrors,
+      updateMessage,
+    ],
   );
 
   const handleAnalyzeDocument = useCallback(
@@ -174,12 +189,12 @@ export default function ChatContainer() {
 
       addMessage({
         role: "user",
-        content: `Analyseer document: **${fileName}**`,
+        content: t("analyzeDocument", { fileName }),
       });
 
       const assistantId = addMessage({
         role: "assistant",
-        content: `Diepe analyse wordt opgehaald voor **${fileName}**...`,
+        content: t("deepAnalyzeFetching", { fileName }),
         isStreaming: true,
       });
 
@@ -193,15 +208,16 @@ export default function ChatContainer() {
             fileUri,
             fileName,
             searchTerm: currentQuery,
+            locale,
           }),
         });
 
         if (!response.ok) {
           const err = await response.json();
-          throw new Error(err?.error || "Diepe analyse mislukt");
+          throw new Error(err?.error || tErrors("summaryFailed"));
         }
 
-        let summaryText = "**Diepe analyse**\n\n";
+        let summaryText = `${t("deepAnalysisHeading")}\n\n`;
         updateMessage(assistantId, {
           content: summaryText,
           isStreaming: true,
@@ -219,13 +235,14 @@ export default function ChatContainer() {
           () => {
             updateMessage(assistantId, { isStreaming: false });
           },
+          t("noStream"),
         );
       } catch (error) {
         updateMessage(assistantId, {
           content:
             error instanceof Error
-              ? `Er ging iets mis: ${error.message}`
-              : "Er ging iets mis tijdens de diepe analyse.",
+              ? `${tErrors("summaryFailed")} ${error.message}`
+              : tErrors("summaryFailed"),
           isStreaming: false,
         });
       } finally {
@@ -233,7 +250,7 @@ export default function ChatContainer() {
         isBusyRef.current = false;
       }
     },
-    [addMessage, updateMessage, setLoading, currentQuery],
+    [addMessage, currentQuery, locale, setLoading, t, tErrors, updateMessage],
   );
 
   return (
@@ -241,15 +258,13 @@ export default function ChatContainer() {
       <header className="flex items-center justify-between border-b px-6 py-4">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">
-            DOJ Epstein Files Agent
+            {t("headerTitle")}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Zoek direct in DOJ-documenten en krijg een AI-samenvatting.
-          </p>
+          <p className="text-sm text-muted-foreground">{t("headerSubtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-xs">
-            Mode: {modeLabel}
+            {t("modeLabel", { mode: modeLabel })}
           </Badge>
           <div className="flex rounded-full border bg-muted p-1">
             <Button
@@ -263,7 +278,7 @@ export default function ChatContainer() {
               onClick={() => setSearchMode("fast")}
               aria-pressed={searchMode === "fast"}
             >
-              Snel
+              {t("modeFast")}
             </Button>
             <Button
               type="button"
@@ -276,7 +291,7 @@ export default function ChatContainer() {
               onClick={() => setSearchMode("deep")}
               aria-pressed={searchMode === "deep"}
             >
-              Diep
+              {t("modeDeep")}
             </Button>
           </div>
         </div>
@@ -287,16 +302,9 @@ export default function ChatContainer() {
         onAnalyzeDocument={handleAnalyzeDocument}
       />
 
-      <ChatInput
-        onSend={handleSend}
-        disabled={isLoading}
-        placeholder="Zoek in DOJ Epstein files… (bijv. 'yfke', 'amsterdam', 'phone call')"
-      />
+      <ChatInput onSend={handleSend} disabled={isLoading} />
 
-      <div className="px-6 pb-4 text-xs text-muted-foreground">
-        Tip: klik op “Diepe analyse uitvoeren” om een PDF on-demand te laten
-        analyseren.
-      </div>
+      <div className="px-6 pb-4 text-xs text-muted-foreground">{t("tip")}</div>
     </section>
   );
 }

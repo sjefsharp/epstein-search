@@ -1,0 +1,149 @@
+{
+  "Metadata": {
+    "title": "DOJ Epstein Bestanden AI Zoeken | Jeffrey Epstein Juridische Documenten Database",
+    "description": "Zoek en analyseer 2.000+ DOJ Epstein zaakdocumenten met AI-samenvattingen. Verken Jeffrey Epstein juridische records, rechtbankdossiers en officiële Department of Justice documenten.",
+    "ogTitle": "DOJ Epstein Bestanden AI Zoekagent",
+    "ogDescription": "AI-aangedreven zoekmachine voor Department of Justice Epstein documenten. Krijg directe samenvattingen en links naar bron-PDFs."
+  },
+  "HomePage": {
+    "tagline": "Epstein Files • DOJ.gov",
+    "title": "Zoek, analyseer en contextualiseer DOJ Epstein documenten",
+    "subtitle": "Een gesprek-gedreven zoekagent die DOJ data direct doorzoekt, met AI-samenvattingen en directe links naar bronbestanden.",
+    "exampleSearches": "amsterdam, yfke, maxwell, slachtoffer, vluchtlogboeken"
+  },
+  "ChatContainer": {
+    "modeFast": "Snel",
+    "modeDeep": "Diep",
+    "switchToFast": "Schakel naar Snelle modus",
+    "switchToDeep": "Schakel naar Diepe modus",
+    "noStream": "Geen stream beschikbaar in response",
+    "headerTitle": "DOJ Epstein Files Agent",
+    "headerSubtitle": "Zoek direct in DOJ-documenten en krijg een AI-samenvatting.",
+    "modeLabel": "Modus: {mode}",
+    "searchingArchive": "Zoeken in DOJ-archief...",
+    "documentsFound": "**{count} document(en) gevonden**. Samenvatting wordt gegenereerd...",
+    "summaryHeading": "**Samenvatting**",
+    "deepAnalysisHeading": "**Diepe analyse**",
+    "analyzeDocument": "Analyseer document: **{fileName}**",
+    "deepAnalyzeFetching": "Diepe analyse wordt opgehaald voor **{fileName}**...",
+    "tip": "Tip: klik op “Diepe analyse uitvoeren” om een PDF on-demand te laten analyseren."
+  },
+  "ChatInput": {
+    "placeholder": "Zoek in Epstein documenten... (bijv. 'amsterdam', 'yfke', 'maxwell')",
+    "searchButton": "Zoeken",
+    "searching": "Bezig met zoeken..."
+  },
+  "MessageList": {
+    "emptyTitle": "DOJ Epstein Bestanden Zoeker",
+    "emptyDescription": "Zoek in de vrijgegeven documenten van de Epstein rechtszaak. Typ een zoekwoord zoals een naam, locatie, of gebeurtenis.",
+    "emptyExamples": "Probeer: amsterdam, yfke, maxwell, slachtoffer, vluchtlogboeken"
+  },
+  "DonationPanel": {
+    "title": "Steun dit project",
+    "description": "Help de hosting gratis te houden. Donaties worden gebruikt voor scraping, analyse en AI-kosten.",
+    "bitcoin": "Bitcoin",
+    "ethereum": "Ethereum",
+    "copyAddress": "Kopieer adres",
+    "addressCopied": "Adres gekopieerd!",
+    "clickToCopy": "Klik om te kopiëren",
+    "btcAddressNotSet": "BTC-adres niet ingesteld",
+    "ethAddressNotSet": "ETH-adres niet ingesteld",
+    "addAddressNote": "Voeg je BTC/ETH-adres toe in .env.local om QR-codes te tonen."
+  },
+  "AboutCard": {
+    "title": "Over deze index",
+    "description": "De zoekresultaten zijn gebaseerd op de DOJ multimedia-search index. PDF-links openen in een nieuw tabblad op DOJ.gov.",
+    "feature1": "Snelle zoekmodus gebruikt geïndexeerde DOJ tekst.",
+    "feature2": "Diepe analyse haalt de PDF on-demand op.",
+    "feature3": "Samenvattingen worden automatisch gegenereerd."
+  },
+  "AboutPage": {
+    "title": "Over | DOJ Epstein Bestanden Zoeken",
+    "metaDescription": "Leer over de DOJ Epstein Bestanden AI Zoektool, onze databronnen, AI-technologie en missie om juridische documenten toegankelijk te maken.",
+    "heading": "Over DOJ Epstein Bestanden Zoeken",
+    "intro": "Dit project biedt gratis, AI-aangedreven toegang tot meer dan 2.000 Department of Justice documenten gerelateerd aan de Jeffrey Epstein zaak.",
+    "missionTitle": "Onze Missie",
+    "mission": "Juridische documenten toegankelijk maken voor journalisten, onderzoekers en het publiek door middel van geavanceerde AI-technologie en conversationeel zoeken.",
+    "dataSourceTitle": "Gegevensbron",
+    "dataSource": "Alle documenten zijn rechtstreeks afkomstig van de officiële DOJ.gov multimedia zoekindex. We hosten of wijzigen geen PDFs - alle links verwijzen naar originele overheidsbronnen.",
+    "technologyTitle": "Technologie",
+    "technology": "We gebruiken Groq's Llama 3.3 70B model voor AI-samenvattingen, Playwright voor document scraping, en Redis voor caching. De zoekinterface is gebouwd met Next.js en gedeployed op Vercel.",
+    "privacyTitle": "Privacy & Transparantie",
+    "privacy": "We volgen geen gebruikers, verkopen geen data, en vereisen geen accounts. Alle zoekopdrachten zijn anoniem. Rate limiting voorkomt misbruik terwijl de service gratis blijft voor iedereen."
+  },
+  "PrivacyPage": {
+    "title": "Privacybeleid | DOJ Epstein Bestanden Zoeken",
+    "metaDescription": "Privacybeleid voor DOJ Epstein Bestanden Zoeken. Lees over gegevensverzameling, cookies, diensten van derden en AVG-naleving.",
+    "heading": "Privacybeleid",
+    "lastUpdated": "Laatst bijgewerkt: 4 februari 2026",
+    "introTitle": "Uw Privacy is Belangrijk",
+    "intro": "We zijn toegewijd aan het beschermen van uw privacy. Dit beleid legt uit welke gegevens we verzamelen en hoe we deze gebruiken.",
+    "dataCollectionTitle": "Gegevensverzameling",
+    "dataCollection": "We verzamelen minimale data: IP-adressen voor rate limiting (tijdelijk opgeslagen), zoekopdrachten (niet gekoppeld aan gebruikers), en geanonimiseerde gebruiksstatistieken. We verzamelen GEEN persoonlijke informatie, e-mails, of maken gebruikersprofielen.",
+    "cookiesTitle": "Cookies",
+    "cookies": "We gebruiken localStorage om uw chatgeschiedenis lokaal in uw browser op te slaan. Deze data verlaat nooit uw apparaat. Geen tracking cookies worden gebruikt.",
+    "thirdPartyTitle": "Diensten van Derden",
+    "thirdParty": "We gebruiken: Upstash (Redis caching), Groq (AI-samenvattingen), Vercel (hosting), en optioneel Google AdSense. Elk heeft hun eigen privacybeleid.",
+    "gdprTitle": "AVG-Naleving",
+    "gdpr": "EU-gebruikers hebben het recht om toegang te krijgen tot, te verwijderen of te exporteren hun gegevens. Omdat we geen persoonlijke gegevens opslaan, is er niets te exporteren. Wis de localStorage van uw browser om de chatgeschiedenis te verwijderen.",
+    "contactTitle": "Contact",
+    "contact": "Voor privacykwesties, open een issue op onze GitHub repository."
+  },
+  "FAQPage": {
+    "title": "Veelgestelde Vragen | DOJ Epstein Bestanden Zoeken",
+    "metaDescription": "Veelgestelde vragen over het zoeken in DOJ Epstein documenten, AI-samenvattingen, databronnen en hoe de zoektool effectief te gebruiken.",
+    "heading": "Veelgestelde Vragen",
+    "q1": "Welke documenten kan ik doorzoeken?",
+    "a1": "Je kunt meer dan 2.000 documenten doorzoeken uit de DOJ Epstein zaak, inclusief rechtbankstukken, verklaringen van slachtoffers, vluchtlogboeken en andere juridische documenten vrijgegeven door het Department of Justice.",
+    "q2": "Hoe werkt het AI-zoeken?",
+    "a2": "Snelle modus doorzoekt de geïndexeerde tekst van de DOJ en genereert een samenvatting. Diepe modus downloadt de volledige PDF en voert uitgebreide analyse uit. Beide gebruiken Groq's Llama 3.3 70B AI-model.",
+    "q3": "Zijn de documenten origineel?",
+    "a3": "Ja. Alle PDF-links verwijzen rechtstreeks naar DOJ.gov. We hosten, wijzigen of veranderen geen documenten. We doorzoeken en vatten ze alleen samen.",
+    "q4": "Is deze service gratis?",
+    "a4": "Ja, volledig gratis. We gebruiken rate limiting om misbruik te voorkomen. Als je de limiet bereikt, wacht dan een paar minuten en probeer het opnieuw. Donaties helpen de hostingkosten te dekken.",
+    "q5": "Kan ik de documenten downloaden?",
+    "a5": "Ja. Klik op elke PDF-link in de zoekresultaten om het originele document op DOJ.gov te openen. Je kunt van daaruit downloaden.",
+    "q6": "Hoe nauwkeurig zijn de AI-samenvattingen?",
+    "a6": "Samenvattingen worden gegenereerd door AI en kunnen fouten bevatten. Verifieer altijd belangrijke informatie door de bron-PDF te lezen. Samenvattingen zijn bedoeld om je snel relevante documenten te helpen vinden.",
+    "q7": "Wie heeft dit gemaakt?",
+    "a7": "Dit is een onafhankelijk open-source project gebouwd om juridische documenten toegankelijker te maken. We hebben geen band met de DOJ of partijen betrokken bij de zaak."
+  },
+  "LanguageSwitcher": {
+    "label": "Taal",
+    "languages": {
+      "en": "English",
+      "nl": "Nederlands",
+      "fr": "Français",
+      "de": "Deutsch",
+      "es": "Español",
+      "pt": "Português"
+    }
+  },
+  "Message": {
+    "resultsFound": "{count} document(en) gevonden:",
+    "pageRange": "Pagina {start}-{end}",
+    "wordCount": "{count} woorden",
+    "openInNewTab": "Open {fileName} in nieuw tabblad",
+    "deepAnalyzeButton": "→ Diepe analyse uitvoeren",
+    "moreDocuments": "... en nog {count} andere documenten"
+  },
+  "Navigation": {
+    "home": "Home",
+    "about": "Over",
+    "privacy": "Privacy",
+    "faq": "Veelgestelde Vragen"
+  },
+  "Common": {
+    "skipToMain": "Ga naar hoofdinhoud",
+    "loading": "Laden...",
+    "error": "Er is een fout opgetreden",
+    "tryAgain": "Probeer opnieuw"
+  },
+  "Errors": {
+    "searchFailed": "Zoeken mislukt. Probeer het opnieuw.",
+    "summaryFailed": "Samenvatting genereren mislukt.",
+    "rateLimitExceeded": "Rate limiet bereikt. Probeer het over een paar minuten opnieuw.",
+    "networkError": "Netwerkfout. Controleer uw verbinding.",
+    "invalidQuery": "Ongeldige zoekopdracht. Probeer een andere zoekterm."
+  }
+}

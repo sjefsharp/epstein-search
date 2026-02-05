@@ -1,6 +1,7 @@
 // Individual Message Component
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
 import { Message as MessageType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { User, Bot, ExternalLink } from "lucide-react";
@@ -14,6 +15,8 @@ interface MessageProps {
 }
 
 export default function Message({ message, onAnalyzeDocument }: MessageProps) {
+  const t = useTranslations("Message");
+  const locale = useLocale();
   const isUser = message.role === "user";
 
   return (
@@ -57,7 +60,7 @@ export default function Message({ message, onAnalyzeDocument }: MessageProps) {
         {message.searchResults && message.searchResults.length > 0 && (
           <div className="space-y-2 pt-2 border-t">
             <p className="text-sm font-semibold">
-              {message.searchResults.length} document(en) gevonden:
+              {t("resultsFound", { count: message.searchResults.length })}
             </p>
             <div className="space-y-2">
               {message.searchResults.slice(0, 5).map((doc) => (
@@ -70,10 +73,13 @@ export default function Message({ message, onAnalyzeDocument }: MessageProps) {
                       <p className="font-medium">{doc.fileName}</p>
                       <div className="flex gap-2 mt-1">
                         <Badge variant="outline" className="text-xs">
-                          Pagina {doc.startPage}-{doc.endPage}
+                          {t("pageRange", {
+                            start: doc.startPage,
+                            end: doc.endPage,
+                          })}
                         </Badge>
                         <Badge variant="outline" className="text-xs">
-                          {doc.totalWords} woorden
+                          {t("wordCount", { count: doc.totalWords })}
                         </Badge>
                       </div>
                     </div>
@@ -82,7 +88,7 @@ export default function Message({ message, onAnalyzeDocument }: MessageProps) {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:underline flex items-center gap-1"
-                      aria-label={`Open ${doc.fileName} in nieuw tabblad`}
+                      aria-label={t("openInNewTab", { fileName: doc.fileName })}
                     >
                       <ExternalLink className="w-4 h-4" />
                     </a>
@@ -107,7 +113,7 @@ export default function Message({ message, onAnalyzeDocument }: MessageProps) {
                       }
                       className="text-xs text-primary hover:underline font-medium"
                     >
-                      → Diepe analyse uitvoeren
+                      {t("deepAnalyzeButton")}
                     </button>
                   )}
                 </div>
@@ -116,7 +122,9 @@ export default function Message({ message, onAnalyzeDocument }: MessageProps) {
 
             {message.searchResults.length > 5 && (
               <p className="text-xs text-muted-foreground">
-                ... en nog {message.searchResults.length - 5} andere documenten
+                {t("moreDocuments", {
+                  count: message.searchResults.length - 5,
+                })}
               </p>
             )}
           </div>
@@ -124,7 +132,7 @@ export default function Message({ message, onAnalyzeDocument }: MessageProps) {
 
         {/* Timestamp */}
         <time className="text-xs opacity-60">
-          {new Date(message.timestamp).toLocaleTimeString("nl-NL", {
+          {new Date(message.timestamp).toLocaleTimeString(locale, {
             hour: "2-digit",
             minute: "2-digit",
           })}

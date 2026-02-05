@@ -11,17 +11,68 @@ import {
   sanitizeError,
 } from "@/lib/security";
 
+type SupportedLocale = "en" | "nl" | "fr" | "de" | "es" | "pt";
+
+const normalizeLocale = (locale?: string): SupportedLocale => {
+  if (!locale) return "en";
+  const normalized = locale.toLowerCase();
+  if (normalized.startsWith("nl")) return "nl";
+  if (normalized.startsWith("fr")) return "fr";
+  if (normalized.startsWith("de")) return "de";
+  if (normalized.startsWith("es")) return "es";
+  if (normalized.startsWith("pt")) return "pt";
+  return "en";
+};
+
+const ERROR_MESSAGES: Record<
+  SupportedLocale,
+  { rateLimit: string; invalidInput: string }
+> = {
+  en: {
+    rateLimit: "Rate limit exceeded. Please try again later.",
+    invalidInput: "Invalid input",
+  },
+  nl: {
+    rateLimit: "Rate limit bereikt. Probeer het later opnieuw.",
+    invalidInput: "Ongeldige invoer",
+  },
+  fr: {
+    rateLimit: "Limite de débit dépassée. Veuillez réessayer plus tard.",
+    invalidInput: "Entrée invalide",
+  },
+  de: {
+    rateLimit: "Rate-Limit überschritten. Bitte später erneut versuchen.",
+    invalidInput: "Ungültige Eingabe",
+  },
+  es: {
+    rateLimit: "Límite de velocidad excedido. Por favor intente más tarde.",
+    invalidInput: "Entrada inválida",
+  },
+  pt: {
+    rateLimit: "Limite de taxa excedido. Por favor tente mais tarde.",
+    invalidInput: "Entrada inválida",
+  },
+};
+
 export const runtime = "nodejs"; // Use Node.js runtime for Upstash Redis compatibility
 
 export async function GET(request: NextRequest) {
   try {
+    const searchParams = request.nextUrl.searchParams;
+    const queryParam = searchParams.get("q");
+    const fromParam = searchParams.get("from");
+    const sizeParam = searchParams.get("size");
+    const localeParam = searchParams.get("locale");
+    const selectedLocale = normalizeLocale(localeParam ?? undefined);
+    const messages = ERROR_MESSAGES[selectedLocale];
+
     // Rate limiting check
     const ip = getClientIp(request);
     const rateLimitResult = await checkRateLimit(ip, searchRatelimit);
 
     if (!rateLimitResult.success) {
       return NextResponse.json(
-        { error: "Rate limit exceeded. Please try again later." },
+        { error: messages.rateLimit },
         {
           status: 429,
           headers: {
@@ -33,11 +84,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const searchParams = request.nextUrl.searchParams;
-    const queryParam = searchParams.get("q");
-    const fromParam = searchParams.get("from");
-    const sizeParam = searchParams.get("size");
-
     // Validate and sanitize input
     const validation = searchSchema.safeParse({
       query: queryParam,
@@ -47,7 +93,7 @@ export async function GET(request: NextRequest) {
 
     if (!validation.success) {
       return NextResponse.json(
-        { error: "Invalid input", details: validation.error.issues },
+        { error: messages.invalidInput, details: validation.error.issues },
         { status: 400 },
       );
     }
@@ -183,9 +229,12 @@ export async function POST(request: NextRequest) {
     const ip = getClientIp(request);
     const rateLimitResult = await checkRateLimit(ip, searchRatelimit);
 
+    let selectedLocale: SupportedLocale = "en";
+    let messages = ERROR_MESSAGES[selectedLocale];
+
     if (!rateLimitResult.success) {
       return NextResponse.json(
-        { error: "Rate limit exceeded. Please try again later." },
+        { error: messages.rateLimit },
         {
           status: 429,
           headers: {
@@ -198,13 +247,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    selectedLocale = normalizeLocale(body?.locale);
+    messages = ERROR_MESSAGES[selectedLocale];
 
     // Validate and sanitize input
     const validation = searchSchema.safeParse(body);
 
     if (!validation.success) {
       return NextResponse.json(
-        { error: "Invalid input", details: validation.error.issues },
+        { error: messages.invalidInput, details: validation.error.issues },
         { status: 400 },
       );
     }

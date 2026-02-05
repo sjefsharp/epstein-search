@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { QRCodeCanvas } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,6 +9,7 @@ import { Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function CopyButton({ value, label }: { value: string; label: string }) {
+  const t = useTranslations("DonationPanel");
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -30,40 +32,38 @@ function CopyButton({ value, label }: { value: string; label: string }) {
       aria-live="polite"
     >
       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-      {copied ? "Gekopieerd" : `Kopieer ${label}`}
+      {copied ? t("addressCopied") : `${t("copyAddress")} ${label}`}
     </Button>
   );
 }
 
 export default function DonationPanel() {
+  const t = useTranslations("DonationPanel");
   const btc = process.env.NEXT_PUBLIC_BTC_ADDRESS || "";
   const eth = process.env.NEXT_PUBLIC_ETH_ADDRESS || "";
 
   const hasAddresses = btc.length > 0 || eth.length > 0;
 
   const btcLabel = useMemo(
-    () => (btc.length > 0 ? btc : "BTC-adres niet ingesteld"),
-    [btc],
+    () => (btc.length > 0 ? btc : t("btcAddressNotSet")),
+    [btc, t],
   );
   const ethLabel = useMemo(
-    () => (eth.length > 0 ? eth : "ETH-adres niet ingesteld"),
-    [eth],
+    () => (eth.length > 0 ? eth : t("ethAddressNotSet")),
+    [eth, t],
   );
 
   return (
     <Card className="p-5 space-y-5 border border-border/70 bg-card/80 backdrop-blur">
       <div className="space-y-2">
-        <h2 className="text-lg font-semibold">Steun dit project</h2>
-        <p className="text-sm text-muted-foreground">
-          Help de hosting gratis te houden. Donaties worden gebruikt voor
-          scraping, analyse en AI-kosten.
-        </p>
+        <h2 className="text-lg font-semibold">{t("title")}</h2>
+        <p className="text-sm text-muted-foreground">{t("description")}</p>
       </div>
 
       <div className="space-y-4">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium">Bitcoin (BTC)</p>
+            <p className="text-sm font-medium">{t("bitcoin")}</p>
             {btc && <CopyButton value={btc} label="BTC" />}
           </div>
           <div
@@ -83,7 +83,7 @@ export default function DonationPanel() {
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium">Ethereum (ETH)</p>
+            <p className="text-sm font-medium">{t("ethereum")}</p>
             {eth && <CopyButton value={eth} label="ETH" />}
           </div>
           <div
@@ -103,10 +103,7 @@ export default function DonationPanel() {
       </div>
 
       {!hasAddresses && (
-        <p className="text-xs text-muted-foreground">
-          Voeg je BTC/ETH adres toe in <code>.env.local</code> om QR-codes te
-          tonen.
-        </p>
+        <p className="text-xs text-muted-foreground">{t("addAddressNote")}</p>
       )}
     </Card>
   );

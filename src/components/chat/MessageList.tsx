@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Message as MessageType } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Message from "./Message";
@@ -15,6 +16,7 @@ export default function MessageList({
   messages,
   onAnalyzeDocument,
 }: MessageListProps) {
+  const t = useTranslations("MessageList");
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -27,19 +29,10 @@ export default function MessageList({
     return (
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="text-center space-y-4 max-w-md">
-          <h2 className="text-2xl font-bold">DOJ Epstein Files Zoeker</h2>
-          <p className="text-muted-foreground">
-            Zoek in de vrijgegeven documenten van de Epstein rechtszaak. Typ een
-            zoekwoord zoals een naam, locatie, of gebeurtenis.
-          </p>
+          <h2 className="text-2xl font-bold">{t("emptyTitle")}</h2>
+          <p className="text-muted-foreground">{t("emptyDescription")}</p>
           <div className="text-sm space-y-1 text-muted-foreground">
-            <p>Voorbeelden:</p>
-            <ul className="list-disc list-inside space-y-1">
-              <li>&quot;yfke&quot; - specifieke persoon</li>
-              <li>&quot;amsterdam&quot; - locatie</li>
-              <li>&quot;jeffrey&quot; - Jeffrey Epstein</li>
-              <li>&quot;phone call&quot; - type communicatie</li>
-            </ul>
+            <p>{t("emptyExamples")}</p>
           </div>
         </div>
       </div>

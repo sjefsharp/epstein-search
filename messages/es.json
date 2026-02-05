@@ -1,0 +1,149 @@
+{
+  "Metadata": {
+    "title": "Búsqueda IA Archivos Epstein DOJ | Base de Datos Documentos Legales Jeffrey Epstein",
+    "description": "Busque y analice más de 2.000 documentos DOJ del caso Epstein con resúmenes IA. Explore registros legales, archivos judiciales y documentos oficiales del Department of Justice sobre Jeffrey Epstein.",
+    "ogTitle": "Agente de Búsqueda IA Archivos Epstein DOJ",
+    "ogDescription": "Motor de búsqueda IA para documentos Epstein del Department of Justice. Obtenga resúmenes instantáneos y enlaces directos a PDFs fuente."
+  },
+  "HomePage": {
+    "tagline": "Archivos Epstein • DOJ.gov",
+    "title": "Busque, analice y contextualice documentos Epstein del DOJ",
+    "subtitle": "Un agente de búsqueda conversacional que consulta directamente datos del DOJ, con resúmenes IA y enlaces directos a archivos fuente.",
+    "exampleSearches": "españa, jeffrey, maxwell, víctima, registros de vuelo"
+  },
+  "ChatContainer": {
+    "modeFast": "Rápido",
+    "modeDeep": "Profundo",
+    "switchToFast": "Cambiar a modo Rápido",
+    "switchToDeep": "Cambiar a modo Profundo",
+    "noStream": "No hay stream disponible en la respuesta",
+    "headerTitle": "Agente de Búsqueda Archivos Epstein DOJ",
+    "headerSubtitle": "Busque documentos del DOJ directamente y obtenga un resumen IA.",
+    "modeLabel": "Modo: {mode}",
+    "searchingArchive": "Buscando en el archivo del DOJ...",
+    "documentsFound": "**{count} documento(s) encontrados**. Generando resumen...",
+    "summaryHeading": "**Resumen**",
+    "deepAnalysisHeading": "**Análisis profundo**",
+    "analyzeDocument": "Analizar documento: **{fileName}**",
+    "deepAnalyzeFetching": "Obteniendo análisis profundo para **{fileName}**...",
+    "tip": "Consejo: haga clic en “Ejecutar análisis profundo” para analizar un PDF bajo demanda."
+  },
+  "ChatInput": {
+    "placeholder": "Buscar en documentos Epstein... (ej: ''jeffrey'', ''maxwell'', ''island'')",
+    "searchButton": "Buscar",
+    "searching": "Buscando..."
+  },
+  "MessageList": {
+    "emptyTitle": "Búsqueda Archivos Epstein DOJ",
+    "emptyDescription": "Busque en los documentos publicados del caso Epstein. Escriba una palabra clave como un nombre, ubicación o evento.",
+    "emptyExamples": "Pruebe: jeffrey, island, maxwell, víctima, registros de vuelo"
+  },
+  "DonationPanel": {
+    "title": "Apoya este proyecto",
+    "description": "Ayuda a mantener el hosting gratuito. Las donaciones cubren costos de scraping, análisis e IA.",
+    "bitcoin": "Bitcoin",
+    "ethereum": "Ethereum",
+    "copyAddress": "Copiar dirección",
+    "addressCopied": "¡Dirección copiada!",
+    "clickToCopy": "Clic para copiar",
+    "btcAddressNotSet": "Dirección BTC no configurada",
+    "ethAddressNotSet": "Dirección ETH no configurada",
+    "addAddressNote": "Agregue su dirección BTC/ETH en .env.local para mostrar códigos QR."
+  },
+  "AboutCard": {
+    "title": "Acerca de este índice",
+    "description": "Los resultados se basan en el índice de búsqueda multimedia del DOJ. Los enlaces PDF se abren en nueva pestaña en DOJ.gov.",
+    "feature1": "El modo rápido usa texto indexado del DOJ.",
+    "feature2": "El análisis profundo descarga el PDF bajo demanda.",
+    "feature3": "Los resúmenes se generan automáticamente."
+  },
+  "AboutPage": {
+    "title": "Acerca de | Búsqueda Archivos Epstein DOJ",
+    "metaDescription": "Conozca la herramienta de búsqueda IA de archivos Epstein del DOJ, nuestras fuentes de datos, tecnología IA y misión de hacer accesibles los documentos legales.",
+    "heading": "Acerca de Búsqueda Archivos Epstein DOJ",
+    "intro": "Este proyecto proporciona acceso gratuito e impulsado por IA a más de 2.000 documentos del Department of Justice relacionados con el caso Jeffrey Epstein.",
+    "missionTitle": "Nuestra Misión",
+    "mission": "Hacer accesibles los documentos legales para periodistas, investigadores y el público mediante tecnología IA avanzada y búsqueda conversacional.",
+    "dataSourceTitle": "Fuente de Datos",
+    "dataSource": "Todos los documentos provienen directamente del índice oficial de búsqueda multimedia de DOJ.gov. No alojamos ni modificamos ningún PDF - todos los enlaces apuntan a fuentes gubernamentales originales.",
+    "technologyTitle": "Tecnología",
+    "technology": "Utilizamos el modelo Llama 3.3 70B de Groq para resúmenes IA, Playwright para scraping de documentos y Redis para caché. La interfaz de búsqueda está construida con Next.js y desplegada en Vercel.",
+    "privacyTitle": "Privacidad y Transparencia",
+    "privacy": "No rastreamos usuarios, no vendemos datos ni requerimos cuentas. Todas las búsquedas son anónimas. La limitación de velocidad previene abusos manteniendo el servicio gratuito para todos."
+  },
+  "PrivacyPage": {
+    "title": "Política de Privacidad | Búsqueda Archivos Epstein DOJ",
+    "metaDescription": "Política de privacidad para Búsqueda Archivos Epstein DOJ. Información sobre recopilación de datos, cookies, servicios de terceros y cumplimiento GDPR.",
+    "heading": "Política de Privacidad",
+    "lastUpdated": "Última actualización: 4 de febrero de 2026",
+    "introTitle": "Su Privacidad Importa",
+    "intro": "Estamos comprometidos a proteger su privacidad. Esta política explica qué datos recopilamos y cómo los usamos.",
+    "dataCollectionTitle": "Recopilación de Datos",
+    "dataCollection": "Recopilamos datos mínimos: direcciones IP para limitación de velocidad (almacenadas temporalmente), consultas de búsqueda (no vinculadas a usuarios) y estadísticas de uso anonimizadas. NO recopilamos información personal, correos electrónicos ni creamos perfiles de usuario.",
+    "cookiesTitle": "Cookies",
+    "cookies": "Usamos localStorage para guardar su historial de chat localmente en su navegador. Estos datos nunca salen de su dispositivo. No se usan cookies de seguimiento.",
+    "thirdPartyTitle": "Servicios de Terceros",
+    "thirdParty": "Usamos: Upstash (caché Redis), Groq (resúmenes IA), Vercel (hosting) y opcionalmente Google AdSense. Cada uno tiene su propia política de privacidad.",
+    "gdprTitle": "Cumplimiento GDPR",
+    "gdpr": "Los usuarios de la UE tienen derecho a acceder, eliminar o exportar sus datos. Como no almacenamos datos personales, no hay nada que exportar. Borre el localStorage de su navegador para eliminar el historial de chat.",
+    "contactTitle": "Contacto",
+    "contact": "Para preocupaciones sobre privacidad, por favor abra un issue en nuestro repositorio GitHub."
+  },
+  "FAQPage": {
+    "title": "Preguntas Frecuentes | Búsqueda Archivos Epstein DOJ",
+    "metaDescription": "Preguntas frecuentes sobre búsqueda de documentos Epstein del DOJ, resúmenes IA, fuentes de datos y cómo usar eficazmente la herramienta de búsqueda.",
+    "heading": "Preguntas Frecuentes",
+    "q1": "¿Qué documentos puedo buscar?",
+    "a1": "Puede buscar más de 2.000 documentos del caso Epstein del DOJ, incluyendo expedientes judiciales, declaraciones de víctimas, registros de vuelo y otros documentos legales publicados por el Department of Justice.",
+    "q2": "¿Cómo funciona la búsqueda IA?",
+    "a2": "El modo rápido busca en el texto indexado del DOJ y genera un resumen. El modo profundo descarga el PDF completo y realiza un análisis exhaustivo. Ambos usan el modelo IA Llama 3.3 70B de Groq.",
+    "q3": "¿Los documentos son originales?",
+    "a3": "Sí. Todos los enlaces PDF apuntan directamente a DOJ.gov. No alojamos, modificamos ni alteramos ningún documento. Solo los buscamos y resumimos.",
+    "q4": "¿Este servicio es gratuito?",
+    "a4": "Sí, completamente gratuito. Usamos limitación de velocidad para prevenir abusos. Si alcanza el límite, espere unos minutos e intente de nuevo. Las donaciones ayudan a cubrir costos de hosting.",
+    "q5": "¿Puedo descargar los documentos?",
+    "a5": "Sí. Haga clic en cualquier enlace PDF en los resultados para abrir el documento original en DOJ.gov. Puede descargar desde allí.",
+    "q6": "¿Qué tan precisos son los resúmenes IA?",
+    "a6": "Los resúmenes son generados por IA y pueden contener errores. Siempre verifique información importante leyendo el PDF fuente. Los resúmenes están diseñados para ayudarle a encontrar documentos relevantes rápidamente.",
+    "q7": "¿Quién creó esto?",
+    "a7": "Este es un proyecto independiente de código abierto construido para hacer documentos legales más accesibles. No tenemos afiliación con el DOJ ni con partes involucradas en el caso."
+  },
+  "LanguageSwitcher": {
+    "label": "Idioma",
+    "languages": {
+      "en": "English",
+      "nl": "Nederlands",
+      "fr": "Français",
+      "de": "Deutsch",
+      "es": "Español",
+      "pt": "Português"
+    }
+  },
+  "Message": {
+    "resultsFound": "{count} documento(s) encontrados:",
+    "pageRange": "Páginas {start}-{end}",
+    "wordCount": "{count} palabras",
+    "openInNewTab": "Abrir {fileName} en una nueva pestaña",
+    "deepAnalyzeButton": "→ Ejecutar análisis profundo",
+    "moreDocuments": "... y {count} documentos más"
+  },
+  "Navigation": {
+    "home": "Inicio",
+    "about": "Acerca de",
+    "privacy": "Privacidad",
+    "faq": "Preguntas Frecuentes"
+  },
+  "Common": {
+    "skipToMain": "Saltar al contenido principal",
+    "loading": "Cargando...",
+    "error": "Ocurrió un error",
+    "tryAgain": "Intentar de nuevo"
+  },
+  "Errors": {
+    "searchFailed": "Búsqueda fallida. Por favor intente de nuevo.",
+    "summaryFailed": "Generación de resumen fallida.",
+    "rateLimitExceeded": "Límite de velocidad excedido. Por favor intente en unos minutos.",
+    "networkError": "Error de red. Verifique su conexión.",
+    "invalidQuery": "Consulta de búsqueda inválida. Por favor intente otro término de búsqueda."
+  }
+}

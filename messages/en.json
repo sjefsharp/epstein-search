@@ -1,0 +1,149 @@
+{
+  "Metadata": {
+    "title": "DOJ Epstein Files AI Search | Jeffrey Epstein Legal Documents Database",
+    "description": "Search and analyze 2,000+ DOJ Epstein case documents with AI-powered summaries. Explore Jeffrey Epstein legal records, court files, and official Department of Justice documents.",
+    "ogTitle": "DOJ Epstein Files AI Search Agent",
+    "ogDescription": "AI-powered search engine for Department of Justice Epstein documents. Get instant summaries and direct links to source PDFs."
+  },
+  "HomePage": {
+    "tagline": "Epstein Files • DOJ.gov",
+    "title": "Search, analyze and contextualize DOJ Epstein documents",
+    "subtitle": "A conversation-driven search agent that directly queries DOJ data, with AI summaries and direct links to source files.",
+    "exampleSearches": "jeffrey, maxwell, island, victim, flight logs"
+  },
+  "ChatContainer": {
+    "modeFast": "Fast",
+    "modeDeep": "Deep",
+    "switchToFast": "Switch to Fast mode",
+    "switchToDeep": "Switch to Deep mode",
+    "noStream": "No stream available in response",
+    "headerTitle": "DOJ Epstein Files Agent",
+    "headerSubtitle": "Search DOJ documents directly and get an AI summary.",
+    "modeLabel": "Mode: {mode}",
+    "searchingArchive": "Searching DOJ archive...",
+    "documentsFound": "**{count} document(s) found**. Generating summary...",
+    "summaryHeading": "**Summary**",
+    "deepAnalysisHeading": "**Deep analysis**",
+    "analyzeDocument": "Analyze document: **{fileName}**",
+    "deepAnalyzeFetching": "Fetching deep analysis for **{fileName}**...",
+    "tip": "Tip: click “Run deep analysis” to analyze a PDF on-demand."
+  },
+  "ChatInput": {
+    "placeholder": "Search Epstein documents... (e.g., 'jeffrey', 'island', 'maxwell')",
+    "searchButton": "Search",
+    "searching": "Searching..."
+  },
+  "MessageList": {
+    "emptyTitle": "DOJ Epstein Files Search",
+    "emptyDescription": "Search the released documents from the Epstein case. Type a keyword such as a name, location, or event.",
+    "emptyExamples": "Try: jeffrey, island, maxwell, victim, flight logs"
+  },
+  "DonationPanel": {
+    "title": "Support this project",
+    "description": "Help keep hosting free. Donations cover scraping, analysis, and AI costs.",
+    "bitcoin": "Bitcoin",
+    "ethereum": "Ethereum",
+    "copyAddress": "Copy address",
+    "addressCopied": "Address copied!",
+    "clickToCopy": "Click to copy",
+    "btcAddressNotSet": "BTC address not set",
+    "ethAddressNotSet": "ETH address not set",
+    "addAddressNote": "Add your BTC/ETH address to .env.local to show QR codes."
+  },
+  "AboutCard": {
+    "title": "About this index",
+    "description": "Search results are based on the DOJ multimedia-search index. PDF links open in a new tab on DOJ.gov.",
+    "feature1": "Fast search mode uses indexed DOJ text.",
+    "feature2": "Deep analysis fetches the PDF on-demand.",
+    "feature3": "Summaries are automatically generated."
+  },
+  "AboutPage": {
+    "title": "About | DOJ Epstein Files Search",
+    "metaDescription": "Learn about the DOJ Epstein Files AI Search tool, our data sources, AI technology, and mission to make legal documents accessible.",
+    "heading": "About DOJ Epstein Files Search",
+    "intro": "This project provides free, AI-powered access to over 2,000 Department of Justice documents related to the Jeffrey Epstein case.",
+    "missionTitle": "Our Mission",
+    "mission": "Making legal documents accessible to journalists, researchers, and the public through advanced AI technology and conversational search.",
+    "dataSourceTitle": "Data Source",
+    "dataSource": "All documents are sourced directly from the official DOJ.gov multimedia search index. We do not host or modify any PDFs - all links point to original government sources.",
+    "technologyTitle": "Technology",
+    "technology": "We use Groq's Llama 3.3 70B model for AI summaries, Playwright for document scraping, and Redis for caching. The search interface is built with Next.js and deployed on Vercel.",
+    "privacyTitle": "Privacy & Transparency",
+    "privacy": "We don't track users, sell data, or require accounts. All searches are anonymous. Rate limiting prevents abuse while keeping the service free for everyone."
+  },
+  "PrivacyPage": {
+    "title": "Privacy Policy | DOJ Epstein Files Search",
+    "metaDescription": "Privacy policy for DOJ Epstein Files Search. Learn about data collection, cookies, third-party services, and GDPR compliance.",
+    "heading": "Privacy Policy",
+    "lastUpdated": "Last updated: February 4, 2026",
+    "introTitle": "Your Privacy Matters",
+    "intro": "We are committed to protecting your privacy. This policy explains what data we collect and how we use it.",
+    "dataCollectionTitle": "Data Collection",
+    "dataCollection": "We collect minimal data: IP addresses for rate limiting (stored temporarily), search queries (not linked to users), and anonymized usage statistics. We do NOT collect personal information, emails, or create user profiles.",
+    "cookiesTitle": "Cookies",
+    "cookies": "We use localStorage to save your chat history locally in your browser. This data never leaves your device. No tracking cookies are used.",
+    "thirdPartyTitle": "Third-Party Services",
+    "thirdParty": "We use: Upstash (Redis caching), Groq (AI summaries), Vercel (hosting), and optionally Google AdSense. Each has their own privacy policy.",
+    "gdprTitle": "GDPR Compliance",
+    "gdpr": "EU users have the right to access, delete, or export their data. Since we don't store personal data, there's nothing to export. Clear your browser's localStorage to remove chat history.",
+    "contactTitle": "Contact",
+    "contact": "For privacy concerns, please open an issue on our GitHub repository."
+  },
+  "FAQPage": {
+    "title": "FAQ | DOJ Epstein Files Search",
+    "metaDescription": "Frequently asked questions about searching DOJ Epstein documents, AI summaries, data sources, and how to use the search tool effectively.",
+    "heading": "Frequently Asked Questions",
+    "q1": "What documents can I search?",
+    "a1": "You can search over 2,000 documents from the DOJ Epstein case, including court filings, victim statements, flight logs, and other legal records released by the Department of Justice.",
+    "q2": "How does the AI search work?",
+    "a2": "Fast mode searches the DOJ's indexed text and generates a summary. Deep mode downloads the full PDF and performs comprehensive analysis. Both use Groq's Llama 3.3 70B AI model.",
+    "q3": "Are the documents original?",
+    "a3": "Yes. All PDF links point directly to DOJ.gov. We don't host, modify, or alter any documents. We only search and summarize them.",
+    "q4": "Is this service free?",
+    "a4": "Yes, completely free. We use rate limiting to prevent abuse. If you hit the limit, wait a few minutes and try again. Donations help cover hosting costs.",
+    "q5": "Can I download the documents?",
+    "a5": "Yes. Click any PDF link in the search results to open the original document on DOJ.gov. You can download from there.",
+    "q6": "How accurate are the AI summaries?",
+    "a6": "Summaries are generated by AI and may contain errors. Always verify important information by reading the source PDF. Summaries are meant to help you find relevant documents quickly.",
+    "q7": "Who made this?",
+    "a7": "This is an independent open-source project built to make legal documents more accessible. We have no affiliation with the DOJ or any parties involved in the case."
+  },
+  "LanguageSwitcher": {
+    "label": "Language",
+    "languages": {
+      "en": "English",
+      "nl": "Nederlands",
+      "fr": "Français",
+      "de": "Deutsch",
+      "es": "Español",
+      "pt": "Português"
+    }
+  },
+  "Message": {
+    "resultsFound": "{count} document(s) found:",
+    "pageRange": "Pages {start}-{end}",
+    "wordCount": "{count} words",
+    "openInNewTab": "Open {fileName} in new tab",
+    "deepAnalyzeButton": "→ Run deep analysis",
+    "moreDocuments": "... and {count} more documents"
+  },
+  "Navigation": {
+    "home": "Home",
+    "about": "About",
+    "privacy": "Privacy",
+    "faq": "FAQ"
+  },
+  "Common": {
+    "skipToMain": "Skip to main content",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "tryAgain": "Try again"
+  },
+  "Errors": {
+    "searchFailed": "Search failed. Please try again.",
+    "summaryFailed": "Summary generation failed.",
+    "rateLimitExceeded": "Rate limit exceeded. Please try again in a few minutes.",
+    "networkError": "Network error. Check your connection.",
+    "invalidQuery": "Invalid search query. Please try a different search term."
+  }
+}

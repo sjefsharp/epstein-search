@@ -1,0 +1,9 @@
+# Allow all search engines to index all pages
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://epstein-search.vercel.app/sitemap.xml
+
+# Crawl-delay (optional, prevents aggressive crawling)
+Crawl-delay: 1

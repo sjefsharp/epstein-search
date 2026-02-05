@@ -21,7 +21,18 @@ export function verifyWorkerSignature(
   secret: string,
 ): boolean {
   const expected = generateWorkerSignature(payload, secret);
-  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+  // Guard against length mismatch before timing-safe comparison
+  if (signature.length !== expected.length) {
+    return false;
+  }
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expected),
+    );
+  } catch {
+    return false;
+  }
 }
 
 /**

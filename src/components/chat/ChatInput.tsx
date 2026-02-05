@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, FormEvent, KeyboardEvent } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Loader2 } from "lucide-react";
@@ -9,14 +10,13 @@ import { Send, Loader2 } from "lucide-react";
 interface ChatInputProps {
   onSend: (message: string) => void;
   disabled?: boolean;
-  placeholder?: string;
 }
 
 export default function ChatInput({
   onSend,
   disabled = false,
-  placeholder = "Zoek in de Epstein documenten... (bijv. 'yfke', 'amsterdam', 'jeffrey')",
 }: ChatInputProps) {
+  const t = useTranslations('ChatInput');
   const [input, setInput] = useState("");
 
   const handleSubmit = (e: FormEvent) => {
@@ -44,10 +44,10 @@ export default function ChatInput({
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder={placeholder}
+        placeholder={t('placeholder')}
         disabled={disabled}
         className="min-h-[60px] max-h-[200px] resize-none"
-        aria-label="Zoek bericht"
+        aria-label={t('searchButton')}
         rows={2}
       />
       <Button
@@ -55,7 +55,7 @@ export default function ChatInput({
         disabled={disabled || !input.trim()}
         size="icon"
         className="h-[60px] w-[60px] shrink-0"
-        aria-label="Verzend bericht"
+        aria-label={t('searchButton')}
       >
         {disabled ? (
           <Loader2 className="h-5 w-5 animate-spin" />
