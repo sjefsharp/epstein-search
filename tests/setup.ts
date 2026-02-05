@@ -8,5 +8,5 @@ beforeAll(() => {
   process.env.UPSTASH_REDIS_REST_URL = "https://test-redis.upstash.io";
   process.env.UPSTASH_REDIS_REST_TOKEN = "test-token";
   process.env.RENDER_WORKER_URL = "http://localhost:10000";
-  process.env.NODE_ENV = "test";
+  // NODE_ENV is set by vitest automatically, no need to override
 });
