@@ -1,13 +1,22 @@
 // Groq AI client for generating summaries
 import Groq from "groq-sdk";
 
-if (!process.env.GROQ_API_KEY) {
-  throw new Error("GROQ_API_KEY environment variable is required");
+// Lazy initialization to avoid build-time errors
+let groqClient: Groq | null = null;
+
+function getGroqClient(): Groq {
+  if (!groqClient) {
+    if (!process.env.GROQ_API_KEY) {
+      throw new Error("GROQ_API_KEY environment variable is required");
+    }
+    groqClient = new Groq({
+      apiKey: process.env.GROQ_API_KEY,
+    });
+  }
+  return groqClient;
 }
 
-export const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+export const groq = getGroqClient;
 
 export const GROQ_MODEL = "llama-3.3-70b-versatile";
 
@@ -312,7 +321,7 @@ export async function generateSummary(
 
   if (onStream) {
     // Streaming mode
-    const stream = await groq.chat.completions.create({
+    const stream = await groq().chat.completions.create({
       model: GROQ_MODEL,
       messages: [
         {
@@ -335,7 +344,7 @@ export async function generateSummary(
     return fullText;
   } else {
     // Non-streaming mode
-    const completion = await groq.chat.completions.create({
+    const completion = await groq().chat.completions.create({
       model: GROQ_MODEL,
       messages: [
         {
@@ -374,7 +383,7 @@ export async function generateDeepSummary(
   });
 
   if (onStream) {
-    const stream = await groq.chat.completions.create({
+    const stream = await groq().chat.completions.create({
       model: GROQ_MODEL,
       messages: [{ role: "user", content: prompt }],
       stream: true,
@@ -391,7 +400,7 @@ export async function generateDeepSummary(
 
     return fullResponse;
   } else {
-    const completion = await groq.chat.completions.create({
+    const completion = await groq().chat.completions.create({
       model: GROQ_MODEL,
       messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
