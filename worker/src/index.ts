@@ -136,74 +136,77 @@ app.post("/search", async (req: Request, res: Response) => {
     const context = await browser.newContext({
       userAgent:
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+      extraHTTPHeaders: {
+        "Accept-Language": "en-US,en;q=0.9",
+      },
     });
-    const page = await context.newPage();
 
     // Build the DOJ search URL
     const searchUrl = new URL("https://www.justice.gov/multimedia-search");
     searchUrl.searchParams.set("keys", query);
     searchUrl.searchParams.set("from", from.toString());
     searchUrl.searchParams.set("size", Math.min(size, 100).toString());
-
-    const headers = {
-      Accept: "application/json, text/javascript, */*; q=0.01",
-      "Accept-Language": "en-US,en;q=0.9",
-      Referer: "https://www.justice.gov/",
-      Origin: "https://www.justice.gov",
-      "X-Requested-With": "XMLHttpRequest",
-    } as const;
+    const searchUrlStr = searchUrl.toString();
 
     let lastError: Error | null = null;
 
-    for (let attempt = 1; attempt <= 2; attempt++) {
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const page = await context.newPage();
       try {
-        await page.setExtraHTTPHeaders(headers);
+        // Step 1: Visit the DOJ homepage to acquire Akamai session cookies
         await page.goto("https://www.justice.gov/", {
-          waitUntil: "domcontentloaded",
-          timeout: 20000,
+          waitUntil: "networkidle",
+          timeout: 30000,
         });
 
-        const response = await page.goto(searchUrl.toString(), {
-          waitUntil: "domcontentloaded",
-          timeout: 20000,
-        });
+        // Let Akamai challenge scripts complete
+        await page.waitForTimeout(2000);
 
-        if (!response) {
-          throw new Error("DOJ search failed with no response");
-        }
+        // Step 2: Make the API call from WITHIN the page context as an XHR.
+        // This carries all Akamai cookies/tokens, matching a real browser flow.
+        const result = await page.evaluate(async (url: string) => {
+          const resp = await fetch(url, {
+            method: "GET",
+            headers: {
+              Accept: "application/json, text/javascript, */*; q=0.01",
+              "X-Requested-With": "XMLHttpRequest",
+            },
+            credentials: "same-origin",
+          });
+          if (!resp.ok) {
+            const body = await resp.text();
+            return {
+              error: true as const,
+              status: resp.status,
+              statusText: resp.statusText,
+              body: body.slice(0, 500),
+            };
+          }
+          const json = await resp.json();
+          return { error: false as const, data: json };
+        }, searchUrlStr);
 
-        if (!response.ok()) {
-          const bodyText = await response.text();
+        if (result.error) {
           throw new Error(
-            `DOJ search failed with ${response.status()} ${response.statusText()}${bodyText ? `: ${bodyText.slice(0, 300)}` : ""}`,
+            `DOJ search failed with ${result.status} ${result.statusText}${result.body ? `: ${result.body.slice(0, 300)}` : ""}`,
           );
         }
 
-        const contentType = response.headers()["content-type"] || "";
-        if (!contentType.includes("application/json")) {
-          const bodyText = await response.text();
-          throw new Error(
-            `Unexpected response content-type (${contentType || "unknown"})${bodyText ? `: ${bodyText.slice(0, 300)}` : ""}`,
-          );
-        }
-
-        const bodyText = await response.text();
-        let apiData: unknown;
-        try {
-          apiData = JSON.parse(bodyText);
-        } catch {
-          throw new Error(
-            `Failed to parse DOJ JSON response${bodyText ? `: ${bodyText.slice(0, 300)}` : ""}`,
-          );
-        }
-
-        res.json(apiData);
+        res.json(result.data);
         return;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error("Unknown error");
-        if (attempt < 2) {
-          await new Promise((resolve) => setTimeout(resolve, 500));
+        console.error(
+          `[worker] search attempt ${attempt}/3 failed: ${lastError.message}`,
+        );
+        if (attempt < 3) {
+          // Wait longer between retries to let bot-protection settle
+          await new Promise((resolve) =>
+            setTimeout(resolve, 1500 * attempt),
+          );
         }
+      } finally {
+        await page.close().catch(() => {});
       }
     }
 
