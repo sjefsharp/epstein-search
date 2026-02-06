@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import ChatContainer from "@/components/chat/ChatContainer";
 import DonationPanel from "@/components/donations/DonationPanel";
+import AdSlot from "@/components/ads/AdSlot";
 import { Card } from "@/components/ui/card";
 
 export default function Home() {
@@ -24,11 +25,26 @@ export default function Home() {
           </p>
         </header>
 
+        <div className="mb-6">
+          <Card className="border border-border/70 bg-card/80 p-4 backdrop-blur">
+            <AdSlot
+              slotId="1473355302"
+              format="autorelaxed"
+              fullWidthResponsive={false}
+              className="min-h-[90px]"
+            />
+          </Card>
+        </div>
+
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
           <ChatContainer />
 
           <aside className="space-y-6">
             <DonationPanel />
+
+            <Card className="p-4 border border-border/70 bg-card/80 backdrop-blur">
+              <AdSlot slotId="9328638488" className="min-h-[250px]" />
+            </Card>
 
             <Card className="p-5 space-y-3 border border-border/70 bg-card/80 backdrop-blur">
               <h2 className="text-sm font-semibold">{tAbout("title")}</h2>
