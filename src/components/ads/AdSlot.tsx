@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useConsentStore } from "@/store/consent-store";
 
 declare global {
@@ -24,6 +24,7 @@ export default function AdSlot({
 }: Props) {
   const { adsConsent, status } = useConsentStore();
   const insRef = useRef<HTMLDivElement | null>(null);
+  const [isVisible, setIsVisible] = useState(true);
 
   const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_ID;
   const clientId = adsenseId
@@ -41,9 +42,22 @@ export default function AdSlot({
     } catch {
       // ignore
     }
+
+    const timeout = window.setTimeout(() => {
+      const container = insRef.current;
+      const iframe = container?.querySelector("iframe");
+      const hasHeight = (container?.offsetHeight ?? 0) > 0;
+      if (!iframe && !hasHeight) {
+        setIsVisible(false);
+      }
+    }, 5000);
+
+    return () => window.clearTimeout(timeout);
   }, [adsConsent, status, clientId, slotId]);
 
-  if (!clientId || status !== "accepted" || !adsConsent) return null;
+  if (!clientId || status !== "accepted" || !adsConsent || !isVisible) {
+    return null;
+  }
 
   return (
     <div className={className} ref={insRef}>
