@@ -65,7 +65,7 @@ jobs:
           NEON_DATABASE_URL: postgresql://test:test@localhost:5432/test
 
       - name: Upload Playwright Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: failure()
         with:
           name: playwright-report
