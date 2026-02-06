@@ -22,17 +22,23 @@ const pdfParse =
 const app = express();
 
 // Security middleware
+type LoggingMiddleware = (
+  req: Request,
+  res: Response,
+  next: (err?: unknown) => void,
+) => void;
+
 app.use(helmet());
-app.use((req, res, next) => {
+app.use(((req, res, next) => {
   const startedAt = Date.now();
   res.on("finish", () => {
     const durationMs = Date.now() - startedAt;
     console.log(
-      `[worker] ${req.method} ${req.originalUrl} -> ${res.statusCode} (${durationMs}ms)`,
+      `[worker] ${req.method} ${req.url} -> ${res.statusCode} (${durationMs}ms)`,
     );
   });
   next();
-});
+}) as LoggingMiddleware);
 app.use(
   cors({
     origin:
