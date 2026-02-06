@@ -135,7 +135,7 @@ app.post("/search", async (req: Request, res: Response) => {
     browser = await chromium.launch({ headless: true });
     const context = await browser.newContext({
       userAgent:
-        "Epstein-Onderzoek-Bot/1.0 (DOJ Document Research; +https://epstein-kappa.vercel.app)",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
     });
 
     // Build the DOJ search URL
@@ -145,7 +145,10 @@ app.post("/search", async (req: Request, res: Response) => {
     searchUrl.searchParams.set("size", Math.min(size, 100).toString());
 
     const headers = {
-      Accept: "application/json",
+      Accept: "application/json, text/javascript, */*; q=0.01",
+      "Accept-Language": "en-US,en;q=0.9",
+      Referer: "https://www.justice.gov/",
+      Origin: "https://www.justice.gov",
       "X-Requested-With": "XMLHttpRequest",
     } as const;
 
@@ -153,6 +156,11 @@ app.post("/search", async (req: Request, res: Response) => {
 
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
+        await context.request.get("https://www.justice.gov/", {
+          headers,
+          timeout: 20000,
+        });
+
         const response = await context.request.get(searchUrl.toString(), {
           headers,
           timeout: 20000,
