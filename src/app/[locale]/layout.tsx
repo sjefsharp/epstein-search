@@ -5,6 +5,7 @@ import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import Script from "next/script";
 import { routing } from "@/i18n/routing";
+import Header from "@/components/navigation/Header";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -178,6 +179,7 @@ export default async function LocaleLayout({
           >
             {t("skipToMain")}
           </a>
+          <Header />
           {process.env.NEXT_PUBLIC_ADSENSE_ID ? (
             <Script
               id="adsense-script"
