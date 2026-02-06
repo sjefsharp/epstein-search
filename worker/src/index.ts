@@ -163,10 +163,10 @@ app.post("/search", async (req: Request, res: Response) => {
         });
 
         const apiData = await page.evaluate(
-          async (url: string, reqHeaders: Record<string, string>) => {
-            const response = await fetch(url, {
+          async (payload: { url: string; headers: Record<string, string> }) => {
+            const response = await fetch(payload.url, {
               method: "GET",
-              headers: reqHeaders,
+              headers: payload.headers,
               credentials: "include",
               cache: "no-store",
             });
@@ -185,8 +185,10 @@ app.post("/search", async (req: Request, res: Response) => {
             }
             return await response.json();
           },
-          searchUrl.toString(),
-          headers,
+          {
+            url: searchUrl.toString(),
+            headers,
+          },
         );
 
         res.json(apiData);
