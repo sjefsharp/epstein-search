@@ -20,7 +20,10 @@ export const getDbPool = () => {
   return pool;
 };
 
-export const runQuery = async <T extends import("pg").QueryResultRow>(text: string, params: unknown[] = []) => {
+export const runQuery = async <T extends import("pg").QueryResultRow>(
+  text: string,
+  params: unknown[] = [],
+) => {
   const db = getDbPool();
   const result = await db.query<T>(text, params);
   return result;

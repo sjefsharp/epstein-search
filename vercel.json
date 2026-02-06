@@ -1,7 +1,7 @@
 {
   "buildCommand": "npm run build",
   "installCommand": "npm install",
-  "cron": [
+  "crons": [
     {
       "path": "/api/consent/cleanup",
       "schedule": "0 3 * * *"
