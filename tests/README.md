@@ -19,6 +19,7 @@ tests/
 ## Unit Tests
 
 ### Run Once
+
 ```bash
 npm test
 # or
@@ -26,11 +27,13 @@ npm run test:run
 ```
 
 ### Watch Mode
+
 ```bash
 npm run test:ui
 ```
 
 ### Coverage Report
+
 ```bash
 npm run test:coverage
 ```
@@ -63,6 +66,7 @@ Smoke tests verify that the Next.js frontend and Worker service can authenticate
 ### Prerequisites
 
 1. **Worker running:**
+
    ```bash
    cd worker
    npm run dev
@@ -70,6 +74,7 @@ Smoke tests verify that the Next.js frontend and Worker service can authenticate
    ```
 
 2. **Next.js running:**
+
    ```bash
    npm run dev
    # Starts on http://localhost:3000
@@ -82,6 +87,7 @@ Smoke tests verify that the Next.js frontend and Worker service can authenticate
 ### Running Smoke Tests
 
 **PowerShell (Windows):**
+
 ```powershell
 .\tests\smoke.ps1
 
@@ -90,6 +96,7 @@ Smoke tests verify that the Next.js frontend and Worker service can authenticate
 ```
 
 **Bash (Linux/macOS):**
+
 ```bash
 bash tests/smoke.sh
 ```
@@ -149,6 +156,7 @@ All smoke tests passed! ✓
 ### Unit Tests Fail
 
 1. **Check environment setup:**
+
    ```bash
    cat tests/setup.ts
    # Verify WORKER_SHARED_SECRET is set
@@ -163,12 +171,14 @@ All smoke tests passed! ✓
 ### Smoke Tests Fail with 401 Unauthorized
 
 1. **Verify `.env.local` has WORKER_SHARED_SECRET:**
+
    ```bash
    grep WORKER_SHARED_SECRET .env.local
    # Should output: WORKER_SHARED_SECRET=test-secret-key-123
    ```
 
 2. **Check Worker environment:**
+
    ```bash
    cd worker
    echo $WORKER_SHARED_SECRET  # Bash
@@ -177,6 +187,7 @@ All smoke tests passed! ✓
    ```
 
 3. **Set Worker secret manually:**
+
    ```bash
    # Bash
    export WORKER_SHARED_SECRET=test-secret-key-123
@@ -190,6 +201,7 @@ All smoke tests passed! ✓
 ### Smoke Tests Fail with Connection Refused
 
 1. **Start services:**
+
    ```bash
    # Terminal 1
    cd worker
@@ -200,6 +212,7 @@ All smoke tests passed! ✓
    ```
 
 2. **Verify ports:**
+
    ```bash
    # Bash
    lsof -i :3000  # Next.js
@@ -226,7 +239,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install dependencies
         run: npm ci
@@ -252,22 +265,26 @@ jobs:
 ## Development Workflow
 
 1. **Write failing test** (TDD)
+
    ```bash
    npm run test:ui
    # Add test case to appropriate file
    ```
 
 2. **Implement feature**
+
    ```typescript
    // Add code to src/lib/...
    ```
 
 3. **Verify test passes**
+
    ```bash
    npm test
    ```
 
 4. **Run smoke tests before pushing**
+
    ```bash
    # Start services, then:
    .\tests\smoke.ps1
