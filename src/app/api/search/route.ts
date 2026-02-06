@@ -139,8 +139,21 @@ export async function GET(request: NextRequest) {
     });
 
     if (!workerResponse.ok) {
+      let workerErrorDetail = "";
+      try {
+        const contentType = workerResponse.headers.get("content-type") || "";
+        if (contentType.includes("application/json")) {
+          const errorJson = (await workerResponse.json()) as { error?: string };
+          workerErrorDetail = errorJson?.error ? ` - ${errorJson.error}` : "";
+        } else {
+          const errorText = await workerResponse.text();
+          workerErrorDetail = errorText ? ` - ${errorText.slice(0, 300)}` : "";
+        }
+      } catch {
+        workerErrorDetail = "";
+      }
       throw new Error(
-        `Worker returned ${workerResponse.status}: ${workerResponse.statusText}`,
+        `Worker returned ${workerResponse.status}: ${workerResponse.statusText}${workerErrorDetail}`,
       );
     }
 
@@ -209,9 +222,11 @@ export async function GET(request: NextRequest) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
     const statusCode =
-      error && typeof error === "object" && "statusCode" in error
-        ? (error.statusCode as number)
-        : 500;
+      error instanceof Error && error.name === "TimeoutError"
+        ? 504
+        : error && typeof error === "object" && "statusCode" in error
+          ? (error.statusCode as number)
+          : 500;
 
     return NextResponse.json(
       {
@@ -300,8 +315,21 @@ export async function POST(request: NextRequest) {
     });
 
     if (!workerResponse.ok) {
+      let workerErrorDetail = "";
+      try {
+        const contentType = workerResponse.headers.get("content-type") || "";
+        if (contentType.includes("application/json")) {
+          const errorJson = (await workerResponse.json()) as { error?: string };
+          workerErrorDetail = errorJson?.error ? ` - ${errorJson.error}` : "";
+        } else {
+          const errorText = await workerResponse.text();
+          workerErrorDetail = errorText ? ` - ${errorText.slice(0, 300)}` : "";
+        }
+      } catch {
+        workerErrorDetail = "";
+      }
       throw new Error(
-        `Worker returned ${workerResponse.status}: ${workerResponse.statusText}`,
+        `Worker returned ${workerResponse.status}: ${workerResponse.statusText}${workerErrorDetail}`,
       );
     }
 
@@ -370,9 +398,11 @@ export async function POST(request: NextRequest) {
     const errorBody = sanitizeError(error, isDevelopment);
 
     const statusCode =
-      error && typeof error === "object" && "statusCode" in error
-        ? (error.statusCode as number)
-        : 500;
+      error instanceof Error && error.name === "TimeoutError"
+        ? 504
+        : error && typeof error === "object" && "statusCode" in error
+          ? (error.statusCode as number)
+          : 500;
 
     return NextResponse.json(errorBody, { status: statusCode });
   }

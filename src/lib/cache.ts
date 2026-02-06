@@ -15,10 +15,10 @@ function getRedisClient(): Redis | null {
   if (redisInitialized) return redis;
   redisInitialized = true;
 
-  if (
-    !process.env.UPSTASH_REDIS_REST_URL ||
-    !process.env.UPSTASH_REDIS_REST_TOKEN
-  ) {
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL?.trim();
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
+
+  if (!redisUrl || !redisToken) {
     console.warn(
       "UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN not set. Caching disabled.",
     );
@@ -27,8 +27,8 @@ function getRedisClient(): Redis | null {
 
   try {
     redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+      url: redisUrl,
+      token: redisToken,
     });
   } catch (error) {
     console.error("Failed to initialize Redis client:", error);

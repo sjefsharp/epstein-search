@@ -23,6 +23,16 @@ const app = express();
 
 // Security middleware
 app.use(helmet());
+app.use((req, res, next) => {
+  const startedAt = Date.now();
+  res.on("finish", () => {
+    const durationMs = Date.now() - startedAt;
+    console.log(
+      `[worker] ${req.method} ${req.originalUrl} -> ${res.statusCode} (${durationMs}ms)`,
+    );
+  });
+  next();
+});
 app.use(
   cors({
     origin:
@@ -85,6 +95,14 @@ app.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
 
+app.get("/", (_req: Request, res: Response) => {
+  res.json({
+    status: "ok",
+    service: "epstein-worker",
+    endpoints: ["/health", "/search", "/analyze"],
+  });
+});
+
 app.post("/search", async (req: Request, res: Response) => {
   if (!verifySignature(req, res)) {
     return;
@@ -113,7 +131,6 @@ app.post("/search", async (req: Request, res: Response) => {
       userAgent:
         "Epstein-Onderzoek-Bot/1.0 (DOJ Document Research; +https://epstein-kappa.vercel.app)",
     });
-    const page = await context.newPage();
 
     // Build the DOJ search URL
     const searchUrl = new URL("https://www.justice.gov/multimedia-search");
@@ -121,28 +138,49 @@ app.post("/search", async (req: Request, res: Response) => {
     searchUrl.searchParams.set("from", from.toString());
     searchUrl.searchParams.set("size", Math.min(size, 100).toString());
 
-    // Navigate to the search page with the browser
-    await page.goto(searchUrl.toString(), {
-      waitUntil: "networkidle",
-      timeout: 30000,
-    });
+    const headers = {
+      Accept: "application/json",
+      "X-Requested-With": "XMLHttpRequest",
+    } as const;
 
-    // Wait for the search results to load
-    await page.waitForTimeout(2000);
+    let lastError: Error | null = null;
 
-    // Extract the JSON response from the page or API call
-    const apiData = await page.evaluate(async (url: string) => {
-      const response = await fetch(url, {
-        headers: {
-          Accept: "application/json",
-          "X-Requested-With": "XMLHttpRequest",
-        },
-      });
-      return await response.json();
-    }, searchUrl.toString());
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const response = await context.request.get(searchUrl.toString(), {
+          headers,
+          timeout: 20000,
+        });
 
-    res.json(apiData);
-    return;
+        const status = response.status();
+        const contentType = response.headers()["content-type"] || "";
+
+        if (!response.ok()) {
+          const bodyText = await response.text();
+          throw new Error(
+            `DOJ search failed with ${status} ${response.statusText()}${bodyText ? `: ${bodyText.slice(0, 300)}` : ""}`,
+          );
+        }
+
+        if (!contentType.includes("application/json")) {
+          const bodyText = await response.text();
+          throw new Error(
+            `Unexpected response content-type (${contentType || "unknown"})${bodyText ? `: ${bodyText.slice(0, 300)}` : ""}`,
+          );
+        }
+
+        const apiData = await response.json();
+        res.json(apiData);
+        return;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error("Unknown error");
+        if (attempt < 2) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+      }
+    }
+
+    throw lastError ?? new Error("Unknown error");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     res.status(500).json({ error: message });
