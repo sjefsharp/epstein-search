@@ -1,14 +1,17 @@
 # Exclude test files from Vercel deployment
+
 tests/
 vitest.config.ts
-*.test.ts
-*.test.tsx
-*.spec.ts
-*.spec.tsx
+_.test.ts
+_.test.tsx
+_.spec.ts
+_.spec.tsx
 
 # Exclude development files
+
 worker/
-*.sh
+\*.sh
 
 # Exclude documentation
+
 tests/README.md
