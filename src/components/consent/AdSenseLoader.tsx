@@ -13,16 +13,14 @@ export default function AdSenseLoader({ adsenseId }: Props) {
   useEffect(() => {
     if (!adsenseId || status !== "accepted" || !adsConsent) return;
 
-    const existing = document.querySelector(
-      `script[data-adsense-id="${adsenseId}"]`,
-    );
+    const src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`;
+    const existing = document.querySelector(`script[src="${src}"]`);
     if (existing) return;
 
     const script = document.createElement("script");
     script.async = true;
-    script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`;
+    script.src = src;
     script.crossOrigin = "anonymous";
-    script.dataset.adsenseId = adsenseId;
 
     document.head.appendChild(script);
   }, [adsenseId, adsConsent, status]);
