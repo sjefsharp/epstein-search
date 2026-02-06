@@ -157,39 +157,45 @@ app.post("/search", async (req: Request, res: Response) => {
 
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
+        await page.setExtraHTTPHeaders(headers);
         await page.goto("https://www.justice.gov/", {
           waitUntil: "domcontentloaded",
           timeout: 20000,
         });
 
-        const apiData = await page.evaluate(
-          async (payload: { url: string; headers: Record<string, string> }) => {
-            const response = await fetch(payload.url, {
-              method: "GET",
-              headers: payload.headers,
-              credentials: "include",
-              cache: "no-store",
-            });
-            if (!response.ok) {
-              const text = await response.text();
-              throw new Error(
-                `DOJ search failed with ${response.status} ${response.statusText}${text ? `: ${text.slice(0, 300)}` : ""}`,
-              );
-            }
-            const contentType = response.headers.get("content-type") || "";
-            if (!contentType.includes("application/json")) {
-              const text = await response.text();
-              throw new Error(
-                `Unexpected response content-type (${contentType || "unknown"})${text ? `: ${text.slice(0, 300)}` : ""}`,
-              );
-            }
-            return await response.json();
-          },
-          {
-            url: searchUrl.toString(),
-            headers,
-          },
-        );
+        const response = await page.goto(searchUrl.toString(), {
+          waitUntil: "domcontentloaded",
+          timeout: 20000,
+        });
+
+        if (!response) {
+          throw new Error("DOJ search failed with no response");
+        }
+
+        if (!response.ok()) {
+          const bodyText = await response.text();
+          throw new Error(
+            `DOJ search failed with ${response.status()} ${response.statusText()}${bodyText ? `: ${bodyText.slice(0, 300)}` : ""}`,
+          );
+        }
+
+        const contentType = response.headers()["content-type"] || "";
+        if (!contentType.includes("application/json")) {
+          const bodyText = await response.text();
+          throw new Error(
+            `Unexpected response content-type (${contentType || "unknown"})${bodyText ? `: ${bodyText.slice(0, 300)}` : ""}`,
+          );
+        }
+
+        const bodyText = await response.text();
+        let apiData: unknown;
+        try {
+          apiData = JSON.parse(bodyText);
+        } catch {
+          throw new Error(
+            `Failed to parse DOJ JSON response${bodyText ? `: ${bodyText.slice(0, 300)}` : ""}`,
+          );
+        }
 
         res.json(apiData);
         return;
