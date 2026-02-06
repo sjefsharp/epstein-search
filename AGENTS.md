@@ -64,6 +64,9 @@ UPSTASH_REDIS_REST_TOKEN # required
 WORKER_SHARED_SECRET    # required — shared between Vercel + Render
 RENDER_WORKER_URL       # required for deep-analyze
 NEXT_PUBLIC_BASE_URL    # optional — canonical URL
+NEON_DATABASE_URL        # required — Neon Postgres for consent logs
+CRON_SECRET              # required — shared secret for cleanup endpoint
+NEXT_PUBLIC_CONSENT_POLICY_VERSION # required — semver for consent policy
 ```
 
 ## Detailed Docs (progressive disclosure)

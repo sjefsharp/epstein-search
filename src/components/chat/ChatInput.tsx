@@ -16,7 +16,7 @@ export default function ChatInput({
   onSend,
   disabled = false,
 }: ChatInputProps) {
-  const t = useTranslations('ChatInput');
+  const t = useTranslations("ChatInput");
   const [input, setInput] = useState("");
 
   const handleSubmit = (e: FormEvent) => {
@@ -41,13 +41,15 @@ export default function ChatInput({
       className="flex gap-2 items-end p-4 border-t bg-background"
     >
       <Textarea
+        id="search-query"
+        name="searchQuery"
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder={t('placeholder')}
+        placeholder={t("placeholder")}
         disabled={disabled}
         className="min-h-[60px] max-h-[200px] resize-none"
-        aria-label={t('searchButton')}
+        aria-label={t("searchButton")}
         rows={2}
       />
       <Button
@@ -55,7 +57,7 @@ export default function ChatInput({
         disabled={disabled || !input.trim()}
         size="icon"
         className="h-[60px] w-[60px] shrink-0"
-        aria-label={t('searchButton')}
+        aria-label={t("searchButton")}
       >
         {disabled ? (
           <Loader2 className="h-5 w-5 animate-spin" />

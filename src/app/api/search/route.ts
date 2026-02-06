@@ -1,6 +1,8 @@
 // API Route: Search DOJ Epstein files
+// Strategy: Try direct DOJ API first (fast), fall back to Render worker (Playwright) if Akamai blocks.
 import { NextRequest, NextResponse } from "next/server";
 import { getCacheKey, deduplicateDocuments } from "@/lib/doj-api";
+import type { DOJDocument } from "@/lib/types";
 import { getCachedSearch, setCachedSearch, trackCacheEvent } from "@/lib/cache";
 import { searchSchema } from "@/lib/validation";
 import { checkRateLimit, getClientIp, searchRatelimit } from "@/lib/ratelimit";
@@ -12,6 +14,15 @@ import {
 } from "@/lib/security";
 
 type SupportedLocale = "en" | "nl" | "fr" | "de" | "es" | "pt";
+
+const EPSTEIN_REGEX = /\bepstein\b/i;
+
+const ensureEpsteinQuery = (query: string): string => {
+  const trimmed = query.trim();
+  if (!trimmed) return trimmed;
+  if (EPSTEIN_REGEX.test(trimmed)) return trimmed;
+  return `epstein ${trimmed}`;
+};
 
 const normalizeLocale = (locale?: string): SupportedLocale => {
   if (!locale) return "en";
@@ -56,6 +67,228 @@ const ERROR_MESSAGES: Record<
 
 export const runtime = "nodejs"; // Use Node.js runtime for Upstash Redis compatibility
 
+// --- Direct DOJ API fetch (fast path, no Playwright) ---
+const DOJ_SEARCH_URL = "https://www.justice.gov/multimedia-search";
+
+interface DOJHit {
+  _source: Record<string, unknown>;
+  highlight?: { content?: string[] };
+  _source_content?: string;
+}
+
+interface DOJAPIData {
+  hits: {
+    total: { value: number };
+    hits: DOJHit[];
+  };
+}
+
+function transformHits(apiData: DOJAPIData): DOJDocument[] {
+  return apiData.hits.hits.map((hit: DOJHit): DOJDocument => {
+    const source = hit._source;
+    const highlights = hit.highlight?.content || [];
+    const content =
+      highlights.length > 0
+        ? highlights.join(" ... ")
+        : hit._source_content || "";
+
+    return {
+      documentId: source.documentId as string,
+      chunkIndex: source.chunkIndex as number,
+      totalChunks: source.totalChunks as number,
+      startPage: source.startPage as number,
+      endPage: source.endPage as number,
+      fileName: source.ORIGIN_FILE_NAME as string,
+      fileUri: source.ORIGIN_FILE_URI as string,
+      fileSize: source.fileSize as number,
+      totalWords: source.totalWords as number,
+      totalCharacters: source.totalCharacters as number,
+      processedAt: source.processedAt as string,
+      content: content,
+      highlights: highlights,
+      bucket: source.bucket as string,
+      key: source.key as string,
+    };
+  });
+}
+
+/**
+ * Try direct DOJ API call (fast, ~1-3 seconds).
+ * Returns null if blocked by Akamai (403 / HTML challenge).
+ */
+async function fetchDOJDirect(
+  query: string,
+  from: number,
+  size: number,
+): Promise<DOJAPIData | null> {
+  const url = new URL(DOJ_SEARCH_URL);
+  url.searchParams.set("keys", query);
+  url.searchParams.set("from", from.toString());
+  url.searchParams.set("size", Math.min(size, 100).toString());
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        Accept: "application/json, text/javascript, */*; q=0.01",
+        "Accept-Language": "en-US,en;q=0.9",
+        Referer: "https://www.justice.gov/",
+        Origin: "https://www.justice.gov",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      signal: AbortSignal.timeout(15000), // 15s — fast path
+    });
+
+    // If Akamai blocks us ⇒ return null so we fall back to the worker
+    if (response.status === 403 || response.status === 429) {
+      console.warn(
+        `[search] Direct DOJ fetch blocked (${response.status}), falling back to worker`,
+      );
+      return null;
+    }
+
+    if (!response.ok) {
+      console.warn(
+        `[search] Direct DOJ fetch failed (${response.status}), falling back to worker`,
+      );
+      return null;
+    }
+
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      // Akamai sometimes returns an HTML challenge page with 200
+      console.warn(
+        "[search] Direct DOJ returned non-JSON (likely Akamai challenge), falling back to worker",
+      );
+      return null;
+    }
+
+    const data: DOJAPIData = await response.json();
+
+    // Sanity check the response structure
+    if (!data?.hits?.hits) {
+      console.warn(
+        "[search] Direct DOJ returned unexpected shape, falling back to worker",
+      );
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.warn(
+      `[search] Direct DOJ fetch error: ${error instanceof Error ? error.message : "unknown"}, falling back to worker`,
+    );
+    return null;
+  }
+}
+
+/**
+ * Fetch via Render worker (Playwright, slower but bypasses Akamai).
+ */
+async function fetchViaWorker(
+  query: string,
+  from: number,
+  size: number,
+): Promise<DOJAPIData> {
+  const workerUrl = process.env.RENDER_WORKER_URL || "http://localhost:10000";
+
+  // Enforce HTTPS in production
+  if (process.env.NODE_ENV === "production") {
+    enforceHttps(workerUrl);
+  }
+
+  const workerSecret = getWorkerSecret();
+  const payload = JSON.stringify({ query, from, size });
+  const signature = generateWorkerSignature(payload, workerSecret);
+
+  const workerResponse = await fetch(`${workerUrl}/search`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Worker-Signature": signature,
+      Authorization: `Bearer ${signature}`,
+    },
+    body: payload,
+    signal: AbortSignal.timeout(55000), // 55s — Playwright needs more time
+  });
+
+  if (!workerResponse.ok) {
+    let workerErrorDetail = "";
+    try {
+      const ct = workerResponse.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        const errorJson = (await workerResponse.json()) as { error?: string };
+        workerErrorDetail = errorJson?.error ? ` - ${errorJson.error}` : "";
+      } else {
+        const errorText = await workerResponse.text();
+        workerErrorDetail = errorText ? ` - ${errorText.slice(0, 300)}` : "";
+      }
+    } catch {
+      workerErrorDetail = "";
+    }
+    throw new Error(
+      `Worker returned ${workerResponse.status}: ${workerResponse.statusText}${workerErrorDetail}`,
+    );
+  }
+
+  return workerResponse.json();
+}
+
+/**
+ * Core search logic: direct DOJ first ➜ worker fallback ➜ transform & cache
+ */
+async function executeSearch(
+  query: string,
+  effectiveQuery: string,
+  from: number,
+  size: number,
+) {
+  const cacheKey = getCacheKey(query, from);
+  const cached = await getCachedSearch(cacheKey);
+
+  if (cached) {
+    await trackCacheEvent("hit");
+    return { data: { ...cached, cached: true }, fromCache: true };
+  }
+
+  await trackCacheEvent("miss");
+
+  // 1️⃣ Fast path — direct DOJ API
+  let apiData = await fetchDOJDirect(effectiveQuery, from, size);
+
+  // 2️⃣ Slow path — Render worker with Playwright
+  if (!apiData) {
+    console.log("[search] Using worker fallback for query:", effectiveQuery);
+    apiData = await fetchViaWorker(effectiveQuery, from, size);
+  }
+
+  const documents = transformHits(apiData);
+
+  const results = {
+    total: apiData.hits.total.value,
+    documents,
+    searchTerm: query,
+    from,
+    size,
+  };
+
+  const uniqueDocuments = deduplicateDocuments(results.documents);
+  const deduplicatedResults = {
+    ...results,
+    documents: uniqueDocuments,
+    uniqueCount: uniqueDocuments.length,
+  };
+
+  // Cache the results
+  await setCachedSearch(cacheKey, deduplicatedResults);
+
+  return { data: { ...deduplicatedResults, cached: false }, fromCache: false };
+}
+
+// ─── GET handler ──────────────────────────────────────────────────────────────
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -99,123 +332,10 @@ export async function GET(request: NextRequest) {
     }
 
     const { query, from, size } = validation.data;
+    const effectiveQuery = ensureEpsteinQuery(query);
 
-    // Check cache first
-    const cacheKey = getCacheKey(query, from);
-    const cached = await getCachedSearch(cacheKey);
-
-    if (cached) {
-      await trackCacheEvent("hit");
-      return NextResponse.json({
-        ...cached,
-        cached: true,
-      });
-    }
-
-    // Cache miss - fetch from DOJ API via Worker (bypasses Akamai blocking)
-    await trackCacheEvent("miss");
-
-    const workerUrl = process.env.RENDER_WORKER_URL || "http://localhost:10000";
-
-    // Enforce HTTPS in production
-    if (process.env.NODE_ENV === "production") {
-      enforceHttps(workerUrl);
-    }
-
-    // Generate authentication signature
-    const workerSecret = getWorkerSecret();
-    const payload = JSON.stringify({ query, from, size });
-    const signature = generateWorkerSignature(payload, workerSecret);
-
-    const workerResponse = await fetch(`${workerUrl}/search`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Worker-Signature": signature,
-        Authorization: `Bearer ${signature}`,
-      },
-      body: payload,
-      signal: AbortSignal.timeout(30000), // 30 second timeout
-    });
-
-    if (!workerResponse.ok) {
-      let workerErrorDetail = "";
-      try {
-        const contentType = workerResponse.headers.get("content-type") || "";
-        if (contentType.includes("application/json")) {
-          const errorJson = (await workerResponse.json()) as { error?: string };
-          workerErrorDetail = errorJson?.error ? ` - ${errorJson.error}` : "";
-        } else {
-          const errorText = await workerResponse.text();
-          workerErrorDetail = errorText ? ` - ${errorText.slice(0, 300)}` : "";
-        }
-      } catch {
-        workerErrorDetail = "";
-      }
-      throw new Error(
-        `Worker returned ${workerResponse.status}: ${workerResponse.statusText}${workerErrorDetail}`,
-      );
-    }
-
-    const apiData = await workerResponse.json();
-
-    // Transform worker response to our format
-    const documents = apiData.hits.hits.map(
-      (hit: {
-        _source: Record<string, unknown>;
-        highlight?: { content?: string[] };
-        _source_content?: string;
-      }) => {
-        const source = hit._source;
-        const highlights = hit.highlight?.content || [];
-        const content =
-          highlights.length > 0
-            ? highlights.join(" ... ")
-            : hit._source_content || "";
-
-        return {
-          documentId: source.documentId,
-          chunkIndex: source.chunkIndex,
-          totalChunks: source.totalChunks,
-          startPage: source.startPage,
-          endPage: source.endPage,
-          fileName: source.ORIGIN_FILE_NAME,
-          fileUri: source.ORIGIN_FILE_URI,
-          fileSize: source.fileSize,
-          totalWords: source.totalWords,
-          totalCharacters: source.totalCharacters,
-          processedAt: source.processedAt,
-          content: content,
-          highlights: highlights,
-          bucket: source.bucket,
-          key: source.key,
-        };
-      },
-    );
-
-    const results = {
-      total: apiData.hits.total.value,
-      documents,
-      searchTerm: query,
-      from,
-      size,
-    };
-
-    // Deduplicate documents by documentId
-    const uniqueDocuments = deduplicateDocuments(results.documents);
-    const deduplicatedResults = {
-      ...results,
-      documents: uniqueDocuments,
-      uniqueCount: uniqueDocuments.length,
-    };
-
-    // Cache the results
-    await setCachedSearch(cacheKey, deduplicatedResults);
-
-    return NextResponse.json({
-      ...deduplicatedResults,
-      cached: false,
-    });
+    const { data } = await executeSearch(query, effectiveQuery, from, size);
+    return NextResponse.json(data);
   } catch (error) {
     console.error("Search API error:", error);
 
@@ -237,6 +357,8 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+// ─── POST handler ─────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
   try {
@@ -276,122 +398,11 @@ export async function POST(request: NextRequest) {
     }
 
     const { query, from, size } = validation.data;
+    const effectiveQuery = ensureEpsteinQuery(query);
 
-    // Same logic as GET but with POST body
-    const cacheKey = getCacheKey(query, from);
-    const cached = await getCachedSearch(cacheKey);
-
-    if (cached) {
-      await trackCacheEvent("hit");
-      return NextResponse.json({
-        ...cached,
-        cached: true,
-      });
-    }
-
-    await trackCacheEvent("miss");
-
-    const workerUrl = process.env.RENDER_WORKER_URL || "http://localhost:10000";
-
-    // Enforce HTTPS in production
-    if (process.env.NODE_ENV === "production") {
-      enforceHttps(workerUrl);
-    }
-
-    // Generate authentication signature
-    const workerSecret = getWorkerSecret();
-    const payload = JSON.stringify({ query, from, size });
-    const signature = generateWorkerSignature(payload, workerSecret);
-
-    const workerResponse = await fetch(`${workerUrl}/search`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Worker-Signature": signature,
-        Authorization: `Bearer ${signature}`,
-      },
-      body: payload,
-      signal: AbortSignal.timeout(30000), // 30 second timeout
-    });
-
-    if (!workerResponse.ok) {
-      let workerErrorDetail = "";
-      try {
-        const contentType = workerResponse.headers.get("content-type") || "";
-        if (contentType.includes("application/json")) {
-          const errorJson = (await workerResponse.json()) as { error?: string };
-          workerErrorDetail = errorJson?.error ? ` - ${errorJson.error}` : "";
-        } else {
-          const errorText = await workerResponse.text();
-          workerErrorDetail = errorText ? ` - ${errorText.slice(0, 300)}` : "";
-        }
-      } catch {
-        workerErrorDetail = "";
-      }
-      throw new Error(
-        `Worker returned ${workerResponse.status}: ${workerResponse.statusText}${workerErrorDetail}`,
-      );
-    }
-
-    const apiData = await workerResponse.json();
-
-    // Transform worker response to our format
-    const documents = apiData.hits.hits.map(
-      (hit: {
-        _source: Record<string, unknown>;
-        highlight?: { content?: string[] };
-        _source_content?: string;
-      }) => {
-        const source = hit._source;
-        const highlights = hit.highlight?.content || [];
-        const content =
-          highlights.length > 0
-            ? highlights.join(" ... ")
-            : hit._source_content || "";
-
-        return {
-          documentId: source.documentId,
-          chunkIndex: source.chunkIndex,
-          totalChunks: source.totalChunks,
-          startPage: source.startPage,
-          endPage: source.endPage,
-          fileName: source.ORIGIN_FILE_NAME,
-          fileUri: source.ORIGIN_FILE_URI,
-          fileSize: source.fileSize,
-          totalWords: source.totalWords,
-          totalCharacters: source.totalCharacters,
-          processedAt: source.processedAt,
-          content: content,
-          highlights: highlights,
-          bucket: source.bucket,
-          key: source.key,
-        };
-      },
-    );
-
-    const results = {
-      total: apiData.hits.total.value,
-      documents,
-      searchTerm: query,
-      from,
-      size,
-    };
-
-    const uniqueDocuments = deduplicateDocuments(results.documents);
-    const deduplicatedResults = {
-      ...results,
-      documents: uniqueDocuments,
-      uniqueCount: uniqueDocuments.length,
-    };
-
-    await setCachedSearch(cacheKey, deduplicatedResults);
-
-    return NextResponse.json({
-      ...deduplicatedResults,
-      cached: false,
-    });
+    const { data } = await executeSearch(query, effectiveQuery, from, size);
+    return NextResponse.json(data);
   } catch (error) {
-    // POST endpoint error handling
     console.error("Search API POST error:", error);
 
     const isDevelopment = process.env.NODE_ENV === "development";

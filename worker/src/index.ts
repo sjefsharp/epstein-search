@@ -201,9 +201,7 @@ app.post("/search", async (req: Request, res: Response) => {
         );
         if (attempt < 3) {
           // Wait longer between retries to let bot-protection settle
-          await new Promise((resolve) =>
-            setTimeout(resolve, 1500 * attempt),
-          );
+          await new Promise((resolve) => setTimeout(resolve, 1500 * attempt));
         }
       } finally {
         await page.close().catch(() => {});

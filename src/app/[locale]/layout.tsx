@@ -5,6 +5,8 @@ import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import Header from "@/components/navigation/Header";
+import ConsentBanner from "@/components/consent/ConsentBanner";
+import AdSenseLoader from "@/components/consent/AdSenseLoader";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -117,6 +119,9 @@ export default async function LocaleLayout({
   const t = await getTranslations({ locale, namespace: "Common" });
   const baseUrl =
     process.env.NEXT_PUBLIC_BASE_URL || "https://epstein-search.vercel.app";
+  const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_ID;
+  const consentPolicyVersion =
+    process.env.NEXT_PUBLIC_CONSENT_POLICY_VERSION || "1.0.0";
 
   // JSON-LD structured data
   const jsonLd = {
@@ -167,11 +172,20 @@ export default async function LocaleLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        {process.env.NEXT_PUBLIC_ADSENSE_ID ? (
+        {adsenseId ? (
           <script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_ID}`}
-            crossOrigin="anonymous"
+            dangerouslySetInnerHTML={{
+              __html: `
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('consent', 'default', {
+                  ad_storage: 'denied',
+                  ad_user_data: 'denied',
+                  ad_personalization: 'denied',
+                  analytics_storage: 'denied'
+                });
+              `,
+            }}
           />
         ) : null}
       </head>
@@ -187,6 +201,13 @@ export default async function LocaleLayout({
           </a>
           <Header />
           <main id="main-content">{children}</main>
+          {adsenseId ? (
+            <ConsentBanner
+              locale={locale}
+              policyVersion={consentPolicyVersion}
+            />
+          ) : null}
+          {adsenseId ? <AdSenseLoader adsenseId={adsenseId} /> : null}
         </NextIntlClientProvider>
       </body>
     </html>

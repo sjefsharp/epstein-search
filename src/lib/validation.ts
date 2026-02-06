@@ -70,3 +70,18 @@ export const deepAnalyzeSchema = z.object({
   fileName: z.string().min(1).max(255),
   searchTerm: z.string().max(500).optional(),
 });
+
+/**
+ * Consent log schema
+ */
+export const consentLogSchema = z.object({
+  eventType: z.enum(["accept", "reject", "update", "withdraw"]),
+  adsConsent: z.boolean(),
+  locale: z.enum(["en", "nl", "fr", "de", "es", "pt"]),
+  policyVersion: z
+    .string()
+    .min(1)
+    .max(32)
+    .regex(/^\d+\.\d+\.\d+$/, "policyVersion must be semver"),
+  eventTimestamp: z.string().datetime(),
+});

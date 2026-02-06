@@ -42,6 +42,19 @@ export const analyzeRatelimit = redis
   : null;
 
 /**
+ * Rate limiter for consent logging
+ * Allows 20 requests per 60 seconds per IP
+ */
+export const consentRatelimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(20, "60 s"),
+      analytics: true,
+      prefix: "@upstash/ratelimit:consent",
+    })
+  : null;
+
+/**
  * Check rate limit for a given identifier (usually IP)
  * Returns { success: boolean, limit, remaining, reset }
  */
