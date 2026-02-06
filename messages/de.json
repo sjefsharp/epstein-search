@@ -69,7 +69,8 @@
     "technologyTitle": "Technologie",
     "technology": "Wir verwenden Groq''s Llama 3.3 70B Modell für KI-Zusammenfassungen, Playwright für Dokument-Scraping und Redis für Caching. Die Suchoberfläche ist mit Next.js gebaut und auf Vercel bereitgestellt.",
     "privacyTitle": "Datenschutz & Transparenz",
-    "privacy": "Wir verfolgen keine Benutzer, verkaufen keine Daten und benötigen keine Konten. Alle Suchen sind anonym. Rate Limiting verhindert Missbrauch und hält den Service für alle kostenlos."
+    "privacy": "Wir verfolgen keine Benutzer, verkaufen keine Daten und benötigen keine Konten. Alle Suchen sind anonym. Rate Limiting verhindert Missbrauch und hält den Service für alle kostenlos.",
+    "socialProfiles": ["https://github.com/epstein-search"]
   },
   "PrivacyPage": {
     "title": "Datenschutzerklärung | DOJ Epstein Akten Suche",
@@ -99,6 +100,7 @@
     "title": "FAQ | DOJ Epstein Akten Suche",
     "metaDescription": "Häufig gestellte Fragen zur Suche in DOJ Epstein-Dokumenten, KI-Zusammenfassungen, Datenquellen und effektiver Nutzung des Suchtools.",
     "heading": "Häufig Gestellte Fragen",
+    "intro": "Kurze Antworten auf die häufigsten Fragen zur DOJ‑Epstein‑Suche, KI‑Zusammenfassungen und Quelldokumenten.",
     "q1": "Welche Dokumente kann ich durchsuchen?",
     "a1": "Sie können über 2.000 Dokumente aus dem DOJ Epstein-Fall durchsuchen, einschließlich Gerichtsakten, Opferaussagen, Flugprotokolle und andere vom Department of Justice veröffentlichte Rechtsdokumente.",
     "q2": "Wie funktioniert die KI-Suche?",

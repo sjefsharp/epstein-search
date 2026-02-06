@@ -69,7 +69,10 @@
     "technologyTitle": "Tecnologia",
     "technology": "Usamos o modelo Llama 3.3 70B da Groq para resumos IA, Playwright para scraping de documentos e Redis para cache. A interface de busca é construída com Next.js e implantada no Vercel.",
     "privacyTitle": "Privacidade e Transparência",
-    "privacy": "Não rastreamos usuários, não vendemos dados nem exigimos contas. Todas as buscas são anônimas. A limitação de taxa previne abusos mantendo o serviço gratuito para todos."
+    "privacy": "Não rastreamos usuários, não vendemos dados nem exigimos contas. Todas as buscas são anônimas. A limitação de taxa previne abusos mantendo o serviço gratuito para todos.",
+    "socialProfiles": [
+      "https://github.com/epstein-search"
+    ]
   },
   "PrivacyPage": {
     "title": "Política de Privacidade | Busca Arquivos Epstein DOJ",
@@ -99,6 +102,7 @@
     "title": "Perguntas Frequentes | Busca Arquivos Epstein DOJ",
     "metaDescription": "Perguntas frequentes sobre busca de documentos Epstein do DOJ, resumos IA, fontes de dados e como usar efetivamente a ferramenta de busca.",
     "heading": "Perguntas Frequentes",
+    "intro": "Respostas rápidas às perguntas mais comuns sobre a busca Epstein do DOJ, resumos IA e documentos de origem.",
     "q1": "Quais documentos posso pesquisar?",
     "a1": "Você pode pesquisar mais de 2.000 documentos do caso Epstein do DOJ, incluindo processos judiciais, declarações de vítimas, registros de voo e outros documentos legais publicados pelo Department of Justice.",
     "q2": "Como funciona a busca IA?",

@@ -69,7 +69,8 @@
     "technologyTitle": "Technology",
     "technology": "We use Groq's Llama 3.3 70B model for AI summaries, Playwright for document scraping, and Redis for caching. The search interface is built with Next.js and deployed on Vercel.",
     "privacyTitle": "Privacy & Transparency",
-    "privacy": "We don't track users, sell data, or require accounts. All searches are anonymous. Rate limiting prevents abuse while keeping the service free for everyone."
+    "privacy": "We don't track users, sell data, or require accounts. All searches are anonymous. Rate limiting prevents abuse while keeping the service free for everyone.",
+    "socialProfiles": ["https://github.com/epstein-search"]
   },
   "PrivacyPage": {
     "title": "Privacy Policy | DOJ Epstein Files Search",
@@ -99,6 +100,7 @@
     "title": "FAQ | DOJ Epstein Files Search",
     "metaDescription": "Frequently asked questions about searching DOJ Epstein documents, AI summaries, data sources, and how to use the search tool effectively.",
     "heading": "Frequently Asked Questions",
+    "intro": "Quick answers to the most common questions about the DOJ Epstein search, AI summaries, and source documents.",
     "q1": "What documents can I search?",
     "a1": "You can search over 2,000 documents from the DOJ Epstein case, including court filings, victim statements, flight logs, and other legal records released by the Department of Justice.",
     "q2": "How does the AI search work?",

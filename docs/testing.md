@@ -14,6 +14,8 @@ tests/
 ├── lib/
 │   ├── security.test.ts      # HMAC, signature verification, enforceHttps, sanitizeError
 │   └── validation.test.ts    # Zod schema tests (search, analyze)
+├── e2e/
+│   └── home.spec.ts           # Playwright E2E smoke
 └── worker/
     └── auth.test.ts          # Worker auth tests
 ```
@@ -42,6 +44,8 @@ node_modules/, tests/, *.config.*, .next/, worker/
 npm test             # watch mode
 npm run test:run     # single run (CI)
 npm run test:ui      # visual UI
+npm run test:e2e     # Playwright E2E (auto-starts dev server)
+npm run test:e2e:ui  # Playwright UI mode
 ```
 
 ## Adding tests

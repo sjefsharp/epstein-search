@@ -69,7 +69,8 @@
     "technologyTitle": "Technologie",
     "technology": "We gebruiken Groq's Llama 3.3 70B model voor AI-samenvattingen, Playwright voor document scraping, en Redis voor caching. De zoekinterface is gebouwd met Next.js en gedeployed op Vercel.",
     "privacyTitle": "Privacy & Transparantie",
-    "privacy": "We volgen geen gebruikers, verkopen geen data, en vereisen geen accounts. Alle zoekopdrachten zijn anoniem. Rate limiting voorkomt misbruik terwijl de service gratis blijft voor iedereen."
+    "privacy": "We volgen geen gebruikers, verkopen geen data, en vereisen geen accounts. Alle zoekopdrachten zijn anoniem. Rate limiting voorkomt misbruik terwijl de service gratis blijft voor iedereen.",
+    "socialProfiles": ["https://github.com/epstein-search"]
   },
   "PrivacyPage": {
     "title": "Privacybeleid | DOJ Epstein Bestanden Zoeken",
@@ -99,6 +100,7 @@
     "title": "Veelgestelde Vragen | DOJ Epstein Bestanden Zoeken",
     "metaDescription": "Veelgestelde vragen over het zoeken in DOJ Epstein documenten, AI-samenvattingen, databronnen en hoe de zoektool effectief te gebruiken.",
     "heading": "Veelgestelde Vragen",
+    "intro": "Korte antwoorden op de meest voorkomende vragen over de DOJ Epstein-zoeker, AI-samenvattingen en bronbestanden.",
     "q1": "Welke documenten kan ik doorzoeken?",
     "a1": "Je kunt meer dan 2.000 documenten doorzoeken uit de DOJ Epstein zaak, inclusief rechtbankstukken, verklaringen van slachtoffers, vluchtlogboeken en andere juridische documenten vrijgegeven door het Department of Justice.",
     "q2": "Hoe werkt het AI-zoeken?",
