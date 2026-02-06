@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
-import Script from "next/script";
 import { routing } from "@/i18n/routing";
 import Header from "@/components/navigation/Header";
 import "./globals.css";
@@ -168,6 +167,13 @@ export default async function LocaleLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        {process.env.NEXT_PUBLIC_ADSENSE_ID ? (
+          <script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_ID}`}
+            crossOrigin="anonymous"
+          />
+        ) : null}
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
@@ -180,14 +186,6 @@ export default async function LocaleLayout({
             {t("skipToMain")}
           </a>
           <Header />
-          {process.env.NEXT_PUBLIC_ADSENSE_ID ? (
-            <Script
-              id="adsense-script"
-              async
-              src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_ID}`}
-              crossOrigin="anonymous"
-            />
-          ) : null}
           <main id="main-content">{children}</main>
         </NextIntlClientProvider>
       </body>
