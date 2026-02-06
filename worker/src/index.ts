@@ -171,6 +171,35 @@ app.post("/search", async (req: Request, res: Response) => {
 
         if (!response.ok()) {
           const bodyText = await response.text();
+          if (status === 403) {
+            const page = await context.newPage();
+            await page.goto("https://www.justice.gov/", {
+              waitUntil: "domcontentloaded",
+              timeout: 20000,
+            });
+            const apiData = await page.evaluate(
+              async (url: string, reqHeaders: Record<string, string>) => {
+                const response = await fetch(url, {
+                  method: "GET",
+                  headers: reqHeaders,
+                  credentials: "include",
+                  cache: "no-store",
+                });
+                if (!response.ok) {
+                  const text = await response.text();
+                  throw new Error(
+                    `DOJ search failed with ${response.status} ${response.statusText}${text ? `: ${text.slice(0, 300)}` : ""}`,
+                  );
+                }
+                return await response.json();
+              },
+              searchUrl.toString(),
+              headers,
+            );
+            await page.close();
+            res.json(apiData);
+            return;
+          }
           throw new Error(
             `DOJ search failed with ${status} ${response.statusText()}${bodyText ? `: ${bodyText.slice(0, 300)}` : ""}`,
           );
