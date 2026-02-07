@@ -19,13 +19,15 @@ declare module "express" {
       path: string,
       handler: (req: Request, res: Response) => void | Promise<void>,
     ) => void;
-    use: (...args: unknown[]) => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    use: (...args: any[]) => void;
     listen: (port: number, cb?: () => void) => void;
   }
 
   interface ExpressStatic {
     (): ExpressApp;
-    json: (options?: unknown) => unknown;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    json: (options?: any) => any;
   }
 
   const express: ExpressStatic;
@@ -33,14 +35,16 @@ declare module "express" {
 }
 
 declare module "playwright" {
-  export const chromium: unknown;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  export const chromium: any;
 }
 
 declare module "pdf-parse" {
   const pdfParse: (buffer: Buffer) => Promise<{
     text?: string;
     numpages?: number;
-    info?: unknown;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    info?: any;
   }>;
   export default pdfParse;
 }
