@@ -5,6 +5,7 @@ import * as pdfParseModule from "pdf-parse";
 import helmet from "helmet";
 import cors from "cors";
 import crypto from "crypto";
+import rateLimit from "express-rate-limit";
 
 // Handle both ESM and CommonJS imports for pdf-parse
 type PdfParseResult = {
@@ -13,6 +14,37 @@ type PdfParseResult = {
   info?: unknown;
 };
 
+function isIpAddress(hostname: string): boolean {
+  // Simple IPv4 and IPv6 detection; adjust if needed
+  const ipv4Pattern =
+    /^(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}$/;
+  const ipv6Pattern = /^[0-9a-fA-F:]+$/;
+  return ipv4Pattern.test(hostname) || ipv6Pattern.test(hostname);
+}
+
+function isAllowedJusticeGovHost(hostname: string): boolean {
+  const lowerHost = hostname.toLowerCase();
+
+  // Explicitly block localhost-style names even if they somehow appear under justice.gov
+  if (
+    lowerHost === "localhost" ||
+    lowerHost === "127.0.0.1" ||
+    lowerHost === "::1" ||
+    lowerHost.endsWith(".localhost")
+  ) {
+    return false;
+  }
+
+  if (isIpAddress(lowerHost)) {
+    return false;
+  }
+
+  return (
+    lowerHost === "justice.gov" ||
+    lowerHost.endsWith(".justice.gov")
+  );
+}
+
 type PdfParseFn = (data: Buffer | Uint8Array) => Promise<PdfParseResult>;
 
 const pdfParse =
@@ -20,6 +52,13 @@ const pdfParse =
   (pdfParseModule as unknown as PdfParseFn);
 
 const app = express();
+
+const analyzeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 60, // limit each IP to 60 analyze requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Security middleware
 type LoggingMiddleware = (
@@ -220,7 +259,7 @@ app.post("/search", async (req: Request, res: Response) => {
   }
 });
 
-app.post("/analyze", async (req: Request, res: Response) => {
+app.post("/analyze", analyzeLimiter, async (req: Request, res: Response) => {
   if (!verifySignature(req, res)) {
     return;
   }
@@ -240,15 +279,15 @@ app.post("/analyze", async (req: Request, res: Response) => {
       res.status(400).json({ error: "Only HTTPS URLs are allowed" });
       return;
     }
-    if (
-      !url.hostname.endsWith(".justice.gov") &&
-      url.hostname !== "justice.gov"
-    ) {
-      res.status(403).json({ error: "Only justice.gov URLs are allowed" });
-    // Use the normalized, validated URL for all outbound requests
-    safeUrl = url.toString();
+    const hostname = url.hostname;
+    if (!isAllowedJusticeGovHost(hostname)) {
+      res
+        .status(403)
+        .json({ error: "Only public justice.gov HTTPS URLs are allowed" });
       return;
     }
+    // Use the normalized, validated URL for all outbound requests
+    safeUrl = url.toString();
   } catch {
     res.status(400).json({ error: "Invalid URL" });
     return;
