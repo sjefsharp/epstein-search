@@ -245,10 +245,10 @@ app.post("/analyze", async (req: Request, res: Response) => {
       url.hostname !== "justice.gov"
     ) {
       res.status(403).json({ error: "Only justice.gov URLs are allowed" });
-    // Use the normalized, validated URL for all outbound requests
-    safeUrl = url.toString();
       return;
     }
+    // Use the normalized, validated URL for all outbound requests
+    safeUrl = url.toString();
   } catch {
     res.status(400).json({ error: "Invalid URL" });
     return;
