@@ -14,6 +14,32 @@ type PdfParseResult = {
   info?: unknown;
 };
 
+// SSRF protection: restrict allowed justice.gov hosts
+function isAllowedJusticeGovHost(hostname: string): boolean {
+  const lowerHost = hostname.toLowerCase();
+
+  // Disallow localhost and direct IP addresses
+  if (
+    lowerHost === "localhost" ||
+    /^[0-9.]+$/.test(lowerHost) ||
+    /^[0-9a-f:.]+$/.test(lowerHost)
+  ) {
+    return false;
+  }
+
+  // Allow only specific public justice.gov domains and their subdomains
+  const allowedJusticeGovSuffixes = [
+    ".justice.gov",
+  ];
+
+  return allowedJusticeGovSuffixes.some((suffix) => {
+    return (
+      lowerHost === suffix.slice(1) || // e.g. "justice.gov"
+      lowerHost.endsWith(suffix)
+    );
+  });
+}
+
 function isIpAddress(hostname: string): boolean {
   // Simple IPv4 and IPv6 detection; adjust if needed
   const ipv4Pattern =
