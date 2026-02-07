@@ -5,6 +5,7 @@ import * as pdfParseModule from "pdf-parse";
 import helmet from "helmet";
 import cors from "cors";
 import crypto from "crypto";
+import rateLimit from "express-rate-limit";
 
 // Handle both ESM and CommonJS imports for pdf-parse
 type PdfParseResult = {
@@ -20,6 +21,13 @@ const pdfParse =
   (pdfParseModule as unknown as PdfParseFn);
 
 const app = express();
+
+const analyzeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 60, // limit each IP to 60 analyze requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Security middleware
 type LoggingMiddleware = (
@@ -220,7 +228,7 @@ app.post("/search", async (req: Request, res: Response) => {
   }
 });
 
-app.post("/analyze", async (req: Request, res: Response) => {
+app.post("/analyze", analyzeLimiter, async (req: Request, res: Response) => {
   if (!verifySignature(req, res)) {
     return;
   }
