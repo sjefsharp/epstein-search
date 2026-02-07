@@ -232,14 +232,21 @@ app.post("/analyze", async (req: Request, res: Response) => {
     return;
   }
 
-  // SSRF Protection: Only allow justice.gov domains
+  // SSRF Protection: Only allow justice.gov domains over HTTPS
+  let safeUrl: string;
   try {
     const url = new URL(fileUri);
+    if (url.protocol !== "https:") {
+      res.status(400).json({ error: "Only HTTPS URLs are allowed" });
+      return;
+    }
     if (
       !url.hostname.endsWith(".justice.gov") &&
       url.hostname !== "justice.gov"
     ) {
       res.status(403).json({ error: "Only justice.gov URLs are allowed" });
+    // Use the normalized, validated URL for all outbound requests
+    safeUrl = url.toString();
       return;
     }
   } catch {
@@ -254,8 +261,10 @@ app.post("/analyze", async (req: Request, res: Response) => {
     const context = await browser.newContext();
     const page = await context.newPage();
 
-    await page.goto(fileUri, { waitUntil: "domcontentloaded", timeout: 60000 });
-
+    await page.goto(safeUrl, {
+      waitUntil: "domcontentloaded",
+      timeout: 60000,
+    });
     if (page.url().includes("/age-verify")) {
       const button = page.getByRole("button", {
         name: /I am 18|I am 18 years|I am 18 years of age/i,
@@ -278,7 +287,7 @@ app.post("/analyze", async (req: Request, res: Response) => {
       .map((cookie) => `${cookie.name}=${cookie.value}`)
       .join("; ");
 
-    const pdfResponse = await fetch(fileUri, {
+    const pdfResponse = await fetch(safeUrl, {
       headers: {
         Cookie: cookieHeader,
         "User-Agent":
