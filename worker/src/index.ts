@@ -13,6 +13,37 @@ type PdfParseResult = {
   info?: unknown;
 };
 
+function isIpAddress(hostname: string): boolean {
+  // Simple IPv4 and IPv6 detection; adjust if needed
+  const ipv4Pattern =
+    /^(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}$/;
+  const ipv6Pattern = /^[0-9a-fA-F:]+$/;
+  return ipv4Pattern.test(hostname) || ipv6Pattern.test(hostname);
+}
+
+function isAllowedJusticeGovHost(hostname: string): boolean {
+  const lowerHost = hostname.toLowerCase();
+
+  // Explicitly block localhost-style names even if they somehow appear under justice.gov
+  if (
+    lowerHost === "localhost" ||
+    lowerHost === "127.0.0.1" ||
+    lowerHost === "::1" ||
+    lowerHost.endsWith(".localhost")
+  ) {
+    return false;
+  }
+
+  if (isIpAddress(lowerHost)) {
+    return false;
+  }
+
+  return (
+    lowerHost === "justice.gov" ||
+    lowerHost.endsWith(".justice.gov")
+  );
+}
+
 type PdfParseFn = (data: Buffer | Uint8Array) => Promise<PdfParseResult>;
 
 const pdfParse =
@@ -240,11 +271,11 @@ app.post("/analyze", async (req: Request, res: Response) => {
       res.status(400).json({ error: "Only HTTPS URLs are allowed" });
       return;
     }
-    if (
-      !url.hostname.endsWith(".justice.gov") &&
-      url.hostname !== "justice.gov"
-    ) {
-      res.status(403).json({ error: "Only justice.gov URLs are allowed" });
+    const hostname = url.hostname;
+    if (!isAllowedJusticeGovHost(hostname)) {
+      res
+        .status(403)
+        .json({ error: "Only public justice.gov HTTPS URLs are allowed" });
       return;
     }
     // Use the normalized, validated URL for all outbound requests
