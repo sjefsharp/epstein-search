@@ -1,0 +1,54 @@
+name: Bug report
+description: Report a problem or regression
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "Thanks for reporting! Please fill out the details below."
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: Short description of the issue
+      placeholder: "The search API returns 500 when..."
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide a clear, ordered list of steps
+      placeholder: "1. Go to...\n2. Click...\n3. See error"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: "I expected..."
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      placeholder: "Instead, it..."
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: OS, browser, Node.js version, etc.
+      placeholder: "Windows 11, Chrome 122, Node 20"
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: Paste any relevant logs or screenshots
+      render: shell
+    validations:
+      required: false
