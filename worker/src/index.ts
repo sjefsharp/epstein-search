@@ -148,7 +148,15 @@ app.get("/", (_req: Request, res: Response) => {
   });
 });
 
-app.post("/search", async (req: Request, res: Response) => {
+const searchLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 50, // limit each IP/client to 50 search requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many search requests, please try again later." },
+});
+
+app.post("/search", searchLimiter, async (req: Request, res: Response) => {
   if (!verifySignature(req, res)) {
     return;
   }
