@@ -11,12 +11,15 @@ on:
 permissions:
   actions: read
   contents: read
-  security-events: write
+  security-events: write  # Required for uploading SARIF results
 
 jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    # NOTE: CodeQL requires GitHub Advanced Security to be enabled in repository settings.
+    # For private repos, this requires a GitHub Enterprise subscription.
+    # For public repos, Advanced Security is free but must be enabled in Settings > Security > Code security and analysis.
     strategy:
       fail-fast: false
       matrix:
