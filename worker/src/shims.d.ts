@@ -11,8 +11,14 @@ declare module "express" {
   }
 
   interface ExpressApp {
-    get: (path: string, handler: (req: Request, res: Response) => any) => void;
-    post: (path: string, handler: (req: Request, res: Response) => any) => void;
+    get: (
+      path: string,
+      handler: (req: Request, res: Response) => void | Promise<void>,
+    ) => void;
+    post: (
+      path: string,
+      handler: (req: Request, res: Response) => void | Promise<void>,
+    ) => void;
     use: (...args: unknown[]) => void;
     listen: (port: number, cb?: () => void) => void;
   }
@@ -27,10 +33,14 @@ declare module "express" {
 }
 
 declare module "playwright" {
-  export const chromium: any;
+  export const chromium: unknown;
 }
 
 declare module "pdf-parse" {
-  const pdfParse: (buffer: Buffer) => Promise<any>;
+  const pdfParse: (buffer: Buffer) => Promise<{
+    text?: string;
+    numpages?: number;
+    info?: unknown;
+  }>;
   export default pdfParse;
 }
