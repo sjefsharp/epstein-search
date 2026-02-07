@@ -17,9 +17,11 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
-    # NOTE: CodeQL requires GitHub Advanced Security to be enabled in repository settings.
+    # IMPORTANT: CodeQL requires GitHub Advanced Security and Code Scanning to be enabled.
+    # Enable it at: Settings > Security > Code security and analysis > Code scanning
     # For private repos, this requires a GitHub Enterprise subscription.
-    # For public repos, Advanced Security is free but must be enabled in Settings > Security > Code security and analysis.
+    # For public repos, Advanced Security is free but must be manually enabled.
+    # If not enabled, this workflow will fail with "Code scanning is not enabled for this repository".
     strategy:
       fail-fast: false
       matrix:
