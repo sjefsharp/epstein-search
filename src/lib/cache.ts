@@ -19,8 +19,8 @@ function getRedisClient(): Redis | null {
   const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
 
   if (!redisUrl || !redisToken) {
-    console.warn(
-      "UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN not set. Caching disabled.",
+    process.stderr.write(
+      "UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN not set. Caching disabled.\n",
     );
     return null;
   }
@@ -31,7 +31,11 @@ function getRedisClient(): Redis | null {
       token: redisToken,
     });
   } catch (error) {
-    console.error("Failed to initialize Redis client:", error);
+    process.stderr.write(
+      `Failed to initialize Redis client: ${
+        error instanceof Error ? (error.stack ?? error.message) : String(error)
+      }\n`,
+    );
     redis = null;
   }
 
@@ -41,16 +45,18 @@ function getRedisClient(): Redis | null {
 /**
  * Get cached search results
  */
-export async function getCachedSearch(
-  cacheKey: string,
-): Promise<DOJSearchResponse | null> {
+export async function getCachedSearch(cacheKey: string): Promise<DOJSearchResponse | null> {
   try {
     const client = getRedisClient();
     if (!client) return null;
     const cached = await client.get<DOJSearchResponse>(cacheKey);
     return cached ?? null;
   } catch (error) {
-    console.error("Cache get error:", error);
+    process.stderr.write(
+      `Cache get error: ${
+        error instanceof Error ? (error.stack ?? error.message) : String(error)
+      }\n`,
+    );
     return null;
   }
 }
@@ -58,16 +64,17 @@ export async function getCachedSearch(
 /**
  * Set search results in cache
  */
-export async function setCachedSearch(
-  cacheKey: string,
-  results: DOJSearchResponse,
-): Promise<void> {
+export async function setCachedSearch(cacheKey: string, results: DOJSearchResponse): Promise<void> {
   try {
     const client = getRedisClient();
     if (!client) return;
     await client.setex(cacheKey, CACHE_TTL, JSON.stringify(results));
   } catch (error) {
-    console.error("Cache set error:", error);
+    process.stderr.write(
+      `Cache set error: ${
+        error instanceof Error ? (error.stack ?? error.message) : String(error)
+      }\n`,
+    );
     // Don't throw - caching is optional
   }
 }
@@ -84,7 +91,11 @@ export async function invalidateSearchCache(searchTerm: string): Promise<void> {
       await client.del(`${baseKey}:${i * 100}`);
     }
   } catch (error) {
-    console.error("Cache invalidation error:", error);
+    process.stderr.write(
+      `Cache invalidation error: ${
+        error instanceof Error ? (error.stack ?? error.message) : String(error)
+      }\n`,
+    );
   }
 }
 

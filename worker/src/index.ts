@@ -116,7 +116,9 @@ app.use(((req, res, next) => {
   res.on("finish", () => {
     const durationMs = Date.now() - startedAt;
     const safeUrl = (req.url || "").replace(/[\r\n]/g, "");
-    console.log(`[worker] ${req.method} ${safeUrl} -> ${res.statusCode} (${durationMs}ms)`);
+    process.stdout.write(
+      `[worker] ${req.method} ${safeUrl} -> ${res.statusCode} (${durationMs}ms)\n`,
+    );
   });
   next();
 }) as LoggingMiddleware);
@@ -152,7 +154,7 @@ const verifySignature = (req: Request, res: Response): boolean => {
   const sharedSecret = process.env.WORKER_SHARED_SECRET;
 
   if (!sharedSecret) {
-    console.error("WORKER_SHARED_SECRET not configured");
+    process.stderr.write("WORKER_SHARED_SECRET not configured\n");
     res.status(500).json({ error: "Server misconfigured" });
     return false;
   }
@@ -268,7 +270,7 @@ app.post("/search", searchLimiter, async (req: Request, res: Response) => {
         return;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error("Unknown error");
-        console.error(`[worker] search attempt ${attempt}/3 failed: ${lastError.message}`);
+        process.stderr.write(`[worker] search attempt ${attempt}/3 failed: ${lastError.message}\n`);
         if (attempt < 3) {
           // Wait longer between retries to let bot-protection settle
           await new Promise((resolve) => setTimeout(resolve, 1500 * attempt));
@@ -393,6 +395,6 @@ app.post("/analyze", analyzeLimiter, async (req: Request, res: Response) => {
 const port = Number(process.env.PORT) || 3000;
 if (process.env.NODE_ENV !== "test") {
   app.listen(port, () => {
-    console.log(`PDF worker listening on :${port}`);
+    process.stdout.write(`PDF worker listening on :${port}\n`);
   });
 }

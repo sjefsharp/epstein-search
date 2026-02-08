@@ -10,18 +10,20 @@ export default function LanguageSwitcher() {
   const router = useRouter();
   const pathname = usePathname();
 
+  type SupportedLocale = (typeof routing.locales)[number];
+
   const handleLocaleChange = (newLocale: string) => {
     router.replace(pathname, { locale: newLocale });
   };
 
-  const languageEmojis: Record<string, string> = {
-    en: "🇬🇧",
-    nl: "🇳🇱",
-    fr: "🇫🇷",
-    de: "🇩🇪",
-    es: "🇪🇸",
-    pt: "🇵🇹",
-  };
+  const languageEmojis = new Map<SupportedLocale, string>([
+    ["en", "🇬🇧"],
+    ["nl", "🇳🇱"],
+    ["fr", "🇫🇷"],
+    ["de", "🇩🇪"],
+    ["es", "🇪🇸"],
+    ["pt", "🇵🇹"],
+  ]);
 
   return (
     <div className="relative inline-block">
@@ -36,8 +38,7 @@ export default function LanguageSwitcher() {
       >
         {routing.locales.map((loc) => (
           <option key={loc} value={loc}>
-            {languageEmojis[loc]}{" "}
-            {t(`languages.${loc as keyof typeof languageEmojis}`)}
+            {languageEmojis.get(loc) ?? ""} {t(`languages.${loc}`)}
           </option>
         ))}
       </select>

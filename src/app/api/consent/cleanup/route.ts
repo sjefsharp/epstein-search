@@ -30,7 +30,7 @@ const isAuthorized = (request: NextRequest) => {
 
 const runCleanup = async () => {
   const retentionInterval = "12 months";
-  const results: Record<string, number> = {};
+  const results = new Map<string, number>();
 
   for (const table of CONSENT_TABLES) {
     const query = `
@@ -38,19 +38,16 @@ const runCleanup = async () => {
       WHERE received_at < NOW() - INTERVAL '${retentionInterval}'
     `;
     const result = await runQuery(query);
-    results[table] = result.rowCount ?? 0;
+    results.set(table, result.rowCount ?? 0);
   }
 
-  return results;
+  return Object.fromEntries(results);
 };
 
 export async function POST(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret) {
-    return NextResponse.json(
-      { error: "CRON_SECRET is not configured" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "CRON_SECRET is not configured" }, { status: 500 });
   }
 
   if (!isAuthorized(request)) {

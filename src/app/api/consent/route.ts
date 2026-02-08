@@ -51,6 +51,42 @@ const ERROR_MESSAGES: Record<
   },
 };
 
+const getErrorMessages = (locale: SupportedLocale) => {
+  switch (locale) {
+    case "nl":
+      return ERROR_MESSAGES.nl;
+    case "fr":
+      return ERROR_MESSAGES.fr;
+    case "de":
+      return ERROR_MESSAGES.de;
+    case "es":
+      return ERROR_MESSAGES.es;
+    case "pt":
+      return ERROR_MESSAGES.pt;
+    case "en":
+    default:
+      return ERROR_MESSAGES.en;
+  }
+};
+
+const getConsentTable = (locale: SupportedLocale) => {
+  switch (locale) {
+    case "nl":
+      return CONSENT_TABLES.nl;
+    case "fr":
+      return CONSENT_TABLES.fr;
+    case "de":
+      return CONSENT_TABLES.de;
+    case "es":
+      return CONSENT_TABLES.es;
+    case "pt":
+      return CONSENT_TABLES.pt;
+    case "en":
+    default:
+      return CONSENT_TABLES.en;
+  }
+};
+
 export const runtime = "nodejs";
 
 const normalizeLocale = (locale?: string): SupportedLocale => {
@@ -85,7 +121,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const selectedLocale = normalizeLocale(body?.locale);
-    const messages = ERROR_MESSAGES[selectedLocale];
+    const messages = getErrorMessages(selectedLocale);
     const validation = consentLogSchema.safeParse(body);
 
     if (!validation.success) {
@@ -98,10 +134,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { eventType, adsConsent, locale, policyVersion, eventTimestamp } =
-      validation.data;
+    const { eventType, adsConsent, locale, policyVersion, eventTimestamp } = validation.data;
     const resolvedLocale = locale satisfies SupportedLocale;
-    const table = CONSENT_TABLES[resolvedLocale];
+    const table = getConsentTable(resolvedLocale);
 
     const query = `
       INSERT INTO ${table} (
@@ -126,11 +161,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true, id: result.rows[0]?.id });
   } catch (error) {
-    console.error("Consent API error:", error);
-    const errorBody = sanitizeError(
-      error,
-      process.env.NODE_ENV === "development",
+    process.stderr.write(
+      `Consent API error: ${
+        error instanceof Error ? (error.stack ?? error.message) : String(error)
+      }\n`,
     );
+    const errorBody = sanitizeError(error, process.env.NODE_ENV === "development");
     return NextResponse.json(
       {
         error: ERROR_MESSAGES.en.serverError,

@@ -4,11 +4,11 @@ import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/routing";
 import { ChevronRight, Home } from "lucide-react";
 
-const SEGMENT_TO_KEY: Record<string, string> = {
-  about: "about",
-  faq: "faq",
-  privacy: "privacy",
-};
+const SEGMENT_TO_KEY = new Map<string, string>([
+  ["about", "about"],
+  ["faq", "faq"],
+  ["privacy", "privacy"],
+]);
 
 export default function Breadcrumbs() {
   const tNav = useTranslations("Navigation");
@@ -34,7 +34,7 @@ export default function Breadcrumbs() {
           </Link>
         </li>
         {segments.map((segment, index) => {
-          const key = SEGMENT_TO_KEY[segment];
+          const key = SEGMENT_TO_KEY.get(segment);
           const isLast = index === segments.length - 1;
 
           return (

@@ -35,10 +35,7 @@ const normalizeLocale = (locale?: string): SupportedLocale => {
   return "en";
 };
 
-const ERROR_MESSAGES: Record<
-  SupportedLocale,
-  { rateLimit: string; invalidInput: string }
-> = {
+const ERROR_MESSAGES: Record<SupportedLocale, { rateLimit: string; invalidInput: string }> = {
   en: {
     rateLimit: "Rate limit exceeded. Please try again later.",
     invalidInput: "Invalid input",
@@ -65,6 +62,24 @@ const ERROR_MESSAGES: Record<
   },
 };
 
+const getErrorMessages = (locale: SupportedLocale) => {
+  switch (locale) {
+    case "nl":
+      return ERROR_MESSAGES.nl;
+    case "fr":
+      return ERROR_MESSAGES.fr;
+    case "de":
+      return ERROR_MESSAGES.de;
+    case "es":
+      return ERROR_MESSAGES.es;
+    case "pt":
+      return ERROR_MESSAGES.pt;
+    case "en":
+    default:
+      return ERROR_MESSAGES.en;
+  }
+};
+
 export const runtime = "nodejs"; // Use Node.js runtime for Upstash Redis compatibility
 
 // --- Direct DOJ API fetch (fast path, no Playwright) ---
@@ -87,10 +102,7 @@ function transformHits(apiData: DOJAPIData): DOJDocument[] {
   return apiData.hits.hits.map((hit: DOJHit): DOJDocument => {
     const source = hit._source;
     const highlights = hit.highlight?.content || [];
-    const content =
-      highlights.length > 0
-        ? highlights.join(" ... ")
-        : hit._source_content || "";
+    const content = highlights.length > 0 ? highlights.join(" ... ") : hit._source_content || "";
 
     return {
       documentId: source.documentId as string,
@@ -143,15 +155,15 @@ async function fetchDOJDirect(
 
     // If Akamai blocks us ⇒ return null so we fall back to the worker
     if (response.status === 403 || response.status === 429) {
-      console.warn(
-        `[search] Direct DOJ fetch blocked (${response.status}), falling back to worker`,
+      process.stderr.write(
+        `[search] Direct DOJ fetch blocked (${response.status}), falling back to worker\n`,
       );
       return null;
     }
 
     if (!response.ok) {
-      console.warn(
-        `[search] Direct DOJ fetch failed (${response.status}), falling back to worker`,
+      process.stderr.write(
+        `[search] Direct DOJ fetch failed (${response.status}), falling back to worker\n`,
       );
       return null;
     }
@@ -159,8 +171,8 @@ async function fetchDOJDirect(
     const contentType = response.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
       // Akamai sometimes returns an HTML challenge page with 200
-      console.warn(
-        "[search] Direct DOJ returned non-JSON (likely Akamai challenge), falling back to worker",
+      process.stderr.write(
+        "[search] Direct DOJ returned non-JSON (likely Akamai challenge), falling back to worker\n",
       );
       return null;
     }
@@ -169,16 +181,18 @@ async function fetchDOJDirect(
 
     // Sanity check the response structure
     if (!data?.hits?.hits) {
-      console.warn(
-        "[search] Direct DOJ returned unexpected shape, falling back to worker",
+      process.stderr.write(
+        "[search] Direct DOJ returned unexpected shape, falling back to worker\n",
       );
       return null;
     }
 
     return data;
   } catch (error) {
-    console.warn(
-      `[search] Direct DOJ fetch error: ${error instanceof Error ? error.message : "unknown"}, falling back to worker`,
+    process.stderr.write(
+      `[search] Direct DOJ fetch error: ${
+        error instanceof Error ? error.message : "unknown"
+      }, falling back to worker\n`,
     );
     return null;
   }
@@ -187,11 +201,7 @@ async function fetchDOJDirect(
 /**
  * Fetch via Render worker (Playwright, slower but bypasses Akamai).
  */
-async function fetchViaWorker(
-  query: string,
-  from: number,
-  size: number,
-): Promise<DOJAPIData> {
+async function fetchViaWorker(query: string, from: number, size: number): Promise<DOJAPIData> {
   const workerUrl = process.env.RENDER_WORKER_URL || "http://localhost:10000";
 
   // Enforce HTTPS in production
@@ -239,12 +249,7 @@ async function fetchViaWorker(
 /**
  * Core search logic: direct DOJ first ➜ worker fallback ➜ transform & cache
  */
-async function executeSearch(
-  query: string,
-  effectiveQuery: string,
-  from: number,
-  size: number,
-) {
+async function executeSearch(query: string, effectiveQuery: string, from: number, size: number) {
   const cacheKey = getCacheKey(query, from);
   const cached = await getCachedSearch(cacheKey);
 
@@ -260,7 +265,7 @@ async function executeSearch(
 
   // 2️⃣ Slow path — Render worker with Playwright
   if (!apiData) {
-    console.log("[search] Using worker fallback for query:", effectiveQuery);
+    process.stdout.write(`[search] Using worker fallback for query: ${effectiveQuery}\n`);
     apiData = await fetchViaWorker(effectiveQuery, from, size);
   }
 
@@ -297,7 +302,7 @@ export async function GET(request: NextRequest) {
     const sizeParam = searchParams.get("size");
     const localeParam = searchParams.get("locale");
     const selectedLocale = normalizeLocale(localeParam ?? undefined);
-    const messages = ERROR_MESSAGES[selectedLocale];
+    const messages = getErrorMessages(selectedLocale);
 
     // Rate limiting check
     const ip = getClientIp(request);
@@ -337,10 +342,13 @@ export async function GET(request: NextRequest) {
     const { data } = await executeSearch(query, effectiveQuery, from, size);
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Search API error:", error);
+    process.stderr.write(
+      `Search API error: ${
+        error instanceof Error ? (error.stack ?? error.message) : String(error)
+      }\n`,
+    );
 
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
     const statusCode =
       error instanceof Error && error.name === "TimeoutError"
         ? 504
@@ -367,7 +375,7 @@ export async function POST(request: NextRequest) {
     const rateLimitResult = await checkRateLimit(ip, searchRatelimit);
 
     let selectedLocale: SupportedLocale = "en";
-    let messages = ERROR_MESSAGES[selectedLocale];
+    let messages = getErrorMessages(selectedLocale);
 
     if (!rateLimitResult.success) {
       return NextResponse.json(
@@ -385,7 +393,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     selectedLocale = normalizeLocale(body?.locale);
-    messages = ERROR_MESSAGES[selectedLocale];
+    messages = getErrorMessages(selectedLocale);
 
     // Validate and sanitize input
     const validation = searchSchema.safeParse(body);
@@ -403,7 +411,11 @@ export async function POST(request: NextRequest) {
     const { data } = await executeSearch(query, effectiveQuery, from, size);
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Search API POST error:", error);
+    process.stderr.write(
+      `Search API POST error: ${
+        error instanceof Error ? (error.stack ?? error.message) : String(error)
+      }\n`,
+    );
 
     const isDevelopment = process.env.NODE_ENV === "development";
     const errorBody = sanitizeError(error, isDevelopment);

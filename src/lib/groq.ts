@@ -24,11 +24,7 @@ type SupportedLocale = "en" | "nl" | "fr" | "de" | "es" | "pt";
 
 const SUMMARY_PROMPTS: Record<
   SupportedLocale,
-  (input: {
-    searchTerm: string;
-    documentsCount: number;
-    context: string;
-  }) => string
+  (input: { searchTerm: string; documentsCount: number; context: string }) => string
 > = {
   en: ({
     searchTerm,
@@ -148,11 +144,7 @@ Seja factual, objetivo e conciso. Evite especulação. Use marcadores quando pos
 
 const DEEP_ANALYSIS_PROMPTS: Record<
   SupportedLocale,
-  (input: {
-    fileName: string;
-    searchTerm?: string;
-    textPreview: string;
-  }) => string
+  (input: { fileName: string; searchTerm?: string; textPreview: string }) => string
 > = {
   en: ({
     fileName,
@@ -313,11 +305,52 @@ export async function generateSummary(
     .join("\n\n---\n\n");
 
   const selectedLocale = normalizeLocale(locale);
-  const prompt = SUMMARY_PROMPTS[selectedLocale]({
-    searchTerm,
-    documentsCount: documents.length,
-    context,
-  });
+  let prompt = "";
+  switch (selectedLocale) {
+    case "nl":
+      prompt = SUMMARY_PROMPTS.nl({
+        searchTerm,
+        documentsCount: documents.length,
+        context,
+      });
+      break;
+    case "fr":
+      prompt = SUMMARY_PROMPTS.fr({
+        searchTerm,
+        documentsCount: documents.length,
+        context,
+      });
+      break;
+    case "de":
+      prompt = SUMMARY_PROMPTS.de({
+        searchTerm,
+        documentsCount: documents.length,
+        context,
+      });
+      break;
+    case "es":
+      prompt = SUMMARY_PROMPTS.es({
+        searchTerm,
+        documentsCount: documents.length,
+        context,
+      });
+      break;
+    case "pt":
+      prompt = SUMMARY_PROMPTS.pt({
+        searchTerm,
+        documentsCount: documents.length,
+        context,
+      });
+      break;
+    case "en":
+    default:
+      prompt = SUMMARY_PROMPTS.en({
+        searchTerm,
+        documentsCount: documents.length,
+        context,
+      });
+      break;
+  }
 
   if (onStream) {
     // Streaming mode
@@ -356,10 +389,7 @@ export async function generateSummary(
       max_tokens: 2000,
     });
 
-    return (
-      completion.choices[0]?.message?.content ||
-      "Geen samenvatting beschikbaar."
-    );
+    return completion.choices[0]?.message?.content || "Geen samenvatting beschikbaar.";
   }
 }
 
@@ -376,11 +406,52 @@ export async function generateDeepSummary(
   const textPreview = fullText.substring(0, 8000); // Limit to ~8K chars to fit token budget
 
   const selectedLocale = normalizeLocale(locale);
-  const prompt = DEEP_ANALYSIS_PROMPTS[selectedLocale]({
-    fileName,
-    searchTerm,
-    textPreview,
-  });
+  let prompt = "";
+  switch (selectedLocale) {
+    case "nl":
+      prompt = DEEP_ANALYSIS_PROMPTS.nl({
+        fileName,
+        searchTerm,
+        textPreview,
+      });
+      break;
+    case "fr":
+      prompt = DEEP_ANALYSIS_PROMPTS.fr({
+        fileName,
+        searchTerm,
+        textPreview,
+      });
+      break;
+    case "de":
+      prompt = DEEP_ANALYSIS_PROMPTS.de({
+        fileName,
+        searchTerm,
+        textPreview,
+      });
+      break;
+    case "es":
+      prompt = DEEP_ANALYSIS_PROMPTS.es({
+        fileName,
+        searchTerm,
+        textPreview,
+      });
+      break;
+    case "pt":
+      prompt = DEEP_ANALYSIS_PROMPTS.pt({
+        fileName,
+        searchTerm,
+        textPreview,
+      });
+      break;
+    case "en":
+    default:
+      prompt = DEEP_ANALYSIS_PROMPTS.en({
+        fileName,
+        searchTerm,
+        textPreview,
+      });
+      break;
+  }
 
   if (onStream) {
     const stream = await groq().chat.completions.create({
@@ -407,8 +478,6 @@ export async function generateDeepSummary(
       max_tokens: 3000,
     });
 
-    return (
-      completion.choices[0]?.message?.content || "Geen analyse beschikbaar."
-    );
+    return completion.choices[0]?.message?.content || "Geen analyse beschikbaar.";
   }
 }
