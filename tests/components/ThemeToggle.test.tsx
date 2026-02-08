@@ -93,4 +93,49 @@ describe("ThemeToggle", () => {
     expect(screen.getByText(/dark/i)).toBeInTheDocument();
     expect(screen.getByText(/system/i)).toBeInTheDocument();
   });
+
+  it("changes theme when clicking dropdown options", async () => {
+    const user = userEvent.setup();
+    const { default: ThemeToggle } = await import("../../src/components/navigation/ThemeToggle");
+
+    renderWithIntl(<ThemeToggle />);
+
+    const button = screen.getByRole("button", { name: /theme/i });
+    await user.click(button);
+
+    const darkOption = screen.getByText(/dark/i);
+    await user.click(darkOption);
+
+    expect(mockSetTheme).toHaveBeenCalledWith("dark");
+  });
+
+  it("sets up media query listener for system theme changes", async () => {
+    const mockAddEventListener = vi.fn();
+    const mockRemoveEventListener = vi.fn();
+
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: mockAddEventListener,
+      removeEventListener: mockRemoveEventListener,
+      dispatchEvent: vi.fn(),
+    }));
+
+    mockTheme = "system";
+    const { default: ThemeToggle } = await import("../../src/components/navigation/ThemeToggle");
+
+    const { unmount } = renderWithIntl(<ThemeToggle />);
+
+    // Verify listener was added
+    expect(mockAddEventListener).toHaveBeenCalledWith("change", expect.any(Function));
+
+    // Cleanup
+    unmount();
+
+    // Verify listener was removed
+    expect(mockRemoveEventListener).toHaveBeenCalledWith("change", expect.any(Function));
+  });
 });
