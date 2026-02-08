@@ -2,22 +2,23 @@
 // @vitest-environment jsdom
 
 import { renderHook, act } from "@testing-library/react";
-import { useConsentStore } from "@/store/consent-store";
+import { useConsentStore } from "../../src/store/consent-store";
+import { describe, beforeEach, it, expect } from "vitest";
 
 // Mock localStorage
 const localStorageMock = (() => {
-  let store: Record<string, string> = {};
+  let store = new Map<string, string>();
 
   return {
-    getItem: (key: string) => store[key] || null,
+    getItem: (key: string) => (store.has(key) ? store.get(key)! : null),
     setItem: (key: string, value: string) => {
-      store[key] = value.toString();
+      store.set(key, value.toString());
     },
     removeItem: (key: string) => {
-      delete store[key];
+      store.delete(key);
     },
     clear: () => {
-      store = {};
+      store = new Map<string, string>();
     },
   };
 })();

@@ -4,6 +4,7 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithIntl } from "../utils/renderWithIntl";
+import { vi, describe, beforeEach, it, expect } from "vitest";
 
 // Mock window.matchMedia (not implemented in jsdom)
 Object.defineProperty(window, "matchMedia", {

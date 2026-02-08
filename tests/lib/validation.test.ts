@@ -1,4 +1,10 @@
-import { searchSchema, analyzeSchema, deepAnalyzeSchema, consentLogSchema } from "@/lib/validation";
+import {
+  searchSchema,
+  analyzeSchema,
+  deepAnalyzeSchema,
+  consentLogSchema,
+} from "../../src/lib/validation";
+import { describe, it, expect } from "vitest";
 
 describe("validation schemas", () => {
   describe("searchSchema", () => {
