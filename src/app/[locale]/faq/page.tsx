@@ -61,6 +61,8 @@ export default async function FaqPage({ params }: { params: Promise<{ locale: st
           <p className="text-sm text-muted-foreground md:text-base">{t("intro")}</p>
         </header>
 
+        <h2 className="text-base font-semibold text-foreground">{t("sectionTitle")}</h2>
+
         <div className="rounded-2xl border border-border/70 bg-card/80 px-6 py-2 text-foreground shadow-sm backdrop-blur">
           <Accordion type="multiple" className="w-full">
             {faqs.map((faq, index) => (
@@ -74,10 +76,6 @@ export default async function FaqPage({ params }: { params: Promise<{ locale: st
 
         <div className="mt-10">
           <AdCard slotId="9328638488" className="min-h-[250px]" />
-        </div>
-
-        <div className="mt-8">
-          <Breadcrumbs />
         </div>
       </div>
     </div>

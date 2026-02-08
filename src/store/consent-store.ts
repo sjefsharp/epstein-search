@@ -13,6 +13,7 @@ type ConsentState = {
   locale: string;
   lastUpdated?: string;
   preferencesOpen: boolean;
+  hasHydrated: boolean;
 };
 
 type ConsentActions = {
@@ -20,6 +21,7 @@ type ConsentActions = {
   setDraftAdsConsent: (adsConsent: boolean) => void;
   setPolicyVersion: (version: string) => void;
   setLocale: (locale: string) => void;
+  setHasHydrated: (hydrated: boolean) => void;
   openPreferences: () => void;
   closePreferences: () => void;
   togglePreferences: () => void;
@@ -37,6 +39,7 @@ export const useConsentStore = create<ConsentStore>()(
       locale: "en",
       lastUpdated: undefined,
       preferencesOpen: false,
+      hasHydrated: false,
       setConsent: (status, adsConsent) => {
         set({
           status,
@@ -59,6 +62,9 @@ export const useConsentStore = create<ConsentStore>()(
           set({ locale });
         }
       },
+      setHasHydrated: (hydrated) => {
+        set({ hasHydrated: hydrated });
+      },
       openPreferences: () =>
         set((state) => ({
           preferencesOpen: true,
@@ -74,6 +80,9 @@ export const useConsentStore = create<ConsentStore>()(
     {
       name: "epstein-consent-storage",
       storage: createJSONStorage(() => localStorage),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
       partialize: (state) => ({
         status: state.status,
         adsConsent: state.adsConsent,

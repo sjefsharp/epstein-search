@@ -11,14 +11,20 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(17,24,39,0.15),_transparent_55%),linear-gradient(180deg,_#f8fafc_0%,_#eef2f6_40%,_#e5e7eb_100%)] dark:bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.08),_transparent_50%),linear-gradient(180deg,_#0f172a_0%,_#0b1120_100%)]">
-      <div className="mx-auto w-full max-w-6xl px-6 py-10">
-        <header className="mb-8 flex flex-col gap-3">
-          <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">{t("tagline")}</p>
-          <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">{t("title")}</h1>
-          <p className="max-w-2xl text-sm text-muted-foreground md:text-base">{t("subtitle")}</p>
+      <div className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 sm:py-6">
+        <header className="mb-4 flex flex-col gap-3 sm:mb-5">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground sm:text-xs">
+            {t("tagline")}
+          </p>
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl md:text-4xl">
+            {t("title")}
+          </h1>
+          <p className="max-w-2xl text-xs text-muted-foreground sm:text-sm md:text-base">
+            {t("subtitle")}
+          </p>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
           <ChatContainer />
 
           <aside className="space-y-6">

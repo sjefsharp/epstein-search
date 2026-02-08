@@ -88,10 +88,6 @@ export default async function KeyFiguresPage({ params }: { params: Promise<{ loc
         <div className="mt-10">
           <AdCard slotId="9328638488" className="min-h-[250px]" />
         </div>
-
-        <div className="mt-8">
-          <Breadcrumbs />
-        </div>
       </div>
     </div>
   );
