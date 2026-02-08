@@ -115,7 +115,8 @@ app.use(((req, res, next) => {
   const startedAt = Date.now();
   res.on("finish", () => {
     const durationMs = Date.now() - startedAt;
-    console.log(`[worker] ${req.method} ${req.url} -> ${res.statusCode} (${durationMs}ms)`);
+    const safeUrl = (req.url || "").replace(/[\r\n]/g, "");
+    console.log(`[worker] ${req.method} ${safeUrl} -> ${res.statusCode} (${durationMs}ms)`);
   });
   next();
 }) as LoggingMiddleware);
