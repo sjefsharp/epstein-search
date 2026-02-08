@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { updateConsent, setConsentDefault } from "@/lib/consent";
-import { useConsentStore } from "@/store/consent-store";
+import { useConsentStore, type ConsentStatus } from "@/store/consent-store";
 
 const POLICY_VERSION_FALLBACK = "1.0.0";
 

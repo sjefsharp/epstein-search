@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-type ConsentStatus = "unknown" | "accepted" | "rejected";
+export type ConsentStatus = "unknown" | "accepted" | "rejected";
 
 type ConsentState = {
   status: ConsentStatus;
