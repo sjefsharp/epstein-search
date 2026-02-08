@@ -1,7 +1,6 @@
 /// <reference types="@testing-library/jest-dom" />
 // @vitest-environment jsdom
 
-import { describe, it, expect, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Message from "../../src/components/chat/Message";
@@ -63,9 +62,6 @@ describe("Message", () => {
 
     await user.click(analyzeButton);
 
-    expect(onAnalyze).toHaveBeenCalledWith(
-      "https://example.com/file.pdf",
-      "Mock File",
-    );
+    expect(onAnalyze).toHaveBeenCalledWith("https://example.com/file.pdf", "Mock File");
   });
 });

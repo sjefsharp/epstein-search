@@ -1,7 +1,6 @@
 /// <reference types="@testing-library/jest-dom" />
 // @vitest-environment jsdom
 
-import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
 import { Badge } from "../../src/components/ui/badge";
 

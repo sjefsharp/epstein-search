@@ -1,4 +1,3 @@
-import { describe, it, expect } from "vitest";
 import crypto from "crypto";
 
 describe("Worker authentication logic", () => {
@@ -8,17 +7,10 @@ describe("Worker authentication logic", () => {
     return crypto.createHmac("sha256", secret).update(payload).digest("hex");
   }
 
-  function verifySignature(
-    payload: string,
-    signature: string,
-    secret: string,
-  ): boolean {
+  function verifySignature(payload: string, signature: string, secret: string): boolean {
     const expected = generateSignature(payload, secret);
     try {
-      return crypto.timingSafeEqual(
-        Buffer.from(signature),
-        Buffer.from(expected),
-      );
+      return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
     } catch {
       return false;
     }

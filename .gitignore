@@ -42,3 +42,8 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# scratch / agent temp files
+temp/
+tmpclaude*
+nul

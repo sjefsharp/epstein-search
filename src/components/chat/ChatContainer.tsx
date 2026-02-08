@@ -171,15 +171,7 @@ export default function ChatContainer() {
         isBusyRef.current = false;
       }
     },
-    [
-      addMessage,
-      locale,
-      setLoading,
-      setCurrentQuery,
-      t,
-      tErrors,
-      updateMessage,
-    ],
+    [addMessage, locale, setLoading, setCurrentQuery, t, tErrors, updateMessage],
   );
 
   const handleAnalyzeDocument = useCallback(
@@ -257,9 +249,7 @@ export default function ChatContainer() {
     <section className="flex h-full flex-col rounded-3xl border bg-card/80 backdrop-blur">
       <header className="flex items-center justify-between border-b px-6 py-4">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {t("headerTitle")}
-          </h1>
+          <h2 className="text-2xl font-semibold tracking-tight">{t("headerTitle")}</h2>
           <p className="text-sm text-muted-foreground">{t("headerSubtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -271,10 +261,7 @@ export default function ChatContainer() {
               type="button"
               size="sm"
               variant={searchMode === "fast" ? "default" : "ghost"}
-              className={cn(
-                "rounded-full px-3",
-                searchMode === "fast" && "shadow-sm",
-              )}
+              className={cn("rounded-full px-3", searchMode === "fast" && "shadow-sm")}
               onClick={() => setSearchMode("fast")}
               aria-pressed={searchMode === "fast"}
             >
@@ -284,10 +271,7 @@ export default function ChatContainer() {
               type="button"
               size="sm"
               variant={searchMode === "deep" ? "default" : "ghost"}
-              className={cn(
-                "rounded-full px-3",
-                searchMode === "deep" && "shadow-sm",
-              )}
+              className={cn("rounded-full px-3", searchMode === "deep" && "shadow-sm")}
               onClick={() => setSearchMode("deep")}
               aria-pressed={searchMode === "deep"}
             >
@@ -297,10 +281,7 @@ export default function ChatContainer() {
         </div>
       </header>
 
-      <MessageList
-        messages={messages}
-        onAnalyzeDocument={handleAnalyzeDocument}
-      />
+      <MessageList messages={messages} onAnalyzeDocument={handleAnalyzeDocument} />
 
       <ChatInput onSend={handleSend} disabled={isLoading} />
 

@@ -1,7 +1,6 @@
 /// <reference types="@testing-library/jest-dom" />
 // @vitest-environment jsdom
 
-import { describe, it, expect, beforeEach } from "vitest";
 import { screen } from "@testing-library/react";
 import MessageList from "../../src/components/chat/MessageList";
 import { renderWithIntl } from "../utils/renderWithIntl";
@@ -14,9 +13,7 @@ describe("MessageList", () => {
   it("renders empty state when no messages", () => {
     renderWithIntl(<MessageList messages={[]} />);
 
-    expect(
-      screen.getByRole("heading", { name: /doj epstein files search/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /doj epstein files search/i })).toBeInTheDocument();
   });
 
   it("renders messages when provided", () => {

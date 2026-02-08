@@ -1,7 +1,6 @@
 /// <reference types="@testing-library/jest-dom" />
 // @vitest-environment jsdom
 
-import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
 import { ScrollArea } from "../../src/components/ui/scroll-area";
 
@@ -14,8 +13,6 @@ describe("ScrollArea", () => {
     );
 
     expect(container.querySelector('[data-slot="scroll-area"]')).toBeTruthy();
-    expect(
-      container.querySelector('[data-slot="scroll-area-viewport"]'),
-    ).toBeTruthy();
+    expect(container.querySelector('[data-slot="scroll-area-viewport"]')).toBeTruthy();
   });
 });

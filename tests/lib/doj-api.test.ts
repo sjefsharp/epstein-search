@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   searchDOJ,
   searchDOJAll,
@@ -65,9 +64,7 @@ describe("doj-api", () => {
   });
 
   it("throws when query is empty", async () => {
-    await expect(searchDOJ({ query: "  " })).rejects.toBeInstanceOf(
-      DOJAPIError,
-    );
+    await expect(searchDOJ({ query: "  " })).rejects.toBeInstanceOf(DOJAPIError);
   });
 
   it("maps DOJ API response into documents", async () => {
@@ -120,10 +117,7 @@ describe("doj-api", () => {
       { fileUri: "https://example.com/b.pdf" } as never,
     ]);
 
-    expect(urls).toEqual([
-      "https://example.com/a.pdf",
-      "https://example.com/b.pdf",
-    ]);
+    expect(urls).toEqual(["https://example.com/a.pdf", "https://example.com/b.pdf"]);
   });
 
   it("builds cache keys from query and offset", () => {

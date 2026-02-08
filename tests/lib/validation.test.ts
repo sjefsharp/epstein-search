@@ -1,4 +1,3 @@
-import { describe, it, expect } from "vitest";
 import { searchSchema, analyzeSchema } from "@/lib/validation";
 
 describe("validation schemas", () => {
@@ -100,9 +99,7 @@ describe("validation schemas", () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain(
-          "HTTPS justice.gov URLs are allowed",
-        );
+        expect(result.error.issues[0].message).toContain("HTTPS justice.gov URLs are allowed");
       }
     });
 

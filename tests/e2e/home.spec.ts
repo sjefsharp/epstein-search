@@ -5,6 +5,7 @@ test("homepage renders key UI", async ({ page }) => {
   const home = new HomePage(page);
 
   await home.gotoHome("en");
+  await home.dismissAgeGateIfVisible();
   await home.dismissConsentIfVisible();
   await home.expectLoaded();
 });

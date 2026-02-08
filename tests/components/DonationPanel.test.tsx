@@ -1,7 +1,6 @@
 /// <reference types="@testing-library/jest-dom" />
 // @vitest-environment jsdom
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithIntl } from "../utils/renderWithIntl";
@@ -32,8 +31,7 @@ describe("DonationPanel", () => {
     delete process.env.NEXT_PUBLIC_BTC_ADDRESS;
     delete process.env.NEXT_PUBLIC_ETH_ADDRESS;
 
-    const { default: DonationPanel } =
-      await import("../../src/components/donations/DonationPanel");
+    const { default: DonationPanel } = await import("../../src/components/donations/DonationPanel");
 
     renderWithIntl(<DonationPanel />);
 
@@ -47,8 +45,7 @@ describe("DonationPanel", () => {
     process.env.NEXT_PUBLIC_BTC_ADDRESS = "btc-address";
     delete process.env.NEXT_PUBLIC_ETH_ADDRESS;
 
-    const { default: DonationPanel } =
-      await import("../../src/components/donations/DonationPanel");
+    const { default: DonationPanel } = await import("../../src/components/donations/DonationPanel");
 
     renderWithIntl(<DonationPanel />);
 

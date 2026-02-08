@@ -1,5 +1,3 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-
 const createMock = vi.fn();
 
 vi.mock("groq-sdk", () => ({
@@ -66,9 +64,7 @@ describe("groq", () => {
 
     expect(result).toBe("Hello world");
     expect(onStream).toHaveBeenCalledTimes(2);
-    expect(createMock).toHaveBeenCalledWith(
-      expect.objectContaining({ stream: true }),
-    );
+    expect(createMock).toHaveBeenCalledWith(expect.objectContaining({ stream: true }));
   });
 
   it("generates a deep summary", async () => {
@@ -78,12 +74,7 @@ describe("groq", () => {
 
     const { generateDeepSummary } = await import("../../src/lib/groq");
 
-    const result = await generateDeepSummary(
-      "doc.pdf",
-      "full text",
-      "epstein",
-      "en",
-    );
+    const result = await generateDeepSummary("doc.pdf", "full text", "epstein", "en");
 
     expect(result).toBe("deep summary");
   });

@@ -12,10 +12,7 @@ interface ChatInputProps {
   disabled?: boolean;
 }
 
-export default function ChatInput({
-  onSend,
-  disabled = false,
-}: ChatInputProps) {
+export default function ChatInput({ onSend, disabled = false }: ChatInputProps) {
   const t = useTranslations("ChatInput");
   const [input, setInput] = useState("");
 
@@ -36,10 +33,10 @@ export default function ChatInput({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex gap-2 items-end p-4 border-t bg-background"
-    >
+    <form onSubmit={handleSubmit} className="flex gap-2 items-end p-4 border-t bg-background">
+      <label htmlFor="search-query" className="sr-only">
+        {t("placeholder")}
+      </label>
       <Textarea
         id="search-query"
         name="searchQuery"
@@ -49,7 +46,6 @@ export default function ChatInput({
         placeholder={t("placeholder")}
         disabled={disabled}
         className="min-h-[60px] max-h-[200px] resize-none"
-        aria-label={t("searchButton")}
         rows={2}
       />
       <Button
@@ -59,11 +55,7 @@ export default function ChatInput({
         className="h-[60px] w-[60px] shrink-0"
         aria-label={t("searchButton")}
       >
-        {disabled ? (
-          <Loader2 className="h-5 w-5 animate-spin" />
-        ) : (
-          <Send className="h-5 w-5" />
-        )}
+        {disabled ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
       </Button>
     </form>
   );

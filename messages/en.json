@@ -139,7 +139,8 @@
     "home": "Home",
     "about": "About",
     "privacy": "Privacy",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "menu": "Menu"
   },
   "ConsentBanner": {
     "bannerAriaLabel": "Cookie consent options",
@@ -169,5 +170,24 @@
     "rateLimitExceeded": "Rate limit exceeded. Please try again in a few minutes.",
     "networkError": "Network error. Check your connection.",
     "invalidQuery": "Invalid search query. Please try a different search term."
+  },
+  "ThemeToggle": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "label": "Theme"
+  },
+  "AgeVerification": {
+    "title": "Age Verification Required",
+    "description": "This website contains sensitive legal documents related to criminal cases. You must be 18 years or older to access this content.",
+    "confirmButton": "I am 18 or older",
+    "underageNotice": "If you are under 18, please leave this website."
+  },
+  "Footer": {
+    "copyright": "\u00a9 2026 DOJ Epstein Files Search",
+    "disclaimer": "Not affiliated with the U.S. Department of Justice."
+  },
+  "Breadcrumbs": {
+    "label": "Breadcrumb navigation"
   }
 }

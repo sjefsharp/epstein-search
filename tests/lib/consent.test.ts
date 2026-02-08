@@ -1,7 +1,6 @@
 /// <reference types="@testing-library/jest-dom" />
 // @vitest-environment jsdom
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   CONSENT_DEFAULT,
   ensureGtag,
