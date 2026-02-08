@@ -13,11 +13,11 @@ declare module "express" {
   interface ExpressApp {
     get: (
       path: string,
-      handler: (req: Request, res: Response) => void | Promise<void>,
+      ...handlers: Array<(req: Request, res: Response, next?: () => void) => void | Promise<void>>
     ) => void;
     post: (
       path: string,
-      handler: (req: Request, res: Response) => void | Promise<void>,
+      ...handlers: Array<(req: Request, res: Response, next?: () => void) => void | Promise<void>>
     ) => void;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     use: (...args: any[]) => void;
@@ -35,8 +35,7 @@ declare module "express" {
 }
 
 declare module "playwright" {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  export const chromium: any;
+  export * from "playwright-core";
 }
 
 declare module "pdf-parse" {
