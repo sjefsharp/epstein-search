@@ -1,10 +1,11 @@
 import express from "express";
 import type { Request, Response } from "express";
-import { chromium } from "playwright";
+import { chromium, type BrowserContextOptions, type LaunchOptions, type Page } from "playwright";
 import * as pdfParseModule from "pdf-parse";
 import helmet from "helmet";
 import cors from "cors";
 import crypto from "crypto";
+import net from "net";
 import rateLimit from "express-rate-limit";
 
 // Handle both ESM and CommonJS imports for pdf-parse
@@ -14,41 +15,43 @@ type PdfParseResult = {
   info?: unknown;
 };
 
-// SSRF protection: restrict allowed justice.gov hosts
-function isAllowedJusticeGovHost(hostname: string): boolean {
-  const lowerHost = hostname.toLowerCase();
+export const STEALTH_USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+const STEALTH_HEADERS = {
+  "Accept-Language": "en-US,en;q=0.9",
+  "sec-ch-ua": '"Chromium";v="131", "Google Chrome";v="131", "Not_A Brand";v="24"',
+  "sec-ch-ua-mobile": "?0",
+  "sec-ch-ua-platform": '"Windows"',
+} as const;
+const STEALTH_VIEWPORT = { width: 1920, height: 1080 } as const;
+const STEALTH_LOCALE = "en-US";
+const STEALTH_TIMEZONE = "America/New_York";
+const STEALTH_LAUNCH_ARGS = [
+  "--disable-blink-features=AutomationControlled",
+  "--no-sandbox",
+  "--disable-dev-shm-usage",
+] as const;
 
-  // Disallow localhost and direct IP addresses
-  if (
-    lowerHost === "localhost" ||
-    /^[0-9.]+$/.test(lowerHost) ||
-    /^[0-9a-f:.]+$/.test(lowerHost)
-  ) {
-    return false;
-  }
+export const buildAkamaiDelayMs = (): number => 2000 + Math.floor(Math.random() * 2000);
 
-  // Allow only specific public justice.gov domains and their subdomains
-  const allowedJusticeGovSuffixes = [
-    ".justice.gov",
-  ];
+export const getStealthLaunchOptions = (): LaunchOptions => ({
+  headless: true,
+  args: [...STEALTH_LAUNCH_ARGS],
+});
 
-  return allowedJusticeGovSuffixes.some((suffix) => {
-    return (
-      lowerHost === suffix.slice(1) || // e.g. "justice.gov"
-      lowerHost.endsWith(suffix)
-    );
-  });
-}
+export const getStealthContextOptions = (): BrowserContextOptions => ({
+  userAgent: STEALTH_USER_AGENT,
+  extraHTTPHeaders: STEALTH_HEADERS,
+  viewport: STEALTH_VIEWPORT,
+  locale: STEALTH_LOCALE,
+  timezoneId: STEALTH_TIMEZONE,
+});
 
 function isIpAddress(hostname: string): boolean {
-  // Simple IPv4 and IPv6 detection; adjust if needed
-  const ipv4Pattern =
-    /^(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}$/;
-  const ipv6Pattern = /^[0-9a-fA-F:]+$/;
-  return ipv4Pattern.test(hostname) || ipv6Pattern.test(hostname);
+  return net.isIP(hostname) !== 0;
 }
 
-function isAllowedJusticeGovHost(hostname: string): boolean {
+export function isAllowedJusticeGovHost(hostname: string): boolean {
   const lowerHost = hostname.toLowerCase();
 
   // Explicitly block localhost-style names even if they somehow appear under justice.gov
@@ -65,11 +68,29 @@ function isAllowedJusticeGovHost(hostname: string): boolean {
     return false;
   }
 
-  return (
-    lowerHost === "justice.gov" ||
-    lowerHost.endsWith(".justice.gov")
-  );
+  return lowerHost === "justice.gov" || lowerHost.endsWith(".justice.gov");
 }
+
+type LaunchedBrowser = Awaited<ReturnType<typeof chromium.launch>>;
+
+const createStealthContext = async (browser: LaunchedBrowser) => {
+  const context = await browser.newContext(getStealthContextOptions());
+  await context.addInitScript(() => {
+    Object.defineProperty(navigator, "webdriver", {
+      get: () => undefined,
+    });
+  });
+  return context;
+};
+
+const prewarmAkamai = async (page: Page) => {
+  await page.goto("https://www.justice.gov/", {
+    waitUntil: "networkidle",
+    timeout: 30000,
+  });
+
+  await page.waitForTimeout(buildAkamaiDelayMs());
+};
 
 type PdfParseFn = (data: Buffer | Uint8Array) => Promise<PdfParseResult>;
 
@@ -87,28 +108,20 @@ const analyzeLimiter = rateLimit({
 });
 
 // Security middleware
-type LoggingMiddleware = (
-  req: Request,
-  res: Response,
-  next: (err?: unknown) => void,
-) => void;
+type LoggingMiddleware = (req: Request, res: Response, next: (err?: unknown) => void) => void;
 
 app.use(helmet());
 app.use(((req, res, next) => {
   const startedAt = Date.now();
   res.on("finish", () => {
     const durationMs = Date.now() - startedAt;
-    console.log(
-      `[worker] ${req.method} ${req.url} -> ${res.statusCode} (${durationMs}ms)`,
-    );
+    console.log(`[worker] ${req.method} ${req.url} -> ${res.statusCode} (${durationMs}ms)`);
   });
   next();
 }) as LoggingMiddleware);
 app.use(
   cors({
-    origin:
-      process.env.ALLOWED_ORIGINS?.split(",") ||
-      "https://epstein-kappa.vercel.app",
+    origin: process.env.ALLOWED_ORIGINS?.split(",") || "https://epstein-kappa.vercel.app",
     methods: ["POST", "GET"],
     allowedHeaders: ["Content-Type", "X-Worker-Signature", "Authorization"],
   }),
@@ -149,10 +162,7 @@ const verifySignature = (req: Request, res: Response): boolean => {
   }
 
   const payload = JSON.stringify(req.body);
-  const expected = crypto
-    .createHmac("sha256", sharedSecret)
-    .update(payload)
-    .digest("hex");
+  const expected = crypto.createHmac("sha256", sharedSecret).update(payload).digest("hex");
 
   if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
     res.status(403).json({ error: "Invalid signature" });
@@ -205,14 +215,8 @@ app.post("/search", searchLimiter, async (req: Request, res: Response) => {
   let browser: Awaited<ReturnType<typeof chromium.launch>> | null = null;
 
   try {
-    browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext({
-      userAgent:
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-      extraHTTPHeaders: {
-        "Accept-Language": "en-US,en;q=0.9",
-      },
-    });
+    browser = await chromium.launch(getStealthLaunchOptions());
+    const context = await createStealthContext(browser);
 
     // Build the DOJ search URL
     const searchUrl = new URL("https://www.justice.gov/multimedia-search");
@@ -227,13 +231,7 @@ app.post("/search", searchLimiter, async (req: Request, res: Response) => {
       const page = await context.newPage();
       try {
         // Step 1: Visit the DOJ homepage to acquire Akamai session cookies
-        await page.goto("https://www.justice.gov/", {
-          waitUntil: "networkidle",
-          timeout: 30000,
-        });
-
-        // Let Akamai challenge scripts complete
-        await page.waitForTimeout(2000);
+        await prewarmAkamai(page);
 
         // Step 2: Make the API call from WITHIN the page context as an XHR.
         // This carries all Akamai cookies/tokens, matching a real browser flow.
@@ -269,9 +267,7 @@ app.post("/search", searchLimiter, async (req: Request, res: Response) => {
         return;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error("Unknown error");
-        console.error(
-          `[worker] search attempt ${attempt}/3 failed: ${lastError.message}`,
-        );
+        console.error(`[worker] search attempt ${attempt}/3 failed: ${lastError.message}`);
         if (attempt < 3) {
           // Wait longer between retries to let bot-protection settle
           await new Promise((resolve) => setTimeout(resolve, 1500 * attempt));
@@ -315,9 +311,7 @@ app.post("/analyze", analyzeLimiter, async (req: Request, res: Response) => {
     }
     const hostname = url.hostname;
     if (!isAllowedJusticeGovHost(hostname)) {
-      res
-        .status(403)
-        .json({ error: "Only public justice.gov HTTPS URLs are allowed" });
+      res.status(403).json({ error: "Only public justice.gov HTTPS URLs are allowed" });
       return;
     }
     // Use the normalized, validated URL for all outbound requests
@@ -330,10 +324,11 @@ app.post("/analyze", analyzeLimiter, async (req: Request, res: Response) => {
   let browser: Awaited<ReturnType<typeof chromium.launch>> | null = null;
 
   try {
-    browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext();
+    browser = await chromium.launch(getStealthLaunchOptions());
+    const context = await createStealthContext(browser);
     const page = await context.newPage();
 
+    await prewarmAkamai(page);
     await page.goto(safeUrl, {
       waitUntil: "domcontentloaded",
       timeout: 60000,
@@ -356,23 +351,18 @@ app.post("/analyze", analyzeLimiter, async (req: Request, res: Response) => {
       name: string;
       value: string;
     }>;
-    const cookieHeader = cookies
-      .map((cookie) => `${cookie.name}=${cookie.value}`)
-      .join("; ");
+    const cookieHeader = cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join("; ");
 
     const pdfResponse = await fetch(safeUrl, {
       headers: {
         Cookie: cookieHeader,
-        "User-Agent":
-          "Epstein-Onderzoek-Bot/1.0 (DOJ Document Research; +https://epstein-kappa.vercel.app)",
+        "User-Agent": STEALTH_USER_AGENT,
         Accept: "application/pdf",
       },
     });
 
     if (!pdfResponse.ok) {
-      throw new Error(
-        `PDF download failed: ${pdfResponse.status} ${pdfResponse.statusText}`,
-      );
+      throw new Error(`PDF download failed: ${pdfResponse.status} ${pdfResponse.statusText}`);
     }
 
     const buffer = Buffer.from(await pdfResponse.arrayBuffer());
@@ -400,6 +390,8 @@ app.post("/analyze", analyzeLimiter, async (req: Request, res: Response) => {
 });
 
 const port = Number(process.env.PORT) || 3000;
-app.listen(port, () => {
-  console.log(`PDF worker listening on :${port}`);
-});
+if (process.env.NODE_ENV !== "test") {
+  app.listen(port, () => {
+    console.log(`PDF worker listening on :${port}`);
+  });
+}

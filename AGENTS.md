@@ -152,6 +152,7 @@ worker/src/index.ts     → Express 5, HMAC auth, Playwright PDF fetch + pdf-par
 - `/search`: visits DOJ homepage first → XHR from page context → 3 retries
 - `/analyze`: navigates to PDF URL → handles age-verify → cookies → pdf-parse
 - Rate limiters: `/search` 50/15min, `/analyze` 60/15min
+- Worker dependencies are isolated: update `worker/package-lock.json` via `cd worker ; npm install` whenever `worker/package.json` changes (Docker `npm ci` requires parity)
 
 ## Environment Variables
 
