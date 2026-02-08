@@ -70,6 +70,13 @@
     "technology": "Nous utilisons le modèle Llama 3.3 70B de Groq pour les résumés IA, Playwright pour le scraping de documents et Redis pour la mise en cache. L''interface de recherche est construite avec Next.js et déployée sur Vercel.",
     "privacyTitle": "Confidentialité & Transparence",
     "privacy": "Nous ne suivons pas les utilisateurs, ne vendons pas de données et n''exigeons pas de comptes. Toutes les recherches sont anonymes. La limitation de débit prévient les abus tout en gardant le service gratuit pour tous.",
+
+    "howItWorksTitle": "TODO: How It Works",
+    "howItWorks": "TODO: Fast mode and Deep mode explanation",
+    "documentTypesTitle": "TODO: Document Types",
+    "documentTypes": "TODO: Court filings, statements, flight logs",
+    "openSourceTitle": "TODO: Open Source",
+    "openSource": "TODO: Project is open source on GitHub",
     "socialProfiles": ["https://github.com/epstein-search"]
   },
   "PrivacyPage": {
@@ -114,7 +121,17 @@
     "q6": "Quelle est la précision des résumés IA?",
     "a6": "Les résumés sont générés par l''IA et peuvent contenir des erreurs. Vérifiez toujours les informations importantes en lisant le PDF source. Les résumés sont destinés à vous aider à trouver rapidement les documents pertinents.",
     "q7": "Qui a créé ceci?",
-    "a7": "Il s''agit d''un projet open-source indépendant construit pour rendre les documents légaux plus accessibles. Nous n''avons aucune affiliation avec le DOJ ou les parties impliquées dans l''affaire."
+    "a7": "Il s''agit d''un projet open-source indépendant construit pour rendre les documents légaux plus accessibles. Nous n''avons aucune affiliation avec le DOJ ou les parties impliquées dans l''affaire.",
+    "q8": "TODO: What is the Epstein case about?",
+    "a8": "TODO: The Jeffrey Epstein case involves charges of sex trafficking",
+    "q9": "TODO: How often is the database updated?",
+    "a9": "TODO: When new documents are published by DOJ",
+    "q10": "TODO: Can I search in languages other than English?",
+    "a10": "TODO: Interface in 6 languages, docs are English",
+    "q11": "TODO: What are Fast and Deep search modes?",
+    "a11": "TODO: Fast searches indexed text, Deep downloads full PDF",
+    "q12": "TODO: Is my search history stored?",
+    "a12": "TODO: No, queries processed in real-time"
   },
   "LanguageSwitcher": {
     "label": "Langue",
@@ -140,6 +157,8 @@
     "about": "À propos",
     "privacy": "Confidentialité",
     "faq": "FAQ",
+    "timeline": "Chronologie",
+    "keyFigures": "Personnages Clés",
     "menu": "Menu"
   },
   "ConsentBanner": {
@@ -182,6 +201,35 @@
     "description": "Ce site contient des documents légaux sensibles liés à des affaires criminelles. Vous devez avoir 18 ans ou plus pour accéder à ce contenu.",
     "confirmButton": "J'ai 18 ans ou plus",
     "underageNotice": "Si vous avez moins de 18 ans, veuillez quitter ce site."
+  },
+  "TimelinePage": {
+    "title": "TODO: Timeline | DOJ Epstein Files Search",
+    "metaDescription": "TODO: Chronological overview of the Jeffrey Epstein case",
+    "heading": "TODO: Case Timeline",
+    "intro": "TODO: Chronological overview of key events",
+    "investigationTitle": "TODO: Early Investigation (2005-2008)",
+    "investigation": "TODO: Investigation content",
+    "arrestTitle": "TODO: Arrest and Federal Charges (2019)",
+    "arrest": "TODO: Arrest content",
+    "deathTitle": "TODO: Death and Ongoing Investigation (2019-Present)",
+    "death": "TODO: Death content",
+    "releasesTitle": "TODO: Document Releases",
+    "releases": "TODO: Releases content"
+  },
+  "KeyFiguresPage": {
+    "title": "TODO: Key Figures | DOJ Epstein Files Search",
+    "metaDescription": "TODO: Overview of key individuals",
+    "heading": "TODO: Key Figures",
+    "intro": "TODO: Overview of individuals",
+    "epsteinTitle": "TODO: Jeffrey Epstein",
+    "epstein": "TODO: Epstein content",
+    "maxwellTitle": "TODO: Ghislaine Maxwell",
+    "maxwell": "TODO: Maxwell content",
+    "victimsTitle": "TODO: Victims and Witnesses",
+    "victims": "TODO: Victims content",
+    "investigatorsTitle": "TODO: Law Enforcement",
+    "investigators": "TODO: Investigators content",
+    "searchPrompt": "TODO: Search for a name to find related documents in the DOJ archive."
   },
   "Footer": {
     "copyright": "\u00a9 2026 DOJ Epstein Files Search",

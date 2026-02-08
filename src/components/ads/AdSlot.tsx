@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useConsentStore } from "@/store/consent-store";
+import { useAgeStore } from "@/store/age-store";
 
 declare global {
   interface Window {
@@ -23,6 +24,7 @@ export default function AdSlot({
   className,
 }: Props) {
   const { adsConsent, status } = useConsentStore();
+  const { verified } = useAgeStore();
   const insRef = useRef<HTMLDivElement | null>(null);
   const [isVisible, setIsVisible] = useState(true);
 
@@ -34,6 +36,7 @@ export default function AdSlot({
     : undefined;
 
   useEffect(() => {
+    if (!verified) return;
     if (!adsConsent || status !== "accepted") return;
     if (!clientId) return;
 
@@ -53,9 +56,9 @@ export default function AdSlot({
     }, 5000);
 
     return () => window.clearTimeout(timeout);
-  }, [adsConsent, status, clientId, slotId]);
+  }, [adsConsent, status, clientId, slotId, verified]);
 
-  if (!clientId || status !== "accepted" || !adsConsent || !isVisible) {
+  if (!verified || !clientId || status !== "accepted" || !adsConsent || !isVisible) {
     return null;
   }
 

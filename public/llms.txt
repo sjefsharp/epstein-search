@@ -1,0 +1,56 @@
+# DOJ Epstein Files Search
+
+> AI-powered search and analysis tool for over 2,000 Department of Justice documents related to the Jeffrey Epstein case
+
+## About
+
+This is an open-source, free-to-use search engine that provides AI-powered summaries and direct access to official Department of Justice documents. The tool uses Groq's Llama 3.3 70B model to generate summaries and supports 6 languages (English, Dutch, French, German, Spanish, Portuguese).
+
+## Main Pages
+
+- Home: https://epstein-search.vercel.app/en - Main search interface with chat-based interaction
+- About: https://epstein-search.vercel.app/en/about - Project mission, technology stack, and data sources
+- FAQ: https://epstein-search.vercel.app/en/faq - Frequently asked questions about the tool and documents
+- Timeline: https://epstein-search.vercel.app/en/timeline - Chronological overview of the case
+- Key Figures: https://epstein-search.vercel.app/en/key-figures - Overview of key individuals documented in the case
+- Privacy: https://epstein-search.vercel.app/en/privacy - Privacy policy and data handling
+
+## Features
+
+- **Fast Search**: Queries the DOJ multimedia search index and generates AI summaries
+- **Deep Analysis**: Downloads full PDFs and performs comprehensive text extraction and analysis
+- **Multi-language Support**: Interface available in 6 languages, AI summaries in user's selected language
+- **Direct Source Links**: All document links point to official DOJ.gov sources
+- **Anonymous & Free**: No tracking, no accounts required, rate-limited to prevent abuse
+
+## API Endpoints
+
+- `/api/search` - Search DOJ documents by keyword (POST with JSON body: `{query, locale}`)
+- `/api/summarize` - Generate AI summary from search results (POST, Server-Sent Events stream)
+- `/api/deep-analyze` - Fetch and analyze a specific PDF (POST, SSE stream)
+
+## Document Types
+
+The searchable archive includes:
+- Court filings and indictments
+- Victim impact statements and depositions
+- Flight logs and travel records
+- Financial records and correspondence
+- Evidence exhibits and investigative documents
+
+All documents are official Department of Justice releases.
+
+## Technical Stack
+
+- Frontend: Next.js 16 (App Router), React 19, TypeScript 5, Tailwind CSS 4
+- AI: Groq SDK with Llama 3.3 70B
+- Caching: Upstash Redis
+- Worker: Express 5 + Playwright + pdf-parse (for PDF analysis)
+- Database: Neon Postgres (consent logging only)
+- Deployment: Vercel (app) + Render (worker)
+
+## Contact & Contribution
+
+- GitHub: https://github.com/epstein-search
+- Issues: Report bugs or request features via GitHub Issues
+- This project is open source and accepts contributions

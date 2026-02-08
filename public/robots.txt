@@ -1,9 +1,29 @@
-# Allow all search engines to index all pages
+# DOJ Epstein Files Search - Robots.txt
+# Allow all search engines and AI crawlers
+
+# Default: All bots allowed
 User-agent: *
+Allow: /
+Disallow: /api/
+
+# AI Training & Indexing Bots (explicitly allow)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
 Allow: /
 
 # Sitemap location
 Sitemap: https://epstein-search.vercel.app/sitemap.xml
 
-# Crawl-delay (optional, prevents aggressive crawling)
-Crawl-delay: 1
+# Canonical host
+Host: epstein-search.vercel.app

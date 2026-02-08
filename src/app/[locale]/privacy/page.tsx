@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import Breadcrumbs from "@/components/navigation/Breadcrumbs";
+import AdCard from "@/components/ads/AdCard";
 
 export async function generateMetadata({
   params,
@@ -73,6 +74,10 @@ export default async function PrivacyPage({ params }: { params: Promise<{ locale
             <h2 className="text-base font-semibold">{t("contactTitle")}</h2>
             <p className="text-muted-foreground">{t("contact")}</p>
           </section>
+        </div>
+
+        <div className="mt-10">
+          <AdCard slotId="9328638488" className="min-h-[250px]" />
         </div>
 
         <div className="mt-8">

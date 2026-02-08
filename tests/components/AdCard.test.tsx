@@ -1,16 +1,24 @@
 /// <reference types="@testing-library/jest-dom" />
 // @vitest-environment jsdom
 
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithIntl } from "../utils/renderWithIntl";
 
 // Mock the consent store
 let mockAdsConsent = false;
 let mockStatus = "pending";
+let mockVerified = true;
 
 vi.mock("@/store/consent-store", () => ({
   useConsentStore: () => ({
     adsConsent: mockAdsConsent,
     status: mockStatus,
+  }),
+}));
+
+vi.mock("@/store/age-store", () => ({
+  useAgeStore: () => ({
+    verified: mockVerified,
   }),
 }));
 
@@ -22,6 +30,7 @@ describe("AdCard", () => {
     process.env = { ...originalEnv };
     mockAdsConsent = false;
     mockStatus = "pending";
+    mockVerified = true;
   });
 
   it("returns null when no adsenseId is configured", async () => {
@@ -50,6 +59,7 @@ describe("AdCard", () => {
     process.env.NEXT_PUBLIC_ADSENSE_ID = "ca-test-id";
     mockAdsConsent = true;
     mockStatus = "accepted";
+    mockVerified = true;
 
     const { default: AdCard } = await import("../../src/components/ads/AdCard");
 
@@ -59,5 +69,18 @@ describe("AdCard", () => {
     expect(ins).not.toBeNull();
     expect(ins?.getAttribute("data-ad-slot")).toBe("1234567890");
     expect(ins?.getAttribute("data-ad-client")).toBe("ca-test-id");
+  });
+
+  it("returns null when age is not verified", async () => {
+    process.env.NEXT_PUBLIC_ADSENSE_ID = "ca-test-id";
+    mockAdsConsent = true;
+    mockStatus = "accepted";
+    mockVerified = false;
+
+    const { default: AdCard } = await import("../../src/components/ads/AdCard");
+
+    const { container } = renderWithIntl(<AdCard slotId="1234567890" />);
+
+    expect(container.innerHTML).toBe("");
   });
 });
