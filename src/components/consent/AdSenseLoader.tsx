@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useConsentStore } from "@/store/consent-store";
+import { useAgeStore } from "@/store/age-store";
 
 type Props = {
   adsenseId?: string;
@@ -9,8 +10,10 @@ type Props = {
 
 export default function AdSenseLoader({ adsenseId }: Props) {
   const { adsConsent, status } = useConsentStore();
+  const { verified } = useAgeStore();
 
   useEffect(() => {
+    if (!verified) return;
     if (!adsenseId || status !== "accepted" || !adsConsent) return;
 
     const src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`;
@@ -23,7 +26,7 @@ export default function AdSenseLoader({ adsenseId }: Props) {
     script.crossOrigin = "anonymous";
 
     document.head.appendChild(script);
-  }, [adsenseId, adsConsent, status]);
+  }, [adsenseId, adsConsent, status, verified]);
 
   return null;
 }

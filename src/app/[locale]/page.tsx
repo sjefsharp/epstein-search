@@ -3,7 +3,6 @@
 import { useTranslations } from "next-intl";
 import ChatContainer from "@/components/chat/ChatContainer";
 import DonationPanel from "@/components/donations/DonationPanel";
-import AdCard from "@/components/ads/AdCard";
 import { Card } from "@/components/ui/card";
 
 export default function Home() {
@@ -24,15 +23,6 @@ export default function Home() {
 
           <aside className="space-y-6">
             <DonationPanel />
-
-            <AdCard
-              slotId="1473355302"
-              format="autorelaxed"
-              fullWidthResponsive={false}
-              className="min-h-[90px]"
-            />
-
-            <AdCard slotId="9328638488" className="min-h-[250px]" />
 
             <Card className="p-5 space-y-3 border border-border/70 bg-card/80 backdrop-blur">
               <h2 className="text-sm font-semibold">{tAbout("title")}</h2>

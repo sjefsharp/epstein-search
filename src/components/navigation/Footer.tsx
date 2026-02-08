@@ -31,6 +31,22 @@ export default function Footer() {
             </li>
             <li>
               <Link
+                href="/timeline"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {tNav("timeline")}
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/key-figures"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {tNav("keyFigures")}
+              </Link>
+            </li>
+            <li>
+              <Link
                 href="/faq"
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import Breadcrumbs from "@/components/navigation/Breadcrumbs";
+import AdCard from "@/components/ads/AdCard";
 
 import {
   Accordion,
@@ -27,7 +28,7 @@ export default async function FaqPage({ params }: { params: Promise<{ locale: st
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "FAQPage" });
 
-  const faqs = [1, 2, 3, 4, 5, 6, 7].map((index) => ({
+  const faqs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((index) => ({
     question: t(`q${index}`),
     answer: t(`a${index}`),
   }));
@@ -69,6 +70,10 @@ export default async function FaqPage({ params }: { params: Promise<{ locale: st
               </AccordionItem>
             ))}
           </Accordion>
+        </div>
+
+        <div className="mt-10">
+          <AdCard slotId="9328638488" className="min-h-[250px]" />
         </div>
 
         <div className="mt-8">

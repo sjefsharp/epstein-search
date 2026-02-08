@@ -1,9 +1,11 @@
 /// <reference types="@testing-library/jest-dom" />
 // @vitest-environment jsdom
 
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { render } from "@testing-library/react";
 import AdSlot from "../../src/components/ads/AdSlot";
 import { useConsentStore } from "../../src/store/consent-store";
+import { useAgeStore } from "../../src/store/age-store";
 
 describe("AdSlot", () => {
   const originalEnv = process.env;
@@ -19,6 +21,7 @@ describe("AdSlot", () => {
       lastUpdated: undefined,
       preferencesOpen: false,
     });
+    useAgeStore.setState({ verified: true });
   });
 
   afterEach(() => {
@@ -41,6 +44,14 @@ describe("AdSlot", () => {
 
   it("returns null when adsense id is missing", () => {
     delete process.env.NEXT_PUBLIC_ADSENSE_ID;
+
+    const { container } = render(<AdSlot slotId="123" />);
+
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("returns null when age is not verified", () => {
+    useAgeStore.setState({ verified: false });
 
     const { container } = render(<AdSlot slotId="123" />);
 

@@ -70,6 +70,12 @@
     "technology": "We gebruiken Groq's Llama 3.3 70B model voor AI-samenvattingen, Playwright voor document scraping, en Redis voor caching. De zoekinterface is gebouwd met Next.js en gedeployed op Vercel.",
     "privacyTitle": "Privacy & Transparantie",
     "privacy": "We volgen geen gebruikers, verkopen geen data, en vereisen geen accounts. Alle zoekopdrachten zijn anoniem. Rate limiting voorkomt misbruik terwijl de service gratis blijft voor iedereen.",
+    "howItWorksTitle": "TODO: How It Works",
+    "howItWorks": "TODO: Fast mode queries the DOJ's multimedia search index and generates an AI summary within seconds. Deep mode fetches the complete PDF from DOJ.gov, extracts all text, and performs a comprehensive AI analysis. Both modes stream responses in real-time so you can start reading results immediately.",
+    "documentTypesTitle": "TODO: Document Types",
+    "documentTypes": "TODO: The searchable archive includes court filings and indictments, victim impact statements and depositions, flight logs and travel records, financial records and correspondence, evidence exhibits, and investigative documents. All materials are official Department of Justice releases.",
+    "openSourceTitle": "TODO: Open Source",
+    "openSource": "TODO: This project is fully open source. The code repository is available on GitHub under an open license. We welcome contributions, bug reports, and feature requests from the community. All infrastructure is documented for transparency and reproducibility.",
     "socialProfiles": ["https://github.com/epstein-search"]
   },
   "PrivacyPage": {
@@ -114,7 +120,17 @@
     "q6": "Hoe nauwkeurig zijn de AI-samenvattingen?",
     "a6": "Samenvattingen worden gegenereerd door AI en kunnen fouten bevatten. Verifieer altijd belangrijke informatie door de bron-PDF te lezen. Samenvattingen zijn bedoeld om je snel relevante documenten te helpen vinden.",
     "q7": "Wie heeft dit gemaakt?",
-    "a7": "Dit is een onafhankelijk open-source project gebouwd om juridische documenten toegankelijker te maken. We hebben geen band met de DOJ of partijen betrokken bij de zaak."
+    "a7": "Dit is een onafhankelijk open-source project gebouwd om juridische documenten toegankelijker te maken. We hebben geen band met de DOJ of partijen betrokken bij de zaak.",
+    "q8": "TODO: What is the Epstein case about?",
+    "a8": "TODO: The Jeffrey Epstein case involves charges of sex trafficking and conspiracy. The Department of Justice released extensive documentation related to federal investigations, court proceedings, and victim testimonies.",
+    "q9": "TODO: How often is the database updated?",
+    "a9": "TODO: The database reflects the DOJ's official document releases. When new documents are published by the Department of Justice, they become searchable through our system.",
+    "q10": "TODO: Can I search in languages other than English?",
+    "a10": "TODO: The interface is available in 6 languages, but the underlying documents are official DOJ records in English. AI summaries are generated in your selected language.",
+    "q11": "TODO: What are Fast and Deep search modes?",
+    "a11": "TODO: Fast mode searches indexed text from the DOJ database and generates quick AI summaries. Deep mode downloads the full PDF, extracts all text, and performs comprehensive analysis.",
+    "q12": "TODO: Is my search history stored?",
+    "a12": "TODO: No. Search queries are processed in real-time and not linked to any user identity. Your chat history is stored locally in your browser via localStorage."
   },
   "LanguageSwitcher": {
     "label": "Taal",
@@ -138,6 +154,8 @@
   "Navigation": {
     "home": "Home",
     "about": "Over",
+    "timeline": "Tijdlijn",
+    "keyFigures": "Sleutelfiguren",
     "privacy": "Privacy",
     "faq": "Veelgestelde Vragen",
     "menu": "Menu"
@@ -182,6 +200,35 @@
     "description": "Deze website bevat gevoelige juridische documenten gerelateerd aan strafzaken. U moet 18 jaar of ouder zijn om toegang te krijgen tot deze inhoud.",
     "confirmButton": "Ik ben 18 jaar of ouder",
     "underageNotice": "Als u jonger bent dan 18, verlaat dan deze website."
+  },
+  "TimelinePage": {
+    "title": "TODO: Timeline | DOJ Epstein Files Search",
+    "metaDescription": "TODO: Chronological overview of the Jeffrey Epstein case, from initial investigations through court proceedings and document releases.",
+    "heading": "TODO: Case Timeline",
+    "intro": "TODO: A chronological overview of key events in the Jeffrey Epstein case based on Department of Justice document releases.",
+    "investigationTitle": "TODO: Early Investigation (2005-2008)",
+    "investigation": "TODO: The initial investigation into Jeffrey Epstein began in 2005 when Palm Beach police received allegations of sexual abuse involving minors. The FBI opened a federal investigation in 2006, identifying dozens of potential victims across multiple states. In 2008, Epstein pleaded guilty to state prostitution charges in a controversial plea deal that avoided federal prosecution.",
+    "arrestTitle": "TODO: Arrest and Federal Charges (2019)",
+    "arrest": "TODO: On July 6, 2019, Epstein was arrested at Teterboro Airport in New Jersey on federal charges of sex trafficking of minors. The Southern District of New York unsealed an indictment alleging a scheme to lure underage girls to his Manhattan and Palm Beach properties for sexual abuse between 2002 and 2005. He was denied bail and held at the Metropolitan Correctional Center.",
+    "deathTitle": "TODO: Death and Ongoing Investigation (2019-Present)",
+    "death": "TODO: Epstein was found dead in his cell on August 10, 2019, in an apparent suicide. Federal prosecutors continued investigating co-conspirators and associates. Ghislaine Maxwell was arrested in July 2020 and later convicted of sex trafficking charges. Document releases continue as courts process civil cases and Freedom of Information Act requests.",
+    "releasesTitle": "TODO: Document Releases",
+    "releases": "TODO: The Department of Justice has released over 2,000 documents including court filings, victim statements, flight logs, and investigative materials. These releases result from court orders, settled civil cases, and FOIA requests. New documents continue to be unsealed as legal proceedings conclude and redaction reviews are completed."
+  },
+  "KeyFiguresPage": {
+    "title": "TODO: Key Figures | DOJ Epstein Files Search",
+    "metaDescription": "TODO: Overview of key individuals documented in the DOJ Epstein case files, including defendants, victims, investigators, and witnesses.",
+    "heading": "TODO: Key Figures",
+    "intro": "TODO: Overview of individuals frequently documented in the Department of Justice Epstein case files.",
+    "epsteinTitle": "TODO: Jeffrey Epstein",
+    "epstein": "TODO: Financier and convicted sex offender. Central figure in the case, charged with federal sex trafficking of minors. Documents extensively detail his properties, financial transactions, travel records, and interactions with victims and associates. Died in federal custody in August 2019 while awaiting trial.",
+    "maxwellTitle": "TODO: Ghislaine Maxwell",
+    "maxwell": "TODO: British socialite and Epstein associate. Arrested in July 2020 and convicted in December 2021 on charges including sex trafficking of minors and conspiracy. Court documents describe her role in recruiting and grooming victims. Case documents include victim testimonies, flight logs, photographs, and correspondence.",
+    "victimsTitle": "TODO: Victims and Witnesses",
+    "victims": "TODO: The DOJ documents include statements from dozens of victims and witnesses. Many victim names are redacted to protect privacy. Documents contain impact statements, depositions, and testimonies describing recruitment tactics, abuse patterns, and long-term effects. Witness statements include household staff, pilots, and business associates.",
+    "investigatorsTitle": "TODO: Law Enforcement and Legal Professionals",
+    "investigators": "TODO: Case documents reference FBI agents, federal prosecutors, Palm Beach police detectives, and attorneys representing both prosecution and defense. Documents include investigative reports, legal motions, court orders, and case management records from multiple jurisdictions over nearly two decades.",
+    "searchPrompt": "TODO: Search for a name to find related documents in the DOJ archive."
   },
   "Footer": {
     "copyright": "\u00a9 2026 DOJ Epstein Files Search",
