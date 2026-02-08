@@ -3,7 +3,6 @@ import { beforeAll, describe, expect, it } from "vitest";
 let workerModule: typeof import("../../worker/src/index");
 
 beforeAll(async () => {
-  process.env.NODE_ENV = "test";
   workerModule = await import("../../worker/src/index");
 });
 
