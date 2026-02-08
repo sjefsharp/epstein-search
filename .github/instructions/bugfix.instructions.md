@@ -38,6 +38,7 @@ applyTo: "src/**,worker/**,tests/**"
 - NEVER modify existing tests to make them pass — fix the code, not the tests
 - Keep the fix minimal and surgical — avoid refactoring in the same commit
 - Ensure you are on a feature/fix branch, not `main` — create one with `git checkout -b fix/<short-description>` if needed
+- If a bugfix changes `worker/package.json`, run `cd worker ; npm install` and commit the updated `worker/package-lock.json`
 
 ## Output Rules
 

@@ -14,6 +14,17 @@ Standalone Express 5 service deployed on Render (Docker). Fetches and parses PDF
    git add -A ; git commit -m "feat: description" ; git push origin HEAD
    ```
 
+## Dependency Management
+
+- `worker/` has its own `package.json` and `package-lock.json`, separate from root.
+- If you add/update/remove dependencies in `worker/package.json`, you MUST run:
+  ```powershell
+  cd worker ; npm install
+  ```
+  and commit the updated `worker/package-lock.json`.
+- The Docker build uses `npm ci`, which fails if `package.json` and `package-lock.json` are out of sync.
+- Optional preflight: `cd worker ; npm ci --dry-run` to confirm lock file parity before committing.
+
 ## Architecture
 
 ```
@@ -28,16 +39,17 @@ worker/
 
 ## Endpoints
 
-| Endpoint    | Method | Auth          | Rate Limit   | Purpose                          |
-|-------------|--------|---------------|--------------|----------------------------------|
-| `/health`   | GET    | none          | none         | Health check for Render          |
-| `/`         | GET    | none          | none         | Service info                     |
-| `/search`   | POST   | HMAC-SHA256   | 50/15min     | Browser-based DOJ search via Playwright |
-| `/analyze`  | POST   | HMAC-SHA256   | 60/15min     | PDF fetch + parse via Playwright |
+| Endpoint   | Method | Auth        | Rate Limit | Purpose                                 |
+| ---------- | ------ | ----------- | ---------- | --------------------------------------- |
+| `/health`  | GET    | none        | none       | Health check for Render                 |
+| `/`        | GET    | none        | none       | Service info                            |
+| `/search`  | POST   | HMAC-SHA256 | 50/15min   | Browser-based DOJ search via Playwright |
+| `/analyze` | POST   | HMAC-SHA256 | 60/15min   | PDF fetch + parse via Playwright        |
 
 ## HMAC Authentication
 
 Every `/search` and `/analyze` request must include:
+
 - `X-Worker-Signature` header (or `Authorization: Bearer <signature>`)
 - Signature = HMAC-SHA256 of `JSON.stringify(req.body)` using `WORKER_SHARED_SECRET`
 - Verification uses `crypto.timingSafeEqual()` — NEVER direct string comparison
@@ -53,6 +65,7 @@ Every `/search` and `/analyze` request must include:
 ## Playwright Patterns
 
 ### /search — DOJ Search with Akamai Bypass
+
 1. Launch headless Chromium
 2. Visit `https://www.justice.gov/` first (acquires Akamai session cookies)
 3. Wait 2s for bot-detection scripts
@@ -60,6 +73,7 @@ Every `/search` and `/analyze` request must include:
 5. Retry up to 3x with exponential backoff (1.5s × attempt)
 
 ### /analyze — PDF Fetch + Parse
+
 1. Launch headless Chromium
 2. Navigate to PDF URL
 3. Handle age-verify interstitial (click through if present)

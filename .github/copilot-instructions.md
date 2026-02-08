@@ -61,6 +61,12 @@ Every code change follows TDD. The strategy depends on the module type:
 3. Implement in `worker/src/`
 4. Refactor; re-run tests
 
+### `worker/` — Dependency Sync Rule
+
+- `worker/` has its own `package.json` and `package-lock.json`.
+- If you change `worker/package.json`, you MUST run `cd worker ; npm install` and commit the updated `worker/package-lock.json`.
+- Docker builds use `npm ci`, which fails when the lock file is out of sync.
+
 ### Test File Naming
 
 - Unit and component tests: `*.test.ts` / `*.test.tsx`

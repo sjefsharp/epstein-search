@@ -57,6 +57,11 @@ If adding a new API route:
 - If calling the worker: HMAC-sign the request body
 - If accepting URLs: enforce HTTPS + justice.gov domain whitelist
 
+## Worker Dependency Requirement
+
+- If a feature changes `worker/package.json`, run `cd worker ; npm install` and commit the updated `worker/package-lock.json`.
+- Optional preflight: `cd worker ; npm ci --dry-run` to verify lock file parity.
+
 ## Output Rules
 
 - Do NOT create new markdown files (plans, implementation notes, fix logs) in the repo
