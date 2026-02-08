@@ -140,6 +140,7 @@ worker/src/index.ts     → Express 5, HMAC auth, Playwright PDF fetch + pdf-par
 
 - NEVER create supporting markdown files (plans, logs, setup guides, fix notes) in the repository
 - If scratch documentation is needed during a task, create it under `temp/` (gitignored)
+- Claude Code CLI may create `tmpclaude*` marker files in the repo root; delete them if found (gitignored)
 - Only update existing docs in `docs/` when the documented behavior actually changes
 - Essential docs structure: `README.md`, `AGENTS.md` files, `docs/*.md`, `.github/*.md`
 
