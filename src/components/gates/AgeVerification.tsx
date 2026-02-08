@@ -11,18 +11,37 @@ export default function AgeVerification() {
   const t = useTranslations("AgeVerification");
   const { verified, confirmAge } = useAgeStore();
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const storedVerified = (() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const raw = localStorage.getItem("epstein-age-storage");
+      if (!raw) return false;
+      const parsed = JSON.parse(raw) as { state?: { verified?: boolean } };
+      return parsed?.state?.verified === true;
+    } catch {
+      return false;
+    }
+  })();
 
   useEffect(() => {
-    if (!verified && buttonRef.current) {
+    if (storedVerified && !verified) {
+      confirmAge();
+    }
+  }, [confirmAge, storedVerified, verified]);
+
+  useEffect(() => {
+    if (!verified && !storedVerified && buttonRef.current) {
       buttonRef.current.focus();
     }
-  }, [verified]);
+  }, [storedVerified, verified]);
 
   if (verified) return null;
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-sm"
+      className={`fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-sm${
+        storedVerified ? " pointer-events-none" : ""
+      }`}
       role="alertdialog"
       aria-modal="true"
       aria-labelledby="age-gate-title"

@@ -51,18 +51,36 @@ const ERROR_MESSAGES: Record<
   },
 };
 
+const getErrorMessages = (locale: SupportedLocale) => {
+  switch (locale) {
+    case "nl":
+      return ERROR_MESSAGES.nl;
+    case "fr":
+      return ERROR_MESSAGES.fr;
+    case "de":
+      return ERROR_MESSAGES.de;
+    case "es":
+      return ERROR_MESSAGES.es;
+    case "pt":
+      return ERROR_MESSAGES.pt;
+    case "en":
+    default:
+      return ERROR_MESSAGES.en;
+  }
+};
+
 export const runtime = "nodejs"; // Node.js runtime for better stability
 
 export async function POST(request: NextRequest) {
   let selectedLocale: SupportedLocale = "en";
-  let messages = ERROR_MESSAGES[selectedLocale];
+  let messages = getErrorMessages(selectedLocale);
 
   try {
     const encoder = new TextEncoder();
     const body = await request.json();
     const { searchTerm, documents, locale } = body;
     selectedLocale = normalizeLocale(locale);
-    messages = ERROR_MESSAGES[selectedLocale];
+    messages = getErrorMessages(selectedLocale);
 
     if (!searchTerm || !documents || !Array.isArray(documents)) {
       return new Response(
@@ -80,28 +98,18 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          await generateSummary(
-            searchTerm,
-            documents,
-            selectedLocale,
-            (text) => {
-              // Stream each chunk as it arrives
-              const chunk = encoder.encode(
-                `data: ${JSON.stringify({ text })}\n\n`,
-              );
-              controller.enqueue(chunk);
-            },
-          );
+          await generateSummary(searchTerm, documents, selectedLocale, (text) => {
+            // Stream each chunk as it arrives
+            const chunk = encoder.encode(`data: ${JSON.stringify({ text })}\n\n`);
+            controller.enqueue(chunk);
+          });
 
           // Send completion signal
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           controller.close();
         } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : messages.summaryFailed;
-          const errorChunk = encoder.encode(
-            `data: ${JSON.stringify({ error: errorMessage })}\n\n`,
-          );
+          const errorMessage = error instanceof Error ? error.message : messages.summaryFailed;
+          const errorChunk = encoder.encode(`data: ${JSON.stringify({ error: errorMessage })}\n\n`);
           controller.enqueue(errorChunk);
           controller.close();
         }
@@ -116,7 +124,11 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Summarize API error:", error);
+    process.stderr.write(
+      `Summarize API error: ${
+        error instanceof Error ? (error.stack ?? error.message) : String(error)
+      }\n`,
+    );
 
     return new Response(
       JSON.stringify({

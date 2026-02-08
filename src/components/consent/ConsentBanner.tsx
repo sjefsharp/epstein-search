@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { updateConsent, setConsentDefault } from "@/lib/consent";
-import { useConsentStore } from "@/store/consent-store";
+import { useConsentStore, type ConsentStatus } from "@/store/consent-store";
 
 const POLICY_VERSION_FALLBACK = "1.0.0";
 
@@ -25,6 +25,7 @@ export default function ConsentBanner({ locale, policyVersion }: Props) {
     adsConsent,
     draftAdsConsent,
     preferencesOpen,
+    hasHydrated,
     setConsent,
     setDraftAdsConsent,
     setLocale,
@@ -65,10 +66,7 @@ export default function ConsentBanner({ locale, policyVersion }: Props) {
     return "update";
   };
 
-  const logConsent = async (
-    type: ConsentEventType,
-    nextAdsConsent: boolean,
-  ) => {
+  const logConsent = async (type: ConsentEventType, nextAdsConsent: boolean) => {
     const payload = {
       eventType: type,
       adsConsent: nextAdsConsent,
@@ -102,8 +100,22 @@ export default function ConsentBanner({ locale, policyVersion }: Props) {
     setIsSubmitting(false);
   };
 
+  const shouldDelayForHydration = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const raw = localStorage.getItem("epstein-consent-storage");
+      if (!raw) return false;
+      const parsed = JSON.parse(raw) as { state?: { status?: ConsentStatus } };
+      const storedStatus = parsed?.state?.status;
+      return storedStatus !== undefined && storedStatus !== "unknown";
+    } catch {
+      return false;
+    }
+  }, []);
+
   const privacyHref = useMemo(() => `/${locale}/privacy`, [locale]);
 
+  if (!hasHydrated && shouldDelayForHydration) return null;
   if (!shouldRender) return null;
 
   return (
@@ -121,11 +133,7 @@ export default function ConsentBanner({ locale, policyVersion }: Props) {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            onClick={() => applyConsent(true)}
-            disabled={isSubmitting}
-          >
+          <Button type="button" onClick={() => applyConsent(true)} disabled={isSubmitting}>
             {t("accept")}
           </Button>
           <Button
@@ -151,9 +159,7 @@ export default function ConsentBanner({ locale, policyVersion }: Props) {
           <div className="rounded-lg border border-border bg-card/80 p-4 text-sm text-foreground shadow-sm">
             <div className="flex flex-col gap-2">
               <p className="font-semibold">{t("preferencesTitle")}</p>
-              <p className="text-xs text-muted-foreground">
-                {t("preferencesDescription")}
-              </p>
+              <p className="text-xs text-muted-foreground">{t("preferencesDescription")}</p>
               <label className="flex items-center gap-3 text-sm">
                 <input
                   type="checkbox"
@@ -173,11 +179,7 @@ export default function ConsentBanner({ locale, policyVersion }: Props) {
                 {t("save")}
               </Button>
               {status !== "unknown" ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={closePreferences}
-                >
+                <Button type="button" variant="ghost" onClick={closePreferences}>
                   {t("close")}
                 </Button>
               ) : null}

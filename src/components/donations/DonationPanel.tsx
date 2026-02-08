@@ -44,14 +44,8 @@ export default function DonationPanel() {
 
   const hasAddresses = btc.length > 0 || eth.length > 0;
 
-  const btcLabel = useMemo(
-    () => (btc.length > 0 ? btc : t("btcAddressNotSet")),
-    [btc, t],
-  );
-  const ethLabel = useMemo(
-    () => (eth.length > 0 ? eth : t("ethAddressNotSet")),
-    [eth, t],
-  );
+  const btcLabel = useMemo(() => (btc.length > 0 ? btc : t("btcAddressNotSet")), [btc, t]);
+  const ethLabel = useMemo(() => (eth.length > 0 ? eth : t("ethAddressNotSet")), [eth, t]);
 
   return (
     <Card className="p-5 space-y-5 border border-border/70 bg-card/80 backdrop-blur">
@@ -76,7 +70,12 @@ export default function DonationPanel() {
           </div>
           {btc && (
             <div className="flex justify-center rounded-xl border bg-background p-4">
-              <QRCodeCanvas value={btc} size={140} />
+              <QRCodeCanvas
+                value={btc}
+                size={140}
+                aria-label={t("bitcoinQrLabel")}
+                title={t("bitcoinQrLabel")}
+              />
             </div>
           )}
         </div>
@@ -96,15 +95,18 @@ export default function DonationPanel() {
           </div>
           {eth && (
             <div className="flex justify-center rounded-xl border bg-background p-4">
-              <QRCodeCanvas value={eth} size={140} />
+              <QRCodeCanvas
+                value={eth}
+                size={140}
+                aria-label={t("ethereumQrLabel")}
+                title={t("ethereumQrLabel")}
+              />
             </div>
           )}
         </div>
       </div>
 
-      {!hasAddresses && (
-        <p className="text-xs text-muted-foreground">{t("addAddressNote")}</p>
-      )}
+      {!hasAddresses && <p className="text-xs text-muted-foreground">{t("addAddressNote")}</p>}
     </Card>
   );
 }

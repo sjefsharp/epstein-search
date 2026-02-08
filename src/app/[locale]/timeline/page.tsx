@@ -84,10 +84,6 @@ export default async function TimelinePage({ params }: { params: Promise<{ local
         <div className="mt-10">
           <AdCard slotId="9328638488" className="min-h-[250px]" />
         </div>
-
-        <div className="mt-8">
-          <Breadcrumbs />
-        </div>
       </div>
     </div>
   );

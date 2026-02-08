@@ -33,7 +33,10 @@ export default function ChatInput({ onSend, disabled = false }: ChatInputProps) 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2 items-end p-4 border-t bg-background">
+    <form
+      onSubmit={handleSubmit}
+      className="flex items-end gap-2 border-t bg-background p-2 sm:p-3"
+    >
       <label htmlFor="search-query" className="sr-only">
         {t("placeholder")}
       </label>
@@ -45,14 +48,14 @@ export default function ChatInput({ onSend, disabled = false }: ChatInputProps) 
         onKeyDown={handleKeyDown}
         placeholder={t("placeholder")}
         disabled={disabled}
-        className="min-h-[60px] max-h-[200px] resize-none"
-        rows={2}
+        className="min-h-[44px] max-h-[200px] resize-none text-sm sm:min-h-[52px] sm:text-base"
+        rows={1}
       />
       <Button
         type="submit"
         disabled={disabled || !input.trim()}
         size="icon"
-        className="h-[60px] w-[60px] shrink-0"
+        className="h-[44px] w-[44px] shrink-0 sm:h-[52px] sm:w-[52px]"
         aria-label={t("searchButton")}
       >
         {disabled ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}

@@ -37,10 +37,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const canonicalUrl = `${baseUrl}/${locale}`;
 
   // Generate hreflang alternates
-  const languages: Record<string, string> = {};
-  routing.locales.forEach((loc) => {
-    languages[loc] = `${baseUrl}/${loc}`;
-  });
+  const languages = Object.fromEntries(
+    routing.locales.map((loc) => [loc, `${baseUrl}/${loc}`] as const),
+  );
 
   return {
     metadataBase: new URL(baseUrl),
@@ -213,7 +212,9 @@ export default async function LocaleLayout({
             {t("skipToMain")}
           </a>
           <Header />
-          <main id="main-content">{children}</main>
+          <main id="main-content" className="relative z-0">
+            {children}
+          </main>
           <Footer />
           {adsenseId ? (
             <ConsentBanner locale={locale} policyVersion={consentPolicyVersion} />

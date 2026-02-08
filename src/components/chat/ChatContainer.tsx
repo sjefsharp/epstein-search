@@ -247,10 +247,10 @@ export default function ChatContainer() {
 
   return (
     <section className="flex h-full flex-col rounded-3xl border bg-card/80 backdrop-blur">
-      <header className="flex items-center justify-between border-b px-6 py-4">
+      <header className="flex items-center justify-between border-b px-4 py-2 sm:px-5 sm:py-3">
         <div className="space-y-1">
-          <h2 className="text-2xl font-semibold tracking-tight">{t("headerTitle")}</h2>
-          <p className="text-sm text-muted-foreground">{t("headerSubtitle")}</p>
+          <h2 className="text-lg font-semibold tracking-tight sm:text-xl">{t("headerTitle")}</h2>
+          <p className="text-xs text-muted-foreground sm:text-sm">{t("headerSubtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-xs">
@@ -285,7 +285,7 @@ export default function ChatContainer() {
 
       <ChatInput onSend={handleSend} disabled={isLoading} />
 
-      <div className="px-6 pb-4 text-xs text-muted-foreground">{t("tip")}</div>
+      <div className="hidden px-6 pb-4 text-xs text-muted-foreground sm:block">{t("tip")}</div>
     </section>
   );
 }

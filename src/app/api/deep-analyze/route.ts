@@ -72,9 +72,27 @@ const ERROR_MESSAGES: Record<
   },
 };
 
+const getErrorMessages = (locale: SupportedLocale) => {
+  switch (locale) {
+    case "nl":
+      return ERROR_MESSAGES.nl;
+    case "fr":
+      return ERROR_MESSAGES.fr;
+    case "de":
+      return ERROR_MESSAGES.de;
+    case "es":
+      return ERROR_MESSAGES.es;
+    case "pt":
+      return ERROR_MESSAGES.pt;
+    case "en":
+    default:
+      return ERROR_MESSAGES.en;
+  }
+};
+
 export async function POST(request: NextRequest) {
   let selectedLocale: SupportedLocale = "en";
-  let messages = ERROR_MESSAGES[selectedLocale];
+  let messages = getErrorMessages(selectedLocale);
 
   try {
     // Rate limiting
@@ -99,7 +117,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     selectedLocale = normalizeLocale(body?.locale);
-    messages = ERROR_MESSAGES[selectedLocale];
+    messages = getErrorMessages(selectedLocale);
 
     // Input validation
     const validation = analyzeSchema.safeParse(body);
@@ -133,25 +151,20 @@ export async function POST(request: NextRequest) {
     const payload = JSON.stringify({ fileUri });
     const signature = generateWorkerSignature(payload, workerSecret);
 
-    const workerResponse = await fetch(
-      `${workerUrl.replace(/\/$/, "")}/analyze`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Worker-Signature": signature,
-          Authorization: `Bearer ${signature}`,
-        },
-        body: payload,
-        signal: AbortSignal.timeout(60000), // 60s timeout for PDF processing
+    const workerResponse = await fetch(`${workerUrl.replace(/\/$/, "")}/analyze`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Worker-Signature": signature,
+        Authorization: `Bearer ${signature}`,
       },
-    );
+      body: payload,
+      signal: AbortSignal.timeout(60000), // 60s timeout for PDF processing
+    });
 
     if (!workerResponse.ok) {
       const errorText = await workerResponse.text();
-      throw new Error(
-        `Worker fout (${workerResponse.status}): ${errorText || "Onbekend"}`,
-      );
+      throw new Error(`Worker fout (${workerResponse.status}): ${errorText || "Onbekend"}`);
     }
 
     const workerData = (await workerResponse.json()) as {
@@ -170,9 +183,7 @@ export async function POST(request: NextRequest) {
             searchTerm,
             selectedLocale,
             (text) => {
-              const chunk = encoder.encode(
-                `data: ${JSON.stringify({ text })}\n\n`,
-              );
+              const chunk = encoder.encode(`data: ${JSON.stringify({ text })}\n\n`);
               controller.enqueue(chunk);
             },
           );
@@ -180,11 +191,8 @@ export async function POST(request: NextRequest) {
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           controller.close();
         } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : messages.analyzeFailed;
-          const errorChunk = encoder.encode(
-            `data: ${JSON.stringify({ error: errorMessage })}\n\n`,
-          );
+          const errorMessage = error instanceof Error ? error.message : messages.analyzeFailed;
+          const errorChunk = encoder.encode(`data: ${JSON.stringify({ error: errorMessage })}\n\n`);
           controller.enqueue(errorChunk);
           controller.close();
         }
@@ -199,7 +207,11 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Deep analyze API error:", error);
+    process.stderr.write(
+      `Deep analyze API error: ${
+        error instanceof Error ? (error.stack ?? error.message) : String(error)
+      }\n`,
+    );
 
     const isDevelopment = process.env.NODE_ENV === "development";
     const errorBody = sanitizeError(error, isDevelopment);
