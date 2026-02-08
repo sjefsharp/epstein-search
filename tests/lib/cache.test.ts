@@ -1,5 +1,3 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-
 const redisMock = {
   get: vi.fn(),
   setex: vi.fn(),
@@ -48,8 +46,7 @@ describe("cache", () => {
     process.env.UPSTASH_REDIS_REST_URL = "http://localhost";
     process.env.UPSTASH_REDIS_REST_TOKEN = "token";
 
-    const { getCachedSearch, setCachedSearch } =
-      await import("../../src/lib/cache");
+    const { getCachedSearch, setCachedSearch } = await import("../../src/lib/cache");
 
     redisMock.get.mockResolvedValue({
       total: 1,

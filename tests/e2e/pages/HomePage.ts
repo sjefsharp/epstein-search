@@ -6,6 +6,7 @@ export default class HomePage extends BasePage {
   readonly searchButton: Locator;
   readonly heading: Locator;
   readonly rejectConsentButton: Locator;
+  readonly ageConfirmButton: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -17,10 +18,19 @@ export default class HomePage extends BasePage {
     this.rejectConsentButton = page.getByRole("button", {
       name: /reject ads cookies|reject/i,
     });
+    this.ageConfirmButton = page.getByRole("button", {
+      name: /18|I am 18/i,
+    });
   }
 
   async gotoHome(locale: string = "en") {
     await this.goto(`/${locale}`);
+  }
+
+  async dismissAgeGateIfVisible() {
+    if (await this.ageConfirmButton.count()) {
+      await this.ageConfirmButton.first().click();
+    }
   }
 
   async dismissConsentIfVisible() {

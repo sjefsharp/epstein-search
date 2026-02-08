@@ -1,4 +1,3 @@
-import { describe, it, expect, vi } from "vitest";
 import { checkRateLimit, getClientIp } from "../../src/lib/ratelimit";
 
 describe("ratelimit", () => {

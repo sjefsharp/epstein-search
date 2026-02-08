@@ -70,9 +70,7 @@
     "technology": "Usamos o modelo Llama 3.3 70B da Groq para resumos IA, Playwright para scraping de documentos e Redis para cache. A interface de busca é construída com Next.js e implantada no Vercel.",
     "privacyTitle": "Privacidade e Transparência",
     "privacy": "Não rastreamos usuários, não vendemos dados nem exigimos contas. Todas as buscas são anônimas. A limitação de taxa previne abusos mantendo o serviço gratuito para todos.",
-    "socialProfiles": [
-      "https://github.com/epstein-search"
-    ]
+    "socialProfiles": ["https://github.com/epstein-search"]
   },
   "PrivacyPage": {
     "title": "Política de Privacidade | Busca Arquivos Epstein DOJ",
@@ -141,7 +139,8 @@
     "home": "Início",
     "about": "Sobre",
     "privacy": "Privacidade",
-    "faq": "Perguntas Frequentes"
+    "faq": "Perguntas Frequentes",
+    "menu": "Menu"
   },
   "ConsentBanner": {
     "bannerAriaLabel": "Opções de consentimento de cookies",
@@ -171,5 +170,24 @@
     "rateLimitExceeded": "Limite de taxa excedido. Por favor tente em alguns minutos.",
     "networkError": "Erro de rede. Verifique sua conexão.",
     "invalidQuery": "Consulta de busca inválida. Por favor tente outro termo de busca."
+  },
+  "ThemeToggle": {
+    "light": "Claro",
+    "dark": "Escuro",
+    "system": "Sistema",
+    "label": "Tema"
+  },
+  "AgeVerification": {
+    "title": "Verificação de idade necessária",
+    "description": "Este site contém documentos legais sensíveis relacionados a casos criminais. Você deve ter 18 anos ou mais para acessar este conteúdo.",
+    "confirmButton": "Tenho 18 anos ou mais",
+    "underageNotice": "Se você tem menos de 18 anos, por favor saia deste site."
+  },
+  "Footer": {
+    "copyright": "\u00a9 2026 DOJ Epstein Files Search",
+    "disclaimer": "Não afiliado ao Department of Justice dos EUA."
+  },
+  "Breadcrumbs": {
+    "label": "Navegação de migalhas de pão"
   }
 }

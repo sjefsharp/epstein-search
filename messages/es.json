@@ -139,7 +139,8 @@
     "home": "Inicio",
     "about": "Acerca de",
     "privacy": "Privacidad",
-    "faq": "Preguntas Frecuentes"
+    "faq": "Preguntas Frecuentes",
+    "menu": "Menú"
   },
   "ConsentBanner": {
     "bannerAriaLabel": "Opciones de consentimiento de cookies",
@@ -169,5 +170,24 @@
     "rateLimitExceeded": "Límite de velocidad excedido. Por favor intente en unos minutos.",
     "networkError": "Error de red. Verifique su conexión.",
     "invalidQuery": "Consulta de búsqueda inválida. Por favor intente otro término de búsqueda."
+  },
+  "ThemeToggle": {
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema",
+    "label": "Tema"
+  },
+  "AgeVerification": {
+    "title": "Verificación de edad requerida",
+    "description": "Este sitio web contiene documentos legales sensibles relacionados con casos criminales. Debe tener 18 años o más para acceder a este contenido.",
+    "confirmButton": "Tengo 18 años o más",
+    "underageNotice": "Si es menor de 18 años, por favor abandone este sitio web."
+  },
+  "Footer": {
+    "copyright": "\u00a9 2026 DOJ Epstein Files Search",
+    "disclaimer": "No afiliado al Department of Justice de EE.UU."
+  },
+  "Breadcrumbs": {
+    "label": "Navegación de migas de pan"
   }
 }

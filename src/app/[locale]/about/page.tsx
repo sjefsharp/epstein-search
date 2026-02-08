@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import Breadcrumbs from "@/components/navigation/Breadcrumbs";
 
 export async function generateMetadata({
   params,
@@ -15,15 +16,10 @@ export async function generateMetadata({
   };
 }
 
-export default async function AboutPage({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
+export default async function AboutPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "AboutPage" });
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BASE_URL || "https://epstein-search.vercel.app";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://epstein-search.vercel.app";
 
   const socialProfiles = t.raw("socialProfiles") as string[];
 
@@ -39,19 +35,17 @@ export default async function AboutPage({
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(17,24,39,0.15),_transparent_55%),linear-gradient(180deg,_#f8fafc_0%,_#eef2f6_40%,_#e5e7eb_100%)] dark:bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.08),_transparent_50%),linear-gradient(180deg,_#0f172a_0%,_#0b1120_100%)]">
-      <main className="mx-auto w-full max-w-4xl px-6 py-12">
+      <div className="mx-auto w-full max-w-4xl px-6 py-12">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
 
-        <header className="mb-8 space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-            {t("heading")}
-          </h1>
-          <p className="text-sm text-muted-foreground md:text-base">
-            {t("intro")}
-          </p>
+        <Breadcrumbs />
+
+        <header className="mb-8 mt-4 space-y-2">
+          <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">{t("heading")}</h1>
+          <p className="text-sm text-muted-foreground md:text-base">{t("intro")}</p>
         </header>
 
         <div className="space-y-8 text-sm text-foreground">
@@ -75,7 +69,11 @@ export default async function AboutPage({
             <p className="text-muted-foreground">{t("privacy")}</p>
           </section>
         </div>
-      </main>
+
+        <div className="mt-8">
+          <Breadcrumbs />
+        </div>
+      </div>
     </div>
   );
 }

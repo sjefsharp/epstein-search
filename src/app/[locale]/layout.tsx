@@ -5,6 +5,8 @@ import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import Header from "@/components/navigation/Header";
+import Footer from "@/components/navigation/Footer";
+import AgeVerification from "@/components/gates/AgeVerification";
 import ConsentBanner from "@/components/consent/ConsentBanner";
 import AdSenseLoader from "@/components/consent/AdSenseLoader";
 import "./globals.css";
@@ -31,8 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Metadata" });
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BASE_URL || "https://epstein-search.vercel.app";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://epstein-search.vercel.app";
   const canonicalUrl = `${baseUrl}/${locale}`;
 
   // Generate hreflang alternates
@@ -117,11 +118,9 @@ export default async function LocaleLayout({
 
   const messages = await getMessages();
   const t = await getTranslations({ locale, namespace: "Common" });
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BASE_URL || "https://epstein-search.vercel.app";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://epstein-search.vercel.app";
   const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_ID;
-  const consentPolicyVersion =
-    process.env.NEXT_PUBLIC_CONSENT_POLICY_VERSION || "1.0.0";
+  const consentPolicyVersion = process.env.NEXT_PUBLIC_CONSENT_POLICY_VERSION || "1.0.0";
 
   // JSON-LD structured data
   const jsonLd = {
@@ -188,11 +187,25 @@ export default async function LocaleLayout({
             }}
           />
         ) : null}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(){
+                try {
+                  var raw = localStorage.getItem("epstein-theme-storage");
+                  var theme = raw ? JSON.parse(raw).state.theme : "system";
+                  var isDark = theme === "dark" ||
+                    (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+                  if (isDark) document.documentElement.classList.add("dark");
+                } catch(e) {}
+              })();
+            `,
+          }}
+        />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}>
         <NextIntlClientProvider messages={messages}>
+          <AgeVerification />
           <a
             href="#main-content"
             className="sr-only focus:not-sr-only focus:fixed focus:left-6 focus:top-6 focus:z-50 focus:rounded-full focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:shadow"
@@ -201,11 +214,9 @@ export default async function LocaleLayout({
           </a>
           <Header />
           <main id="main-content">{children}</main>
+          <Footer />
           {adsenseId ? (
-            <ConsentBanner
-              locale={locale}
-              policyVersion={consentPolicyVersion}
-            />
+            <ConsentBanner locale={locale} policyVersion={consentPolicyVersion} />
           ) : null}
           {adsenseId ? <AdSenseLoader adsenseId={adsenseId} /> : null}
         </NextIntlClientProvider>

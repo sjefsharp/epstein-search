@@ -1,5 +1,3 @@
-import { beforeAll, describe, expect, it } from "vitest";
-
 let workerModule: typeof import("../../worker/src/index");
 
 beforeAll(async () => {

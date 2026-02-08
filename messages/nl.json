@@ -139,7 +139,8 @@
     "home": "Home",
     "about": "Over",
     "privacy": "Privacy",
-    "faq": "Veelgestelde Vragen"
+    "faq": "Veelgestelde Vragen",
+    "menu": "Menu"
   },
   "ConsentBanner": {
     "bannerAriaLabel": "Cookie-toestemming opties",
@@ -169,5 +170,24 @@
     "rateLimitExceeded": "Rate limiet bereikt. Probeer het over een paar minuten opnieuw.",
     "networkError": "Netwerkfout. Controleer uw verbinding.",
     "invalidQuery": "Ongeldige zoekopdracht. Probeer een andere zoekterm."
+  },
+  "ThemeToggle": {
+    "light": "Licht",
+    "dark": "Donker",
+    "system": "Systeem",
+    "label": "Thema"
+  },
+  "AgeVerification": {
+    "title": "Leeftijdsverificatie vereist",
+    "description": "Deze website bevat gevoelige juridische documenten gerelateerd aan strafzaken. U moet 18 jaar of ouder zijn om toegang te krijgen tot deze inhoud.",
+    "confirmButton": "Ik ben 18 jaar of ouder",
+    "underageNotice": "Als u jonger bent dan 18, verlaat dan deze website."
+  },
+  "Footer": {
+    "copyright": "\u00a9 2026 DOJ Epstein Files Search",
+    "disclaimer": "Niet gelieerd aan het U.S. Department of Justice."
+  },
+  "Breadcrumbs": {
+    "label": "Broodkruimelnavigatie"
   }
 }

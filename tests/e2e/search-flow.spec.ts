@@ -45,10 +45,7 @@ test("search flow renders results and summary", async ({ page }) => {
     }),
   );
 
-  const sseBody = [
-    'data: {"text":"Summary chunk"}\n\n',
-    "data: [DONE]\n\n",
-  ].join("");
+  const sseBody = ['data: {"text":"Summary chunk"}\n\n', "data: [DONE]\n\n"].join("");
 
   await page.route("**/api/summarize", (route) =>
     route.fulfill({
@@ -59,6 +56,7 @@ test("search flow renders results and summary", async ({ page }) => {
   );
 
   await home.gotoHome("en");
+  await home.dismissAgeGateIfVisible();
   await home.dismissConsentIfVisible();
   await home.expectLoaded();
 

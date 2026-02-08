@@ -1,4 +1,3 @@
-import { describe, it, expect, beforeEach } from "vitest";
 import {
   generateWorkerSignature,
   verifyWorkerSignature,
@@ -51,11 +50,7 @@ describe("security utilities", () => {
     });
 
     it("rejects invalid signature", () => {
-      const isValid = verifyWorkerSignature(
-        testPayload,
-        "invalid-signature",
-        testSecret,
-      );
+      const isValid = verifyWorkerSignature(testPayload, "invalid-signature", testSecret);
 
       expect(isValid).toBe(false);
     });
@@ -70,11 +65,7 @@ describe("security utilities", () => {
     it("rejects signature for different payload", () => {
       const signature = generateWorkerSignature(testPayload, testSecret);
       const differentPayload = JSON.stringify({ query: "different" });
-      const isValid = verifyWorkerSignature(
-        differentPayload,
-        signature,
-        testSecret,
-      );
+      const isValid = verifyWorkerSignature(differentPayload, signature, testSecret);
 
       expect(isValid).toBe(false);
     });

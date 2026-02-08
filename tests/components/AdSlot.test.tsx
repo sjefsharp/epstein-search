@@ -1,7 +1,6 @@
 /// <reference types="@testing-library/jest-dom" />
 // @vitest-environment jsdom
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { render } from "@testing-library/react";
 import AdSlot from "../../src/components/ads/AdSlot";
 import { useConsentStore } from "../../src/store/consent-store";
