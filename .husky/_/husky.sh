@@ -1,9 +1,9 @@
-echo "husky - DEPRECATED
-
-Please remove the following two lines from $0:
-
 #!/usr/bin/env sh
-. \"\$(dirname -- \"\$0\")/_/husky.sh\"
+if [ -z "$HUSKY" ]; then
+  export HUSKY=1
+fi
 
-They WILL FAIL in v10.0.0
-"
+hook_name="$(basename -- "$0")"
+if [ -n "$HUSKY_DEBUG" ]; then
+  echo "husky > running $hook_name" >&2
+fi
