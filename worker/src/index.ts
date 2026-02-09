@@ -1,5 +1,5 @@
 import express from "express";
-import type { Request, Response } from "express";
+import type { Express, Request, Response } from "express";
 import { chromium, type BrowserContextOptions, type LaunchOptions, type Page } from "playwright";
 import * as pdfParseModule from "pdf-parse";
 import helmet from "helmet";
@@ -17,6 +17,7 @@ type PdfParseResult = {
 
 export const STEALTH_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+export const PREWARM_WAIT_UNTIL = "domcontentloaded" as const;
 const STEALTH_HEADERS = {
   "Accept-Language": "en-US,en;q=0.9",
   "sec-ch-ua": '"Chromium";v="131", "Google Chrome";v="131", "Not_A Brand";v="24"',
@@ -85,7 +86,7 @@ const createStealthContext = async (browser: LaunchedBrowser) => {
 
 const prewarmAkamai = async (page: Page) => {
   await page.goto("https://www.justice.gov/", {
-    waitUntil: "networkidle",
+    waitUntil: PREWARM_WAIT_UNTIL,
     timeout: 30000,
   });
 
@@ -99,6 +100,12 @@ const pdfParse =
   (pdfParseModule as unknown as PdfParseFn);
 
 const app = express();
+
+export const applyTrustProxy = (target: Pick<Express, "set">) => {
+  target.set("trust proxy", 1);
+};
+
+applyTrustProxy(app);
 
 const analyzeLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
