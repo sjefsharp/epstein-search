@@ -99,6 +99,10 @@ const pdfParse =
   (pdfParseModule as unknown as { default?: PdfParseFn }).default ??
   (pdfParseModule as unknown as PdfParseFn);
 
+type TrustProxyTarget = {
+  set: (setting: string, value: number) => unknown;
+};
+
 const app = express();
 
 export const applyTrustProxy = (target: Pick<Express, "set">) => {
