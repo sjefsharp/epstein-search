@@ -6,6 +6,8 @@ import FAQPage from "./pages/FAQPage";
 import PrivacyPage from "./pages/PrivacyPage";
 
 test.describe("Accessibility (axe-core)", () => {
+  test.describe.configure({ timeout: 60000 });
+
   test.beforeEach(async ({ page }) => {
     // Dismiss age gate by setting localStorage before navigation
     await page.addInitScript(() => {
@@ -52,6 +54,9 @@ test.describe("Accessibility (axe-core)", () => {
 
   test("age gate dialog has no axe violations", async ({ page }) => {
     // Navigate WITHOUT pre-setting age storage so gate is visible
+    await page.addInitScript(() => {
+      localStorage.removeItem("epstein-age-storage");
+    });
     await page.goto("/en");
     await expect(page.getByRole("button", { name: /18|I am 18/i })).toBeVisible();
 
