@@ -24,6 +24,10 @@
 ## Checklist
 
 - [ ] I ran `npm run lint`
+- [ ] I ran `npm run typecheck`
 - [ ] I ran `npm run test:run`
+- [ ] I ran `npm run test:coverage`
 - [ ] I added/updated tests when needed
 - [ ] I updated docs where needed
+- [ ] I will use **squash and merge** after CI passes
+- [ ] I will delete the local branch after the PR is merged

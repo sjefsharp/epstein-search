@@ -52,8 +52,9 @@ export default function AdCard({
     const timeout = window.setTimeout(() => {
       const container = insRef.current;
       const iframe = container?.querySelector("iframe");
-      const hasHeight = (container?.offsetHeight ?? 0) > 0;
-      if (!iframe && !hasHeight) {
+      const ins = container?.querySelector("ins.adsbygoogle");
+      const adStatus = ins?.getAttribute("data-ad-status");
+      if (!iframe && adStatus !== "filled") {
         setIsVisible(false);
       }
     }, 5000);

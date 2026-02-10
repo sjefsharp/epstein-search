@@ -73,4 +73,14 @@ describe("AgeVerification", () => {
 
     expect(screen.getByText(/under 18/i)).toBeInTheDocument();
   });
+
+  it("uses absolute positioning to scope the overlay", async () => {
+    const { default: AgeVerification } = await import("../../src/components/gates/AgeVerification");
+
+    renderWithIntl(<AgeVerification />);
+
+    const dialog = screen.getByRole("alertdialog");
+    expect(dialog).toHaveClass("absolute");
+    expect(dialog).not.toHaveClass("fixed");
+  });
 });

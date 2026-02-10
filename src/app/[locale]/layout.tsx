@@ -6,7 +6,6 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import Header from "@/components/navigation/Header";
 import Footer from "@/components/navigation/Footer";
-import AgeVerification from "@/components/gates/AgeVerification";
 import ConsentBanner from "@/components/consent/ConsentBanner";
 import AdSenseLoader from "@/components/consent/AdSenseLoader";
 import "./globals.css";
@@ -204,7 +203,6 @@ export default async function LocaleLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}>
         <NextIntlClientProvider messages={messages}>
-          <AgeVerification />
           <a
             href="#main-content"
             className="sr-only focus:not-sr-only focus:fixed focus:left-6 focus:top-6 focus:z-50 focus:rounded-full focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:shadow"

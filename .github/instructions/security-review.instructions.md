@@ -8,7 +8,7 @@ OWASP-focused review checklist specific to Epstein Search's attack surface.
 
 ## When to Run
 
-Run this checklist before every commit that touches `src/lib/security.ts`, `src/lib/validation.ts`, `src/app/api/**`, or `worker/**`. After completing the review, follow the standard commit & push workflow from [AGENTS.md](../../AGENTS.md#git-workflow).
+Run this checklist before every commit that touches `src/lib/security.ts`, `src/lib/validation.ts`, `src/app/api/**`, or `worker/**`. After completing the review, follow the full git workflow (branch → verify → commit → push → PR → cleanup) from [AGENTS.md](../../AGENTS.md).
 
 ## A01: Broken Access Control
 

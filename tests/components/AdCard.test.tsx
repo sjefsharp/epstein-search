@@ -2,6 +2,7 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act } from "@testing-library/react";
 import { renderWithIntl } from "../utils/renderWithIntl";
 
 // Mock the consent store
@@ -82,5 +83,26 @@ describe("AdCard", () => {
     const { container } = renderWithIntl(<AdCard slotId="1234567890" />);
 
     expect(container.innerHTML).toBe("");
+  });
+
+  it("hides the card when ads are unfilled", async () => {
+    vi.useFakeTimers();
+    process.env.NEXT_PUBLIC_ADSENSE_ID = "ca-test-id";
+    mockAdsConsent = true;
+    mockStatus = "accepted";
+    mockVerified = true;
+
+    const { default: AdCard } = await import("../../src/components/ads/AdCard");
+
+    const { container } = renderWithIntl(<AdCard slotId="1234567890" />);
+    const ins = container.querySelector("ins.adsbygoogle");
+    ins?.setAttribute("data-ad-status", "unfilled");
+
+    await act(async () => {
+      vi.advanceTimersByTime(5000);
+    });
+
+    expect(container.innerHTML).toBe("");
+    vi.useRealTimers();
   });
 });

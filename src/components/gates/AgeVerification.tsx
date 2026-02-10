@@ -39,7 +39,7 @@ export default function AgeVerification() {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-sm${
+      className={`absolute inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-sm${
         storedVerified ? " pointer-events-none" : ""
       }`}
       role="alertdialog"

@@ -47,6 +47,18 @@ describe("ConsentBanner", () => {
     );
   });
 
+  it("closes the banner after accepting consent", async () => {
+    const user = userEvent.setup();
+
+    renderWithIntl(<ConsentBanner locale="en" policyVersion="1.0.0" />);
+
+    await user.click(screen.getByRole("button", { name: /accept/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: /accept/i })).not.toBeInTheDocument();
+    });
+  });
+
   it("opens preferences panel", async () => {
     const user = userEvent.setup();
 

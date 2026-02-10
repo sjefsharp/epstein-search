@@ -18,22 +18,30 @@ applyTo: "src/**,worker/**"
 
 4. **Refactor** while keeping tests green
 
-5. **Verify before committing**:
+5. **Git workflow (required)**:
 
    ```powershell
+   git checkout -b feat/<short-description>
+
    npm run lint ; npm run typecheck ; npm run test:run
    npm run test:e2e      # only if the feature touches UI flows
    npm run test:coverage # lines ≥80%, statements ≥80%, functions ≥75%, branches ≥60%
-   ```
 
-6. **Commit and push**:
-   ```powershell
    git add -A
    git commit -m "feat: description of the new feature"
    git push origin HEAD
    ```
 
-> **Branch check**: ensure you are on a feature branch, not `main`. Create one with `git checkout -b feat/<short-description>` if needed.
+   Create a PR (GitHub UI or `gh pr create --fill`) using `.github/PULL_REQUEST_TEMPLATE.md`.
+   Merge strategy: **squash and merge** (self-merge allowed after CI passes).
+
+   After the PR is merged:
+
+   ```powershell
+   git checkout main
+   git pull origin main
+   git branch -d <branch-name>
+   ```
 
 ## i18n Requirement
 

@@ -121,7 +121,32 @@ it("should reject invalid input", () => {
 - Set env vars in `setup.ts` — do NOT set them per-test unless testing env-dependent behavior
 - E2E tests use Playwright's `page` fixture — never import Vitest in E2E files
 - Path alias `@/` works in tests via `vitest.config.ts` resolve alias
-- Test-only changes (new test utilities, setup adjustments) commit with `test:` prefix — see root [AGENTS.md](../AGENTS.md#git-workflow) for the full commit & push workflow
+- Test-only changes (new test utilities, setup adjustments) commit with `test:` prefix
+
+### Git Workflow (tests)
+
+```powershell
+git checkout -b test/<short-description>
+
+npm run lint ; npm run typecheck ; npm run test:run
+npm run test:e2e      # only if touching UI flows
+npm run test:coverage # lines ≥80%, statements ≥80%, functions ≥75%, branches ≥60%
+
+git add -A
+git commit -m "test: <description>"
+git push origin HEAD
+```
+
+Create a PR (GitHub UI or `gh pr create --fill`) using `.github/PULL_REQUEST_TEMPLATE.md`.
+Merge strategy: **squash and merge** (self-merge allowed after CI passes).
+
+After the PR is merged:
+
+```powershell
+git checkout main
+git pull origin main
+git branch -d <branch-name>
+```
 
 ## Output Rules
 
