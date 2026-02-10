@@ -73,7 +73,17 @@ Every code change follows TDD. The strategy depends on the module type:
 - E2E tests: `*.spec.ts`
 - Tests live in `tests/`, mirroring `src/` structure (NOT `__tests__/`)
 
-## Mandatory Verification & Commit (before every push)
+## Git Workflow (before every push)
+
+Follow this lifecycle for every task.
+
+### 1) Start a new branch (never work on `main`)
+
+```powershell
+git checkout -b <type>/<short-description>
+```
+
+### 2) Mandatory verification (before every commit)
 
 Run these in order. All must pass:
 
@@ -85,15 +95,38 @@ npm run test:e2e      # Playwright E2E (only if touching UI flows)
 npm run test:coverage # Vitest + v8 (lines ≥80%, statements ≥80%, functions ≥75%, branches ≥60%)
 ```
 
-Then commit and push:
+Optional shortcut:
+
+```powershell
+npm run preflight
+```
+
+### 3) Commit
 
 ```powershell
 git add -A
 git commit -m "<type>: <description>"   # feat: | fix: | test: | refactor: | docs: | chore:
+```
+
+### 4) Push
+
+```powershell
 git push origin HEAD
 ```
 
-> **Branch check**: ensure you are on a feature/fix branch, not `main`. Create one with `git checkout -b <type>/<short-description>` if needed.
+### 5) Create a pull request
+
+- Use GitHub UI or `gh pr create --fill`
+- Follow `.github/PULL_REQUEST_TEMPLATE.md`
+- Merge strategy: **squash and merge** (self-merge allowed after CI passes)
+
+### 6) Cleanup (after PR is merged)
+
+```powershell
+git checkout main
+git pull origin main
+git branch -d <branch-name>
+```
 
 ## Security Guidelines (attack-surface specific)
 

@@ -13,11 +13,18 @@ export const runtime = "nodejs";
 
 type SupportedLocale = "en" | "nl" | "fr" | "de" | "es" | "pt";
 
-function normalizeLocale(locale?: string): SupportedLocale { /* ... */ }
+function normalizeLocale(locale?: string): SupportedLocale {
+  /* ... */
+}
 
-const ERROR_MESSAGES: Record<SupportedLocale, {
-  // All error keys for this route, all 6 locales
-}> = { /* ... */ };
+const ERROR_MESSAGES: Record<
+  SupportedLocale,
+  {
+    // All error keys for this route, all 6 locales
+  }
+> = {
+  /* ... */
+};
 
 export async function POST(request: Request) {
   try {
@@ -27,10 +34,7 @@ export async function POST(request: Request) {
     // 4. Business logic
     // 5. Return Response
   } catch (error) {
-    return Response.json(
-      { error: sanitizeError(error) },
-      { status: 500 }
-    );
+    return Response.json({ error: sanitizeError(error) }, { status: 500 });
   }
 }
 ```
@@ -67,5 +71,5 @@ export async function POST(request: Request) {
 - Do NOT create new markdown files (plans, implementation notes, fix logs) in the repo
 - If scratch notes are needed, use the `temp/` folder (gitignored)
 - Only modify existing `docs/*.md` files when documented behavior changes
-- After completing the route, follow the commit & push workflow from [AGENTS.md](../../AGENTS.md#git-workflow)
+- After completing the route, follow the full git workflow (branch → verify → commit → push → PR → cleanup) from [AGENTS.md](../../AGENTS.md)
 - See also: [src/app/api/AGENTS.md](../../src/app/api/AGENTS.md) for route inventory and "Adding a New Route" checklist

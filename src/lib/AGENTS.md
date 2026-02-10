@@ -5,30 +5,50 @@ Pure utility modules shared by API routes, components, and the worker.
 ## TDD Rule
 
 Every new function gets a unit test BEFORE implementation:
+
 1. Create `tests/lib/<module>.test.ts`
 2. Write failing test → `npm run test:run` → confirm red
 3. Implement minimum code → confirm green
 4. Refactor → re-run tests
-5. Verify, commit, and push:
-   ```powershell
-   npm run lint ; npm run typecheck ; npm run test:run
-   git add -A ; git commit -m "feat: description" ; git push origin HEAD
-   ```
+5. Git workflow (required):
+
+```powershell
+git checkout -b <type>/<short-description>
+
+npm run lint ; npm run typecheck ; npm run test:run
+npm run test:e2e      # only if touching UI flows
+npm run test:coverage # lines ≥80%, statements ≥80%, functions ≥75%, branches ≥60%
+
+git add -A
+git commit -m "<type>: <description>"
+git push origin HEAD
+```
+
+Create a PR (GitHub UI or `gh pr create --fill`) using `.github/PULL_REQUEST_TEMPLATE.md`.
+Merge strategy: **squash and merge** (self-merge allowed after CI passes).
+
+After the PR is merged:
+
+```powershell
+git checkout main
+git pull origin main
+git branch -d <branch-name>
+```
 
 ## Module Inventory
 
-| Module          | Purpose                          | Lazy Init | Graceful Degrade |
-|-----------------|----------------------------------|-----------|------------------|
-| `types.ts`      | Shared TypeScript types/interfaces| n/a       | n/a              |
-| `validation.ts` | Zod schemas for all external input| n/a       | n/a              |
-| `security.ts`   | HMAC, timing-safe, sanitizeError | n/a       | n/a              |
-| `groq.ts`       | Groq client + locale prompts     | ✅        | ❌ (throws)       |
-| `cache.ts`      | Upstash Redis cache (24h TTL)    | ✅        | ✅ (returns null)  |
-| `ratelimit.ts`  | Upstash rate limiters            | ✅        | ✅ (pass-through)  |
-| `doj-api.ts`    | DOJ API proxy + dedup            | n/a       | ❌ (throws)       |
-| `db.ts`         | Neon Postgres pool               | ✅        | ❌ (throws)       |
-| `consent.ts`    | GDPR consent logic (client-side) | n/a       | n/a              |
-| `utils.ts`      | `cn()` Tailwind merge helper     | n/a       | n/a              |
+| Module          | Purpose                            | Lazy Init | Graceful Degrade  |
+| --------------- | ---------------------------------- | --------- | ----------------- |
+| `types.ts`      | Shared TypeScript types/interfaces | n/a       | n/a               |
+| `validation.ts` | Zod schemas for all external input | n/a       | n/a               |
+| `security.ts`   | HMAC, timing-safe, sanitizeError   | n/a       | n/a               |
+| `groq.ts`       | Groq client + locale prompts       | ✅        | ❌ (throws)       |
+| `cache.ts`      | Upstash Redis cache (24h TTL)      | ✅        | ✅ (returns null) |
+| `ratelimit.ts`  | Upstash rate limiters              | ✅        | ✅ (pass-through) |
+| `doj-api.ts`    | DOJ API proxy + dedup              | n/a       | ❌ (throws)       |
+| `db.ts`         | Neon Postgres pool                 | ✅        | ❌ (throws)       |
+| `consent.ts`    | GDPR consent logic (client-side)   | n/a       | n/a               |
+| `utils.ts`      | `cn()` Tailwind merge helper       | n/a       | n/a               |
 
 ## Patterns
 

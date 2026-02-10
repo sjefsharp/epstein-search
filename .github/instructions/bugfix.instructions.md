@@ -22,14 +22,28 @@ applyTo: "src/**,worker/**,tests/**"
    ```powershell
    npm run lint ; npm run typecheck ; npm run test:run
    npm run test:e2e      # only if the fix touches UI flows
-   npm run test:coverage # only if the fix touches security or core logic
+   npm run test:coverage # lines ≥80%, statements ≥80%, functions ≥75%, branches ≥60%
    ```
 
-6. **Commit and push**:
+6. **Git workflow (required)**:
+
    ```powershell
+   git checkout -b fix/<short-description>
+
    git add -A
    git commit -m "fix: description of what was fixed"
    git push origin HEAD
+   ```
+
+   Create a PR (GitHub UI or `gh pr create --fill`) using `.github/PULL_REQUEST_TEMPLATE.md`.
+   Merge strategy: **squash and merge** (self-merge allowed after CI passes).
+
+   After the PR is merged:
+
+   ```powershell
+   git checkout main
+   git pull origin main
+   git branch -d <branch-name>
    ```
 
 ## Rules
@@ -37,7 +51,7 @@ applyTo: "src/**,worker/**,tests/**"
 - NEVER fix a bug without a regression test
 - NEVER modify existing tests to make them pass — fix the code, not the tests
 - Keep the fix minimal and surgical — avoid refactoring in the same commit
-- Ensure you are on a feature/fix branch, not `main` — create one with `git checkout -b fix/<short-description>` if needed
+- Ensure you are on a feature/fix branch, not `main`
 - If a bugfix changes `worker/package.json`, run `cd worker ; npm install` and commit the updated `worker/package-lock.json`
 
 ## Output Rules

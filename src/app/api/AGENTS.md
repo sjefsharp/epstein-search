@@ -7,21 +7,40 @@ Next.js App Router API route handlers. All follow the same structural pattern.
 1. Extract business logic into `src/lib/` — test it in `tests/lib/`
 2. For user-facing flows, add E2E tests in `tests/e2e/`
 3. Unit test the logic → E2E test the integration → implement the route
-4. Verify, commit, and push:
-   ```powershell
-   npm run lint ; npm run typecheck ; npm run test:run
-   git add -A ; git commit -m "feat: description" ; git push origin HEAD
-   ```
+4. Git workflow (required):
+
+```powershell
+git checkout -b <type>/<short-description>
+
+npm run lint ; npm run typecheck ; npm run test:run
+npm run test:e2e      # only if touching UI flows
+npm run test:coverage # lines ≥80%, statements ≥80%, functions ≥75%, branches ≥60%
+
+git add -A
+git commit -m "<type>: <description>"
+git push origin HEAD
+```
+
+Create a PR (GitHub UI or `gh pr create --fill`) using `.github/PULL_REQUEST_TEMPLATE.md`.
+Merge strategy: **squash and merge** (self-merge allowed after CI passes).
+
+After the PR is merged:
+
+```powershell
+git checkout main
+git pull origin main
+git branch -d <branch-name>
+```
 
 ## Route Inventory
 
-| Route               | Method   | Auth    | Rate Limit  | Response    |
-|----------------------|----------|---------|-------------|-------------|
-| `/api/search`       | GET/POST | none    | 10/10s      | JSON        |
-| `/api/summarize`    | POST     | none    | none        | SSE stream  |
-| `/api/deep-analyze` | POST     | none    | 3/60s       | SSE stream  |
-| `/api/consent`      | POST     | none    | 20/60s      | JSON        |
-| `/api/consent/cleanup` | POST  | CRON_SECRET | none    | JSON        |
+| Route                  | Method   | Auth        | Rate Limit | Response   |
+| ---------------------- | -------- | ----------- | ---------- | ---------- |
+| `/api/search`          | GET/POST | none        | 10/10s     | JSON       |
+| `/api/summarize`       | POST     | none        | none       | SSE stream |
+| `/api/deep-analyze`    | POST     | none        | 3/60s      | SSE stream |
+| `/api/consent`         | POST     | none        | 20/60s     | JSON       |
+| `/api/consent/cleanup` | POST     | CRON_SECRET | none       | JSON       |
 
 ## Mandatory Pattern (every route)
 
@@ -42,7 +61,14 @@ function normalizeLocale(locale?: string): SupportedLocale {
 }
 
 // Localized error messages — ALL 6 locales, route-specific keys
-const ERROR_MESSAGES: Record<SupportedLocale, { /* ... */ }> = { /* ... */ };
+const ERROR_MESSAGES: Record<
+  SupportedLocale,
+  {
+    /* ... */
+  }
+> = {
+  /* ... */
+};
 
 // Handler
 export async function POST(request: Request) {
@@ -78,7 +104,7 @@ return new Response(stream, {
   headers: {
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache",
-    "Connection": "keep-alive",
+    Connection: "keep-alive",
   },
 });
 ```
@@ -106,8 +132,23 @@ return new Response(stream, {
 4. Add Zod schema to `src/lib/validation.ts`
 5. Add rate limiter to `src/lib/ratelimit.ts` if needed
 6. Write unit tests for business logic + E2E test if user-facing
-7. Verify: `npm run lint ; npm run typecheck ; npm run test:run`
-8. Commit and push: `git add -A ; git commit -m "feat: add <name> route" ; git push origin HEAD`
+7. Verify:
+
+```powershell
+npm run lint ; npm run typecheck ; npm run test:run
+npm run test:e2e      # only if touching UI flows
+npm run test:coverage # lines ≥80%, statements ≥80%, functions ≥75%, branches ≥60%
+```
+
+8. Commit and push:
+
+```powershell
+git add -A
+git commit -m "feat: add <name> route"
+git push origin HEAD
+```
+
+9. Create PR and cleanup (see root [AGENTS.md](../../../AGENTS.md))
 
 ## Output Rules
 

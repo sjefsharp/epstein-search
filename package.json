@@ -12,6 +12,7 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "preflight": "node -e \"const { execSync } = require('node:child_process'); const cmds = ['npm run lint','npm run typecheck','npm run test:run','npm run test:coverage']; for (const cmd of cmds) { execSync(cmd, { stdio: 'inherit' }); }\"",
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",
     "prepare": "husky"

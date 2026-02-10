@@ -5,14 +5,34 @@ Client-side React 19 components using shadcn/ui + Tailwind CSS 4 + next-intl.
 ## TDD Rule
 
 Every new component gets a test BEFORE implementation:
+
 1. Create `tests/components/<Component>.test.tsx`
 2. Use the `renderWithIntl` helper from `tests/utils/renderWithIntl.tsx`
 3. Write failing test → `npm run test:run` → confirm red
 4. Implement component → confirm green
-5. Verify, commit, and push:
+5. Git workflow (required):
+
    ```powershell
+   git checkout -b <type>/<short-description>
+
    npm run lint ; npm run typecheck ; npm run test:run
-   git add -A ; git commit -m "feat: description" ; git push origin HEAD
+   npm run test:e2e      # only if touching UI flows
+   npm run test:coverage # lines ≥80%, statements ≥80%, functions ≥75%, branches ≥60%
+
+   git add -A
+   git commit -m "<type>: <description>"
+   git push origin HEAD
+   ```
+
+   Create a PR (GitHub UI or `gh pr create --fill`) using `.github/PULL_REQUEST_TEMPLATE.md`.
+   Merge strategy: **squash and merge** (self-merge allowed after CI passes).
+
+   After the PR is merged:
+
+   ```powershell
+   git checkout main
+   git pull origin main
+   git branch -d <branch-name>
    ```
 
 ## Folder Structure

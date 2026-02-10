@@ -39,15 +39,15 @@ npm run test:coverage  # vitest + v8 coverage
 
 ## Git Workflow
 
-### Branch
+Follow this lifecycle for every task (feature, fix, refactor, test, docs, chore).
 
-Before starting work, ensure you are on a feature/fix branch — never commit directly to `main`:
+### 1) Start a new branch (never work on `main`)
 
 ```powershell
 git checkout -b <type>/<short-description>   # e.g., feat/consent-export, fix/sse-encoding
 ```
 
-### Mandatory Verification (before every commit)
+### 2) Mandatory verification (before every commit)
 
 Run all of these in order. All must pass:
 
@@ -59,7 +59,13 @@ npm run test:e2e      # Playwright E2E (only if touching UI flows)
 npm run test:coverage # Vitest + v8 (lines ≥80%, statements ≥80%, functions ≥75%, branches ≥60%)
 ```
 
-### Commit
+Optional shortcut:
+
+```powershell
+npm run preflight
+```
+
+### 3) Commit (conventional commits)
 
 Use **conventional commits** (enforced by commitlint + husky):
 
@@ -74,12 +80,24 @@ Use **conventional commits** (enforced by commitlint + husky):
 
 **Default**: one commit per completed task. **Optional**: separate commits per logical step (test → implementation → refactor) for large changes.
 
-### Push
-
-After every commit, push to remote:
+### 4) Push
 
 ```powershell
 git push origin HEAD
+```
+
+### 5) Create a pull request
+
+- Use GitHub UI or `gh pr create --fill`
+- Follow `.github/PULL_REQUEST_TEMPLATE.md`
+- Merge strategy: **squash and merge** (self-merge allowed after CI passes)
+
+### 6) Cleanup (after PR is merged)
+
+```powershell
+git checkout main
+git pull origin main
+git branch -d <branch-name>
 ```
 
 ## Architecture (compressed)

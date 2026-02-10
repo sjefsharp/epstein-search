@@ -8,11 +8,30 @@ Standalone Express 5 service deployed on Render (Docker). Fetches and parses PDF
 2. Run `npm run test:run` from repo root — confirm red
 3. Implement in `worker/src/` — confirm green
 4. Worker has its own `package.json` — install deps with `cd worker ; npm install`
-5. Verify, commit, and push:
-   ```powershell
-   npm run lint ; npm run typecheck ; npm run test:run
-   git add -A ; git commit -m "feat: description" ; git push origin HEAD
-   ```
+5. Git workflow (required):
+
+```powershell
+git checkout -b <type>/<short-description>
+
+npm run lint ; npm run typecheck ; npm run test:run
+npm run test:e2e      # only if touching UI flows
+npm run test:coverage # lines ≥80%, statements ≥80%, functions ≥75%, branches ≥60%
+
+git add -A
+git commit -m "<type>: <description>"
+git push origin HEAD
+```
+
+Create a PR (GitHub UI or `gh pr create --fill`) using `.github/PULL_REQUEST_TEMPLATE.md`.
+Merge strategy: **squash and merge** (self-merge allowed after CI passes).
+
+After the PR is merged:
+
+```powershell
+git checkout main
+git pull origin main
+git branch -d <branch-name>
+```
 
 ## Dependency Management
 

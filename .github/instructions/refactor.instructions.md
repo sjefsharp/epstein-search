@@ -48,17 +48,26 @@ A refactor changes code structure while preserving ALL existing behavior. If a t
 - Removing security checks or validation rules
 - Disabling ESLint rules
 
-## Commit
-
-Use: `refactor: description of structural change`
+## Git Workflow (required)
 
 ```powershell
+git checkout -b refactor/<short-description>
+
 git add -A
 git commit -m "refactor: description of structural change"
 git push origin HEAD
 ```
 
-> **Branch check**: ensure you are on a feature/fix branch, not `main`. Create one with `git checkout -b refactor/<short-description>` if needed.
+Create a PR (GitHub UI or `gh pr create --fill`) using `.github/PULL_REQUEST_TEMPLATE.md`.
+Merge strategy: **squash and merge** (self-merge allowed after CI passes).
+
+After the PR is merged:
+
+```powershell
+git checkout main
+git pull origin main
+git branch -d <branch-name>
+```
 
 ## Output Rules
 
