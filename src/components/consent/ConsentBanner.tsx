@@ -95,9 +95,9 @@ export default function ConsentBanner({ locale, policyVersion }: Props) {
     setIsSubmitting(true);
     setConsent(nextStatus, nextAdsConsent);
     updateConsent({ adsConsent: nextAdsConsent });
-    await logConsent(nextEvent, nextAdsConsent);
     closePreferences();
     setIsSubmitting(false);
+    void logConsent(nextEvent, nextAdsConsent);
   };
 
   const shouldDelayForHydration = useMemo(() => {

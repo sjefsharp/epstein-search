@@ -10,6 +10,7 @@ import { DOJDocument } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import AgeVerification from "@/components/gates/AgeVerification";
 
 async function readSSE(
   response: Response,
@@ -246,7 +247,8 @@ export default function ChatContainer() {
   );
 
   return (
-    <section className="flex h-full flex-col rounded-3xl border bg-card/80 backdrop-blur">
+    <section className="relative flex h-full flex-col overflow-hidden rounded-3xl border bg-card/80 backdrop-blur">
+      <AgeVerification />
       <header className="flex items-center justify-between border-b px-4 py-2 sm:px-5 sm:py-3">
         <div className="space-y-1">
           <h2 className="text-lg font-semibold tracking-tight sm:text-xl">{t("headerTitle")}</h2>

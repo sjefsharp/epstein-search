@@ -1,8 +1,8 @@
 /// <reference types="@testing-library/jest-dom" />
 // @vitest-environment jsdom
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { render } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { act, render } from "@testing-library/react";
 import AdSlot from "../../src/components/ads/AdSlot";
 import { useConsentStore } from "../../src/store/consent-store";
 import { useAgeStore } from "../../src/store/age-store";
@@ -56,5 +56,20 @@ describe("AdSlot", () => {
     const { container } = render(<AdSlot slotId="123" />);
 
     expect(container.firstChild).toBeNull();
+  });
+
+  it("hides the slot when ads are unfilled", async () => {
+    vi.useFakeTimers();
+
+    const { container } = render(<AdSlot slotId="123" />);
+    const ins = container.querySelector("ins.adsbygoogle");
+    ins?.setAttribute("data-ad-status", "unfilled");
+
+    await act(async () => {
+      vi.advanceTimersByTime(5000);
+    });
+
+    expect(container.firstChild).toBeNull();
+    vi.useRealTimers();
   });
 });
