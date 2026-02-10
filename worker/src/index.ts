@@ -1,5 +1,5 @@
 import express from "express";
-import type { Request, Response } from "express";
+import type { Express, Request, Response } from "express";
 import { chromium, type BrowserContextOptions, type LaunchOptions, type Page } from "playwright";
 import * as pdfParseModule from "pdf-parse";
 import helmet from "helmet";
@@ -105,11 +105,12 @@ type TrustProxyTarget = {
 
 const app = express();
 
-export const applyTrustProxy = (target: TrustProxyTarget) => {
+export const applyTrustProxy = (target: Pick<Express, "set">) => {
   target.set("trust proxy", 1);
 };
 
-applyTrustProxy(app as unknown as TrustProxyTarget);
+applyTrustProxy(app);
+
 const analyzeLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 60, // limit each IP to 60 analyze requests per window
