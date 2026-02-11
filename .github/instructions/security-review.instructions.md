@@ -2,72 +2,39 @@
 applyTo: "src/lib/security.ts,src/lib/validation.ts,src/app/api/**,worker/**"
 ---
 
-# Security Review Instructions
+# Security Review Checklist
 
-OWASP-focused review checklist specific to Epstein Search's attack surface.
+Run this checklist for every change to security-sensitive files.
 
-## When to Run
+## Input Validation (OWASP A03)
 
-Run this checklist before every commit that touches `src/lib/security.ts`, `src/lib/validation.ts`, `src/app/api/**`, or `worker/**`. After completing the review, follow the full git workflow (branch → verify → commit → push → PR → cleanup) from [AGENTS.md](../../AGENTS.md).
+- [ ] All user input validated with Zod schemas from `src/lib/validation.ts`
+- [ ] `sanitizeError()` used in every catch block (no raw error leaks in prod)
+- [ ] No `eval()`, `new Function()`, or `dangerouslySetInnerHTML` (except pre-sanitized DOJ highlights)
 
-## A01: Broken Access Control
+## Authentication & Authorization (OWASP A07)
 
-- [ ] Worker endpoints verify HMAC signature before processing
-- [ ] `verifyTimingSafe()` used (never `===` for secret comparison)
-- [ ] CRON endpoints verify `CRON_SECRET` before executing
-- [ ] No authentication bypass via missing early-return
+- [ ] Worker auth: HMAC-SHA256 via `WORKER_SHARED_SECRET` → `verifyTimingSafe()` — NEVER `===`
+- [ ] Rate limiters applied: search 10/10s, analyze 3/60s, consent 20/60s
+- [ ] Rate-limit graceful degradation: pass-through if Redis unavailable — never throw
 
-## A03: Injection
+## SSRF Prevention (OWASP A10)
 
-- [ ] All external input validated through Zod schemas BEFORE use
-- [ ] Search queries restricted by regex whitelist: `^[a-zA-Z0-9\s\-._]+$`
-- [ ] SSE chunks use `JSON.stringify()` — no template literal interpolation of user input
-- [ ] `dangerouslySetInnerHTML` used ONLY for pre-sanitized DOJ highlights
-- [ ] No `eval()`, `new Function()`, `vm.runInNewContext()`
+- [ ] All outbound URLs validated by `isAllowedJusticeGovHost()` — justice.gov + HTTPS only
+- [ ] Blocks localhost, private IPs, non-justice.gov domains
 
-## A05: Security Misconfiguration
+## SSE Injection Prevention
 
-- [ ] `export const runtime = "nodejs"` on every API route
-- [ ] Helmet applied on worker (security headers)
-- [ ] CORS restricted to allowed origins (not `*`)
-- [ ] `sanitizeError()` used in production error responses
-- [ ] No secrets in logs, responses, or client-side code
+- [ ] All SSE data: `data: ${JSON.stringify({ text })}\n\n` — never interpolate user input
+- [ ] Stream terminated with `data: [DONE]\n\n`
 
-## A07: SSRF (Server-Side Request Forgery)
+## Secrets & Config
 
-- [ ] All user-provided URLs validated against justice.gov domain whitelist
-- [ ] HTTPS protocol enforced (`url.protocol === "https:"`)
-- [ ] `isAllowedJusticeGovHost()` blocks: localhost, `127.0.0.1`, `::1`, IPs, non-justice.gov
-- [ ] URL validation happens at BOTH Zod schema level AND runtime level
-- [ ] Worker uses validated `safeUrl` (not raw `fileUri`) for all outbound requests
+- [ ] No secrets in source — env vars via `process.env` with lazy init
+- [ ] No `console.log` of secrets, tokens, or PII
+- [ ] HMAC signatures never logged
 
-## A08: Software and Data Integrity
+## Locale Safety
 
-- [ ] Worker requests authenticated via HMAC-SHA256 with per-request signature
-- [ ] `WORKER_SHARED_SECRET` never logged or exposed
-- [ ] Timing-safe comparison prevents timing attacks on signatures
-- [ ] `crypto.timingSafeEqual()` uses Buffer length guard (prevents length leak)
-
-## A09: Logging and Monitoring
-
-- [ ] Security-relevant events logged (auth failures, rate-limit hits, validation failures)
-- [ ] No secrets, tokens, or PII in log output
-- [ ] Worker logs request method, URL, status, and duration (not body)
-
-## Rate Limiting
-
-- [ ] Search: 10 requests per 10 seconds (sliding window)
-- [ ] Analyze: 3 requests per 60 seconds (sliding window)
-- [ ] Consent: 20 requests per 60 seconds (sliding window)
-- [ ] Rate limiters degrade gracefully (pass-through when Redis unavailable)
-- [ ] 429 responses include `Retry-After` header
-
-## Regex Safety
-
-- [ ] No unsafe regex patterns (enforced by `eslint-plugin-security`)
-- [ ] IP detection uses `net.isIP()` — not custom regex
-- [ ] RegExp objects hoisted outside loops
-
-## Generated Files
-
-- [ ] No new documentation files created outside `temp/` or existing `docs/` structure
+- [ ] `normalizeLocale()` applied — returns `SupportedLocale`, never raw user string
+- [ ] `ERROR_MESSAGES` has entries for all 6 locales

@@ -4,58 +4,19 @@ applyTo: "src/**,worker/**,tests/**"
 
 # Bug Fix Instructions
 
+**Prerequisite**: Follow `workflow.instructions.md` for workspace check, deps sync, and post-push lifecycle.
+
 ## Reproduce-First Workflow
 
-1. **Write a failing test** that reproduces the bug:
-   - This test MUST fail on the current code and pass after the fix
-   - Place it alongside existing tests for the affected module
-   - Name it descriptively: `it("should not crash when input is empty (regression #123)")`
-
-2. **Confirm the test fails**: `npm run test:run`
-
-3. **Fix the bug** — change only the minimum code necessary
-
-4. **Confirm the test passes**: `npm run test:run`
-
-5. **Check for regressions** — ensure no other tests broke:
-
-   ```powershell
-   npm run lint ; npm run typecheck ; npm run test:run
-   npm run test:e2e      # only if the fix touches UI flows
-   npm run test:coverage # lines ≥80%, statements ≥80%, functions ≥75%, branches ≥60%
-   ```
-
-6. **Git workflow (required)**:
-
-   ```powershell
-   git checkout -b fix/<short-description>
-
-   git add -A
-   git commit -m "fix: description of what was fixed"
-   git push origin HEAD
-   ```
-
-   Create a PR (GitHub UI or `gh pr create --fill`) using `.github/PULL_REQUEST_TEMPLATE.md`.
-   Merge strategy: **squash and merge** (self-merge allowed after CI passes).
-
-   After the PR is merged:
-
-   ```powershell
-   git checkout main
-   git pull origin main
-   git branch -d <branch-name>
-   ```
+1. **Write a failing test** reproducing the bug — MUST fail now, pass after fix
+2. **Confirm it fails**: `npm run test:run`
+3. **Fix the bug** — minimum code change only
+4. **Confirm it passes**: `npm run test:run`
+5. **Verify no regressions**: `npm run lint && npm run typecheck && npm run test:run` (+ `test:e2e` if UI, + `test:coverage`)
+6. **Commit & push** per `AGENTS.md § Git Workflow`
 
 ## Rules
 
-- NEVER fix a bug without a regression test
-- NEVER modify existing tests to make them pass — fix the code, not the tests
-- Keep the fix minimal and surgical — avoid refactoring in the same commit
-- Ensure you are on a feature/fix branch, not `main`
-- If a bugfix changes `worker/package.json`, run `cd worker ; npm install` and commit the updated `worker/package-lock.json`
-
-## Output Rules
-
-- Do NOT create new markdown files (plans, implementation notes, fix logs) in the repo
-- If scratch notes are needed, use the `temp/` folder (gitignored)
-- Only modify existing `docs/*.md` files when documented behavior changes
+- NEVER fix without a regression test — NEVER modify existing tests to pass — fix the code
+- Keep fix minimal and surgical — no refactoring in same commit
+- If changing `worker/package.json`: `cd worker && npm install` → commit lockfile

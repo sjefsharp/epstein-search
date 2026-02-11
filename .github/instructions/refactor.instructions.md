@@ -4,73 +4,15 @@ applyTo: "src/**,worker/**"
 
 # Refactor Instructions
 
-## Core Rule: No Behavior Change
+**Prerequisite**: Follow `workflow.instructions.md` for workspace check, deps sync, and post-push lifecycle.
 
-A refactor changes code structure while preserving ALL existing behavior. If a test must change, it's not a refactor — it's a feature or bugfix.
+## No-Behavior-Change Rule
 
-## Workflow
+1. **Baseline**: `npm run lint && npm run typecheck && npm run test:run` — ALL must pass before touching code
+2. **Refactor** — all original tests must still pass WITHOUT modification
+3. **Verify**: re-run exact same gate commands — same results
 
-1. **Run the full test suite first** — establish a baseline:
+## Scope
 
-   ```powershell
-   npm run lint ; npm run typecheck ; npm run test:run
-   ```
-
-2. **All tests must pass** before you start refactoring
-
-3. **Refactor in small steps** — run tests after each step
-
-4. **After completion**, run the full verification:
-
-   ```powershell
-   npm run lint ; npm run typecheck ; npm run test:run
-   npm run test:e2e      # only if the refactor touches UI components
-   npm run test:coverage
-   ```
-
-5. **All original tests must still pass WITHOUT modification**
-
-## Allowed Changes
-
-- Rename variables, functions, files (update all imports)
-- Extract helper functions or modules
-- Replace patterns with more idiomatic alternatives
-- Reduce duplication (e.g., extracting shared `normalizeLocale()`)
-- Improve type safety (narrowing `any` to specific types)
-- Performance optimizations (memoization, derive state inline)
-
-## Forbidden Changes
-
-- Adding new features or changing return values
-- Modifying test assertions or expectations
-- Changing API response shapes or HTTP status codes
-- Altering SSE stream format
-- Removing security checks or validation rules
-- Disabling ESLint rules
-
-## Git Workflow (required)
-
-```powershell
-git checkout -b refactor/<short-description>
-
-git add -A
-git commit -m "refactor: description of structural change"
-git push origin HEAD
-```
-
-Create a PR (GitHub UI or `gh pr create --fill`) using `.github/PULL_REQUEST_TEMPLATE.md`.
-Merge strategy: **squash and merge** (self-merge allowed after CI passes).
-
-After the PR is merged:
-
-```powershell
-git checkout main
-git pull origin main
-git branch -d <branch-name>
-```
-
-## Output Rules
-
-- Do NOT create new markdown files (plans, implementation notes, fix logs) in the repo
-- If scratch notes are needed, use the `temp/` folder (gitignored)
-- Only modify existing `docs/*.md` files when documented behavior changes
+**Allowed**: rename, extract function/module, simplify conditionals, reduce duplication, improve types, restructure files
+**Forbidden**: new features, bug fixes, API changes, test modifications, dependency upgrades — each gets its own branch + commit type

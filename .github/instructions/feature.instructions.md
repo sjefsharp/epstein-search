@@ -4,74 +4,31 @@ applyTo: "src/**,worker/**"
 
 # Feature Development Instructions
 
+**Prerequisite**: Follow `workflow.instructions.md` for workspace check, deps sync, and post-push lifecycle.
+
 ## TDD Workflow (mandatory)
 
-1. **Write the test first** — determine the module type:
-   - `src/lib/` → `tests/lib/<module>.test.ts`
-   - `src/components/` → `tests/components/<Component>.test.tsx`
-   - `src/app/api/` → `tests/lib/<logic>.test.ts` + `tests/e2e/<flow>.spec.ts`
-   - `worker/` → `tests/worker/<module>.test.ts`
-
+1. **Write the test first** — determine module type (see `AGENTS.md § TDD` table)
 2. **Confirm the test fails**: `npm run test:run`
-
 3. **Implement the minimum code** to make the test pass
-
 4. **Refactor** while keeping tests green
-
-5. **Git workflow (required)**:
-
-   ```powershell
-   git checkout -b feat/<short-description>
-
-   npm run lint ; npm run typecheck ; npm run test:run
-   npm run test:e2e      # only if the feature touches UI flows
-   npm run test:coverage # lines ≥80%, statements ≥80%, functions ≥75%, branches ≥60%
-
-   git add -A
-   git commit -m "feat: description of the new feature"
-   git push origin HEAD
-   ```
-
-   Create a PR (GitHub UI or `gh pr create --fill`) using `.github/PULL_REQUEST_TEMPLATE.md`.
-   Merge strategy: **squash and merge** (self-merge allowed after CI passes).
-
-   After the PR is merged:
-
-   ```powershell
-   git checkout main
-   git pull origin main
-   git branch -d <branch-name>
-   ```
+5. **Verify**: `npm run lint && npm run typecheck && npm run test:run` (+ `test:e2e` if UI, + `test:coverage`)
+6. **Commit & push** per `AGENTS.md § Git Workflow`
 
 ## i18n Requirement
 
-- Every user-visible string MUST use `useTranslations()` (client) or `ERROR_MESSAGES` (API)
-- Add translation keys to ALL 6 files: `messages/en.json`, `nl.json`, `fr.json`, `de.json`, `es.json`, `pt.json`
-- Never hardcode English text in components or API responses
+- Every user-visible string: `useTranslations()` (client) or `ERROR_MESSAGES` (API)
+- Add keys to ALL 6 files: `messages/{en,nl,fr,de,es,pt}.json`
+- Never hardcode English text
 
 ## API Route Requirement
 
-If adding a new API route:
-
-- `export const runtime = "nodejs"`
-- Define `SupportedLocale`, `normalizeLocale()`, `ERROR_MESSAGES` (all 6 locales)
-- Add Zod schema to `src/lib/validation.ts`
-- Implement rate-limiting if the route accepts user input
+New routes: follow `api-route.instructions.md` — `export const runtime = "nodejs"` → `SupportedLocale` → `normalizeLocale()` → `ERROR_MESSAGES` (×6) → Zod schema → rate-limit
 
 ## Security Requirement
 
-- Validate all external input through Zod before use
-- Use `sanitizeError()` in catch blocks
-- If calling the worker: HMAC-sign the request body
-- If accepting URLs: enforce HTTPS + justice.gov domain whitelist
+Zod validate all input → `sanitizeError()` in catch → HMAC-sign worker calls → HTTPS + justice.gov whitelist for URLs
 
 ## Worker Dependency Requirement
 
-- If a feature changes `worker/package.json`, run `cd worker ; npm install` and commit the updated `worker/package-lock.json`.
-- Optional preflight: `cd worker ; npm ci --dry-run` to verify lock file parity.
-
-## Output Rules
-
-- Do NOT create new markdown files (plans, implementation notes, fix logs) in the repo
-- If scratch notes are needed, use the `temp/` folder (gitignored)
-- Only modify existing `docs/*.md` files when documented behavior changes
+If changing `worker/package.json`: `cd worker && npm install` → commit `worker/package-lock.json`. Preflight: `cd worker && npm ci --dry-run`.

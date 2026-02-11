@@ -23,6 +23,8 @@
 
 ## Checklist
 
+- [ ] Workspace was clean before branching (or used a worktree)
+- [ ] Lockfiles are in sync (`npm install` at root; `cd worker && npm install` if worker touched)
 - [ ] I ran `npm run lint`
 - [ ] I ran `npm run typecheck`
 - [ ] I ran `npm run test:run`
