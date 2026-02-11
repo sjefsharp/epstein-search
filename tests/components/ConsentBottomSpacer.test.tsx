@@ -44,7 +44,7 @@ describe("ConsentBottomSpacer", () => {
 
     render(<ConsentBottomSpacer enabled />);
 
-    expect(screen.getByRole("presentation", { hidden: true })).toHaveClass("h-52");
+    expect(screen.getByRole("presentation", { hidden: true })).toHaveClass("h-40");
   });
 
   it("does not render when disabled", () => {

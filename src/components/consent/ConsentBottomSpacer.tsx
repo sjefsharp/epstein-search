@@ -12,7 +12,7 @@ export default function ConsentBottomSpacer({ enabled = false }: ConsentBottomSp
   const isVisible = enabled && hasHydrated && (status === "unknown" || preferencesOpen);
   if (!isVisible) return null;
 
-  const heightClass = preferencesOpen ? "h-52 sm:h-40" : "h-36 sm:h-28";
+  const heightClass = preferencesOpen ? "h-40 sm:h-32" : "h-36 sm:h-28";
 
   return <div role="presentation" aria-hidden="true" className={`w-full ${heightClass}`} />;
 }
