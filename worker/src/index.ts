@@ -105,10 +105,47 @@ const STEALTH_LAUNCH_ARGS = [
 
 export const buildAkamaiDelayMs = (): number => 3000 + Math.floor(Math.random() * 3000);
 
-export const getStealthLaunchOptions = (): LaunchOptions => ({
-  headless: true,
-  args: [...STEALTH_LAUNCH_ARGS],
-});
+// ---------------------------------------------------------------------------
+// Proxy support — route all Chromium traffic through a proxy to avoid
+// datacenter IP blocking by Akamai. Set PROXY_URL env var to enable.
+// Format: http://username:password@host:port or socks5://host:port
+// ---------------------------------------------------------------------------
+
+export interface ParsedProxy {
+  server: string;
+  username?: string;
+  password?: string;
+}
+
+/**
+ * Parse a proxy URL into Playwright's proxy config format.
+ * Supports http://, https://, and socks5:// with optional credentials.
+ */
+export function parseProxyUrl(proxyUrl: string): ParsedProxy {
+  const url = new URL(proxyUrl);
+  const server = `${url.protocol}//${url.hostname}${url.port ? ":" + url.port : ""}`;
+  const result: ParsedProxy = { server };
+  if (url.username) result.username = decodeURIComponent(url.username);
+  if (url.password) result.password = decodeURIComponent(url.password);
+  return result;
+}
+
+/** Whether a proxy is configured via PROXY_URL env var. */
+export const isProxyEnabled = (): boolean => !!process.env.PROXY_URL;
+
+export const getStealthLaunchOptions = (): LaunchOptions => {
+  const opts: LaunchOptions = {
+    headless: true,
+    args: [...STEALTH_LAUNCH_ARGS],
+  };
+
+  const proxyUrl = process.env.PROXY_URL;
+  if (proxyUrl) {
+    opts.proxy = parseProxyUrl(proxyUrl);
+  }
+
+  return opts;
+};
 
 export const getStealthContextOptions = (fp?: StealthFingerprint): BrowserContextOptions => {
   const f = fp ?? buildFingerprint();
@@ -250,8 +287,17 @@ const createStealthContext = async (browser: LaunchedBrowser, fp?: StealthFinger
 };
 
 const prewarmAkamai = async (page: Page) => {
+  // When proxied, use domcontentloaded and block heavy resources to save bandwidth.
+  // Akamai cookies are set by JS execution, not by downloading images/fonts.
+  const proxied = isProxyEnabled();
+  if (proxied) {
+    await page.route("**/*.{png,jpg,jpeg,gif,svg,webp,woff,woff2,ttf,eot,css}", (route) =>
+      route.abort(),
+    );
+  }
+
   await page.goto("https://www.justice.gov/", {
-    waitUntil: PREWARM_WAIT_UNTIL,
+    waitUntil: proxied ? "domcontentloaded" : PREWARM_WAIT_UNTIL,
     timeout: 30000,
   });
 
@@ -266,8 +312,21 @@ const prewarmAkamai = async (page: Page) => {
 // Persistent browser pool — keeps a warm Chromium + Akamai session
 // ---------------------------------------------------------------------------
 
-/** How often to re-prewarm the shared context (ms). */
-const PREWARM_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+/**
+ * How often to re-prewarm the shared context (ms).
+ * Configurable via PREWARM_INTERVAL_MINUTES env var.
+ * Defaults to 0 (disabled) when proxy is active to conserve bandwidth,
+ * or 10 minutes when no proxy is set.
+ */
+export const getPrewarmIntervalMs = (): number => {
+  const envMinutes = process.env.PREWARM_INTERVAL_MINUTES;
+  if (envMinutes !== undefined) {
+    const mins = parseInt(envMinutes, 10);
+    if (!isNaN(mins) && mins >= 0) return mins * 60 * 1000;
+  }
+  // Default: disabled when proxied (saves bandwidth), 10 min otherwise
+  return isProxyEnabled() ? 0 : 10 * 60 * 1000;
+};
 
 interface BrowserPool {
   browser: Browser;
@@ -299,20 +358,28 @@ export async function initBrowserPool(): Promise<BrowserPool> {
   _pool = { browser, context, fingerprint: fp, lastPrewarm: Date.now() };
 
   // Schedule periodic re-prewarm to keep cookies fresh
-  _prewarmTimer = setInterval(async () => {
-    if (!_pool) return;
-    const p = await _pool.context.newPage();
-    try {
-      await prewarmAkamai(p);
-      _pool.lastPrewarm = Date.now();
-    } catch (err) {
-      process.stderr.write(
-        `[worker] prewarm refresh failed: ${err instanceof Error ? err.message : "unknown"}\n`,
-      );
-    } finally {
-      await p.close().catch(() => {});
-    }
-  }, PREWARM_INTERVAL_MS);
+  // When proxied, periodic prewarm is disabled by default to conserve bandwidth.
+  // On-demand prewarm still occurs on 403 retries.
+  const intervalMs = getPrewarmIntervalMs();
+  if (intervalMs > 0) {
+    _prewarmTimer = setInterval(async () => {
+      if (!_pool) return;
+      const p = await _pool.context.newPage();
+      try {
+        await prewarmAkamai(p);
+        _pool.lastPrewarm = Date.now();
+      } catch (err) {
+        process.stderr.write(
+          `[worker] prewarm refresh failed: ${err instanceof Error ? err.message : "unknown"}\n`,
+        );
+      } finally {
+        await p.close().catch(() => {});
+      }
+    }, intervalMs);
+    process.stdout.write(`[worker] periodic prewarm enabled (every ${intervalMs / 60000} min)\n`);
+  } else {
+    process.stdout.write("[worker] periodic prewarm disabled (on-demand only via retry)\n");
+  }
 
   process.stdout.write(
     `[worker] browser pool initialised (fingerprint: ${fp.userAgent.slice(-30)})\n`,

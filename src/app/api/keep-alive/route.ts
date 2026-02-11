@@ -31,7 +31,7 @@ async function pingNeon(): Promise<"ok" | "error"> {
 
 async function pingRender(): Promise<"ok" | "error"> {
   try {
-    const workerUrl = process.env.RENDER_WORKER_URL;
+    const workerUrl = process.env.WORKER_URL || process.env.RENDER_WORKER_URL;
     if (!workerUrl) {
       return "error";
     }

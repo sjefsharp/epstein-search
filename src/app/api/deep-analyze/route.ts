@@ -37,37 +37,37 @@ const ERROR_MESSAGES: Record<
   en: {
     rateLimit: "Rate limit exceeded. Please try again later.",
     invalidInput: "Invalid input",
-    workerMissing: "RENDER_WORKER_URL is not set",
+    workerMissing: "WORKER_URL is not set",
     analyzeFailed: "Analysis failed",
   },
   nl: {
     rateLimit: "Rate limit bereikt. Probeer het later opnieuw.",
     invalidInput: "Ongeldige invoer",
-    workerMissing: "RENDER_WORKER_URL is niet ingesteld",
+    workerMissing: "WORKER_URL is niet ingesteld",
     analyzeFailed: "Analyse mislukt",
   },
   fr: {
     rateLimit: "Limite de débit dépassée. Veuillez réessayer plus tard.",
     invalidInput: "Entrée invalide",
-    workerMissing: "RENDER_WORKER_URL n'est pas défini",
+    workerMissing: "WORKER_URL n'est pas défini",
     analyzeFailed: "Échec de l'analyse",
   },
   de: {
     rateLimit: "Rate-Limit überschritten. Bitte später erneut versuchen.",
     invalidInput: "Ungültige Eingabe",
-    workerMissing: "RENDER_WORKER_URL ist nicht gesetzt",
+    workerMissing: "WORKER_URL ist nicht gesetzt",
     analyzeFailed: "Analyse fehlgeschlagen",
   },
   es: {
     rateLimit: "Límite de velocidad excedido. Por favor intente más tarde.",
     invalidInput: "Entrada inválida",
-    workerMissing: "RENDER_WORKER_URL no está configurado",
+    workerMissing: "WORKER_URL no está configurado",
     analyzeFailed: "Análisis fallido",
   },
   pt: {
     rateLimit: "Limite de taxa excedido. Por favor tente mais tarde.",
     invalidInput: "Entrada inválida",
-    workerMissing: "RENDER_WORKER_URL não está definido",
+    workerMissing: "WORKER_URL não está definido",
     analyzeFailed: "Análise falhou",
   },
 };
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
 
     const { fileUri, fileName, searchTerm } = validation.data;
 
-    const workerUrl = process.env.RENDER_WORKER_URL;
+    const workerUrl = process.env.WORKER_URL || process.env.RENDER_WORKER_URL;
     if (!workerUrl) {
       return new Response(JSON.stringify({ error: messages.workerMissing }), {
         status: 500,

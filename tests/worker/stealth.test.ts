@@ -78,6 +78,85 @@ describe("Worker stealth helpers", () => {
     );
   });
 
+  it("stealth launch options have no proxy when PROXY_URL is unset", () => {
+    delete process.env.PROXY_URL;
+    const options = workerModule.getStealthLaunchOptions();
+    expect(options.proxy).toBeUndefined();
+  });
+
+  it("stealth launch options include proxy when PROXY_URL is set", () => {
+    process.env.PROXY_URL = "http://user:pass@proxy.example.com:8080";
+    const options = workerModule.getStealthLaunchOptions();
+    expect(options.proxy).toEqual({
+      server: "http://proxy.example.com:8080",
+      username: "user",
+      password: "pass",
+    });
+    delete process.env.PROXY_URL;
+  });
+
+  describe("parseProxyUrl", () => {
+    it("parses HTTP proxy with credentials", () => {
+      const result = workerModule.parseProxyUrl("http://user:pass@host.com:8080");
+      expect(result.server).toBe("http://host.com:8080");
+      expect(result.username).toBe("user");
+      expect(result.password).toBe("pass");
+    });
+
+    it("parses SOCKS5 proxy without credentials", () => {
+      const result = workerModule.parseProxyUrl("socks5://host.com:1080");
+      expect(result.server).toBe("socks5://host.com:1080");
+      expect(result.username).toBeUndefined();
+      expect(result.password).toBeUndefined();
+    });
+
+    it("decodes URL-encoded credentials", () => {
+      const result = workerModule.parseProxyUrl("http://us%40er:p%23ss@h.com:80");
+      expect(result.username).toBe("us@er");
+      expect(result.password).toBe("p#ss");
+    });
+  });
+
+  describe("isProxyEnabled", () => {
+    it("returns false when PROXY_URL is unset", () => {
+      delete process.env.PROXY_URL;
+      expect(workerModule.isProxyEnabled()).toBe(false);
+    });
+
+    it("returns true when PROXY_URL is set", () => {
+      process.env.PROXY_URL = "http://proxy:8080";
+      expect(workerModule.isProxyEnabled()).toBe(true);
+      delete process.env.PROXY_URL;
+    });
+  });
+
+  describe("getPrewarmIntervalMs", () => {
+    it("returns 0 (disabled) when proxy is active and no env override", () => {
+      process.env.PROXY_URL = "http://proxy:8080";
+      delete process.env.PREWARM_INTERVAL_MINUTES;
+      expect(workerModule.getPrewarmIntervalMs()).toBe(0);
+      delete process.env.PROXY_URL;
+    });
+
+    it("returns 10 minutes when no proxy and no env override", () => {
+      delete process.env.PROXY_URL;
+      delete process.env.PREWARM_INTERVAL_MINUTES;
+      expect(workerModule.getPrewarmIntervalMs()).toBe(10 * 60 * 1000);
+    });
+
+    it("respects PREWARM_INTERVAL_MINUTES env var", () => {
+      process.env.PREWARM_INTERVAL_MINUTES = "30";
+      expect(workerModule.getPrewarmIntervalMs()).toBe(30 * 60 * 1000);
+      delete process.env.PREWARM_INTERVAL_MINUTES;
+    });
+
+    it("returns 0 when PREWARM_INTERVAL_MINUTES is 0", () => {
+      process.env.PREWARM_INTERVAL_MINUTES = "0";
+      expect(workerModule.getPrewarmIntervalMs()).toBe(0);
+      delete process.env.PREWARM_INTERVAL_MINUTES;
+    });
+  });
+
   it("pickRandom selects from the array", () => {
     const arr = [1, 2, 3, 4, 5];
     for (let i = 0; i < 20; i++) {

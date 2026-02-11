@@ -1,9 +1,10 @@
 // API Route: Search DOJ Epstein files
-// Strategy: Try direct DOJ API first (fast), fall back to Render worker (Playwright) if Akamai blocks.
+// Strategy: Redis cache → Neon DB (local cache) → direct DOJ API (fast) → worker w/ proxy (Playwright).
 import { NextRequest, NextResponse } from "next/server";
 import { getCacheKey, deduplicateDocuments } from "@/lib/doj-api";
 import type { DOJDocument } from "@/lib/types";
 import { getCachedSearch, setCachedSearch, trackCacheEvent } from "@/lib/cache";
+import { searchDocumentsLocal } from "@/lib/documents";
 import { searchSchema } from "@/lib/validation";
 import { checkRateLimit, getClientIp, searchRatelimit } from "@/lib/ratelimit";
 import {
@@ -202,7 +203,8 @@ async function fetchDOJDirect(
  * Fetch via Render worker (Playwright, slower but bypasses Akamai).
  */
 async function fetchViaWorker(query: string, from: number, size: number): Promise<DOJAPIData> {
-  const workerUrl = process.env.RENDER_WORKER_URL || "http://localhost:10000";
+  const workerUrl =
+    process.env.WORKER_URL || process.env.RENDER_WORKER_URL || "http://localhost:10000";
 
   // Enforce HTTPS in production
   if (process.env.NODE_ENV === "production") {
@@ -247,7 +249,7 @@ async function fetchViaWorker(query: string, from: number, size: number): Promis
 }
 
 /**
- * Core search logic: direct DOJ first ➜ worker fallback ➜ transform & cache
+ * Core search logic: cache ➜ Neon DB ➜ direct DOJ ➜ worker fallback ➜ transform & cache
  */
 async function executeSearch(query: string, effectiveQuery: string, from: number, size: number) {
   const cacheKey = getCacheKey(query, from);
@@ -260,10 +262,27 @@ async function executeSearch(query: string, effectiveQuery: string, from: number
 
   await trackCacheEvent("miss");
 
-  // 1️⃣ Fast path — direct DOJ API
+  // 1️⃣ Neon Postgres fallback — search local document cache
+  const localResults = await searchDocumentsLocal(effectiveQuery, from, size);
+  if (localResults && localResults.documents.length > 0) {
+    process.stdout.write(
+      `[search] Serving from Neon cache (${localResults.documents.length} docs)\n`,
+    );
+    const uniqueDocuments = deduplicateDocuments(localResults.documents);
+    const deduplicatedResults = {
+      ...localResults,
+      searchTerm: query,
+      documents: uniqueDocuments,
+      uniqueCount: uniqueDocuments.length,
+    };
+    await setCachedSearch(cacheKey, deduplicatedResults);
+    return { data: { ...deduplicatedResults, cached: false, source: "neon" }, fromCache: false };
+  }
+
+  // 2️⃣ Fast path — direct DOJ API
   let apiData = await fetchDOJDirect(effectiveQuery, from, size);
 
-  // 2️⃣ Slow path — Render worker with Playwright
+  // 3️⃣ Slow path — Render worker with Playwright
   if (!apiData) {
     process.stdout.write(`[search] Using worker fallback for query: ${effectiveQuery}\n`);
     apiData = await fetchViaWorker(effectiveQuery, from, size);

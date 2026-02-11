@@ -21,7 +21,8 @@ GROQ_API_KEY                        # Groq console
 UPSTASH_REDIS_REST_URL              # Upstash dashboard
 UPSTASH_REDIS_REST_TOKEN            # Upstash dashboard
 WORKER_SHARED_SECRET                # shared with Render — HMAC auth
-RENDER_WORKER_URL                   # Render service URL
+RENDER_WORKER_URL                   # Render service URL (legacy — prefer WORKER_URL)
+WORKER_URL                          # Worker service URL (preferred over RENDER_WORKER_URL)
 NEON_DATABASE_URL                   # Neon Postgres connection string
 CRON_SECRET                         # shared secret for cleanup cron
 NEXT_PUBLIC_CONSENT_POLICY_VERSION  # semver (e.g. 1.0.0)
@@ -40,10 +41,12 @@ NEXT_PUBLIC_ADSENSE_ID              # optional — Google AdSense
 - Auto-deploy on push to `main`
 
 ```
-WORKER_SHARED_SECRET   # REQUIRED — must match Vercel value
-NODE_ENV=production    # required
-PORT=10000             # Render default
-ALLOWED_ORIGINS        # optional — comma-separated, defaults to Vercel app URL
+WORKER_SHARED_SECRET      # REQUIRED — must match Vercel value
+NODE_ENV=production       # required
+PORT=10000                # Render default
+ALLOWED_ORIGINS           # optional — comma-separated, defaults to Vercel app URL
+PROXY_URL                 # optional — HTTP proxy to bypass Akamai IP blocks
+PREWARM_INTERVAL_MINUTES  # optional — defaults to 0 (disabled) when PROXY_URL set
 ```
 
 ## Deploy Order
