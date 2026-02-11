@@ -18,6 +18,7 @@ type ConsentState = {
 
 type ConsentActions = {
   setConsent: (status: ConsentStatus, adsConsent: boolean) => void;
+  applyAndClose: (status: ConsentStatus, adsConsent: boolean) => void;
   setDraftAdsConsent: (adsConsent: boolean) => void;
   setPolicyVersion: (version: string) => void;
   setLocale: (locale: string) => void;
@@ -45,6 +46,14 @@ export const useConsentStore = create<ConsentStore>()(
           status,
           adsConsent,
           lastUpdated: new Date().toISOString(),
+        });
+      },
+      applyAndClose: (status, adsConsent) => {
+        set({
+          status,
+          adsConsent,
+          lastUpdated: new Date().toISOString(),
+          preferencesOpen: false,
         });
       },
       setDraftAdsConsent: (adsConsent) => {

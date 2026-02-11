@@ -25,8 +25,9 @@ src/components/
 │   ├── Message.tsx              # Single message bubble (user/assistant)
 │   └── MessageList.tsx          # Scrollable message list
 ├── consent/
-│   ├── ConsentBanner.tsx        # GDPR cookie consent banner
-│   └── ConsentBottomSpacer.tsx  # Layout spacer when banner visible
+│   ├── ConsentBanner.tsx        # GDPR cookie consent banner (dismiss + preferences view)
+│   ├── ConsentBottomSpacer.tsx  # Layout spacer when banner visible
+│   └── CookiePreferencesButton.tsx # Header button to re-open preferences
 ├── donations/
 │   └── DonationPanel.tsx        # QR code donation sidebar (BTC/ETH)
 ├── gates/

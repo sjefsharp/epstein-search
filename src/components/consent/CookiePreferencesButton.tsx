@@ -12,14 +12,14 @@ export default function CookiePreferencesButton() {
   return (
     <Button
       type="button"
-      variant="ghost"
-      size="sm"
+      variant="outline"
+      size="icon"
       onClick={openPreferences}
+      aria-label={t("preferencesLink")}
       aria-expanded={preferencesOpen}
-      className="gap-2"
+      className="size-10"
     >
       <Cookie className="size-4" aria-hidden="true" />
-      <span className="sr-only sm:not-sr-only">{t("preferencesLink")}</span>
     </Button>
   );
 }
