@@ -8,7 +8,7 @@
     },
     {
       "path": "/api/keep-alive",
-      "schedule": "0 * * * *"
+      "schedule": "0 3 * * *"
     }
   ]
 }
