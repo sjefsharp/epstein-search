@@ -39,64 +39,15 @@ npm run preflight      # lint + typecheck + test:run + test:coverage
 
 ## Git Workflow
 
-Follow this lifecycle for every task. Full details in `.github/instructions/workflow.instructions.md`.
+Full lifecycle: `.github/instructions/workflow.instructions.md` (authoritative source).
 
-### 0) Workspace check
+Key rules:
 
-```bash
-git status
-```
-
-- **Clean**: `git checkout -b <type>/<desc>` from `main`
-- **Dirty**: isolate via worktree — `git worktree add ../<repo>-<desc> -b <type>/<desc> main && cd ../<repo>-<desc>`
-
-Never work directly on `main`.
-
-### 1) Dependency sync
-
-```bash
-npm install                         # root — always
-cd worker && npm install && cd ..   # only if worker/ touched
-```
-
-Commit lockfile changes. `npm ci` in CI/Docker fails on drift.
-
-### 2) Verify (before every commit — all must pass)
-
-```bash
-npm run lint && npm run typecheck && npm run test:run
-npm run test:e2e        # only if touching UI flows
-npm run test:coverage   # lines ≥80%, statements ≥80%, functions ≥75%, branches ≥60%
-```
-
-### 2b) Doc sync
-
-If your change affects documented behavior, update the relevant `docs/` file and `README.md`. `docs/` is the single source of truth.
-
-### 3) Commit (conventional commits)
-
-```bash
-git add -A && git commit -m "<type>: <description>"
-```
-
-Prefixes: `feat` | `fix` | `test` | `refactor` | `docs` | `chore` (enforced by commitlint + husky).
-
-### 4) Push & PR
-
-```bash
-git push origin HEAD
-gh pr create --fill   # or GitHub UI — follow .github/PULL_REQUEST_TEMPLATE.md
-```
-
-Merge: **squash and merge** (self-merge allowed after CI).
-Human-in-the-loop: user reviews PRs — proceed without extra confirmations.
-
-### 5) Cleanup
-
-```bash
-git checkout main && git pull origin main && git branch -d <branch>
-git worktree remove ../<repo>-<desc>   # only if worktree was used
-```
+- **Never on `main`** — always a feature/fix/refactor branch
+- **Dirty workspace → worktree** — never `git checkout` away from uncommitted work
+- **Verify branch before every commit** — `git rev-parse --abbrev-ref HEAD`
+- **Conventional commits** — `feat` | `fix` | `test` | `refactor` | `docs` | `chore` (commitlint + husky)
+- **Squash and merge** — human reviews PRs
 
 ## Architecture (compressed)
 
