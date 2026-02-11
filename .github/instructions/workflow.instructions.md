@@ -32,6 +32,10 @@ Commit any lockfile changes — `npm ci` in CI/Docker fails on drift.
 
 Follow TDD per module type (see `AGENTS.md § TDD`). Write the test first, confirm red, implement, confirm green.
 
+## Step 2b — Doc Sync
+
+If your change affects documented behavior (API contracts, env vars, deploy steps, component API, worker endpoints), update the relevant `docs/` file and `README.md` **before** moving to verify. `docs/` is the single source of truth for human-readable project documentation.
+
 ## Step 3 — Verify (all must pass)
 
 ```bash
@@ -79,4 +83,5 @@ git worktree remove ../<repo>-<desc>
 - Root + worker lockfiles must be in sync before push
 - All verify gates (Step 3) must pass before push
 - No new .md files outside `temp/` (gitignored) or existing `docs/`
+- `docs/` is the single source of truth — keep it current with every behavior change
 - Proceed autonomously — only pause for missing permissions or critical ambiguity

@@ -69,6 +69,10 @@ npm run test:e2e        # only if touching UI flows
 npm run test:coverage   # lines ≥80%, statements ≥80%, functions ≥75%, branches ≥60%
 ```
 
+### 2b) Doc sync
+
+If your change affects documented behavior, update the relevant `docs/` file and `README.md`. `docs/` is the single source of truth.
+
 ### 3) Commit (conventional commits)
 
 ```bash
@@ -173,7 +177,7 @@ Docker/CI uses `npm ci` — lockfile drift = build failure.
 
 ```
 GROQ_API_KEY             # required — Groq console
-UPSTASH_REDIS_REST_URL   # required — Upstash/Vercel KV
+UPSTASH_REDIS_REST_URL   # required — Upstash Redis
 UPSTASH_REDIS_REST_TOKEN # required
 WORKER_SHARED_SECRET     # required — shared between Vercel + Render
 RENDER_WORKER_URL        # required for deep-analyze + search fallback
@@ -185,15 +189,16 @@ NEXT_PUBLIC_CONSENT_POLICY_VERSION # required — semver for consent policy
 
 ## Docs (progressive disclosure)
 
-| Topic      | File                                     |
-| ---------- | ---------------------------------------- |
-| i18n       | [docs/i18n.md](docs/i18n.md)             |
-| API routes | [docs/api-routes.md](docs/api-routes.md) |
-| Security   | [docs/security.md](docs/security.md)     |
-| Testing    | [docs/testing.md](docs/testing.md)       |
-| Worker     | [docs/worker.md](docs/worker.md)         |
-| Deployment | [docs/deployment.md](docs/deployment.md) |
-| Components | [docs/components.md](docs/components.md) |
+| Topic           | File                                               |
+| --------------- | -------------------------------------------------- |
+| i18n            | [docs/i18n.md](docs/i18n.md)                       |
+| API routes      | [docs/api-routes.md](docs/api-routes.md)           |
+| Security        | [docs/security.md](docs/security.md)               |
+| Testing         | [docs/testing.md](docs/testing.md)                 |
+| Worker          | [docs/worker.md](docs/worker.md)                   |
+| Deployment      | [docs/deployment.md](docs/deployment.md)           |
+| Components      | [docs/components.md](docs/components.md)           |
+| Consent logging | [docs/consent-logging.md](docs/consent-logging.md) |
 
 ## Key Files
 
