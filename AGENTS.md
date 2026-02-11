@@ -49,6 +49,19 @@ Key rules:
 - **Conventional commits** — `feat` | `fix` | `test` | `refactor` | `docs` | `chore` (commitlint + husky)
 - **Squash and merge** — human reviews PRs
 
+## Chrome Dev Tools (extra guardrail)
+
+When a browser is available (local dev or remote debugging), use Chrome Dev Tools **alongside** automated tests:
+
+- **Console** — runtime errors, unhandled rejections, deprecation warnings
+- **Network** — API status codes, payloads, CORS issues
+- **Elements** — DOM/layout inspection
+- **Lighthouse / Accessibility** — quick a11y audit
+
+For remote debugging: capture Dev Tools output → analyze → report in commit/PR.
+
+> Advisory — automated tests remain the hard gate.
+
 ## Architecture (compressed)
 
 ```

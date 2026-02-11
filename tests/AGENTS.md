@@ -97,4 +97,17 @@ it("should reject invalid input", () => {
 - Path alias `@/` works via `vitest.config.ts` resolve alias
 - Test-only changes commit with `test:` prefix
 
+## Chrome Dev Tools (extra guardrail)
+
+When a browser is available (local dev or remote debugging), use Chrome Dev Tools **alongside** automated tests as an extra verification step:
+
+- **Console** — scan for runtime errors, unhandled rejections, deprecation warnings
+- **Network** — verify API calls return expected status codes and payloads
+- **Elements** — inspect DOM and computed styles to confirm layout intent
+- **Lighthouse / Accessibility** — quick a11y audit for regressions
+
+For remote debugging: capture Dev Tools output (screenshots, console logs) → analyze → report in commit/PR.
+
+> Advisory — automated tests (Vitest + Playwright) remain the hard gate. Chrome Dev Tools checks do NOT replace `test:run` or `test:e2e`.
+
 Git workflow: see `AGENTS.md § Git Workflow`

@@ -88,6 +88,25 @@ npm run test:coverage   # lines ≥80%, statements ≥80%, functions ≥75%, bra
 
 Shortcut: `npm run preflight`
 
+## Step 3b — Chrome Dev Tools Check (when browser is available)
+
+If you have access to a browser (local dev or remote debugging), open Chrome Dev Tools as an **extra guardrail** alongside automated tests:
+
+1. **Console** — scan for runtime errors, unhandled rejections, or deprecation warnings
+2. **Network** — verify API calls return expected status codes and payloads; confirm no failed requests or CORS issues
+3. **Elements** — inspect DOM and computed styles to confirm layout intent
+4. **Lighthouse / Accessibility** — quick audit for a11y regressions (axe panel or Lighthouse a11y score)
+
+For **remote debugging** (e.g. when investigating a deployed environment):
+
+```
+1. Capture screenshots / Console output from the remote host
+2. Analyze the Dev Tools feedback and correlate with test results
+3. Report findings inline with the commit or PR description
+```
+
+> **Non-blocking**: Chrome Dev Tools checks are advisory. Automated tests (Step 3) remain the hard gate — do NOT skip them.
+
 ## Step 4 — Commit
 
 ```bash

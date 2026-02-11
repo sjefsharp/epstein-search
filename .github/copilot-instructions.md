@@ -101,6 +101,19 @@ npm run test:coverage   # lines ≥80%, statements ≥80%, functions ≥75%, bra
 
 Shortcut: `npm run preflight`
 
+### 2a) Chrome Dev Tools check (when browser is available)
+
+If you have access to a browser, open Chrome Dev Tools as an **extra guardrail**:
+
+- **Console** — runtime errors, unhandled rejections, deprecation warnings
+- **Network** — API status codes, payloads, CORS issues
+- **Elements** — DOM/layout inspection
+- **Lighthouse / Accessibility** — quick a11y audit
+
+For remote debugging: capture Dev Tools output → analyze → report in commit/PR.
+
+> Advisory — automated tests (step 2) remain the hard gate.
+
 ### 2b) Doc sync
 
 If your change affects documented behavior (API contracts, env vars, deploy steps, component API, worker endpoints), update the relevant `docs/` file and `README.md` **before** committing. `docs/` is the single source of truth for human-readable project documentation.
