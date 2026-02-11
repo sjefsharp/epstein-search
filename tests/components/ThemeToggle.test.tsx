@@ -37,7 +37,15 @@ vi.mock("lucide-react", () => ({
   Sun: () => <span data-testid="sun-icon" />,
   Moon: () => <span data-testid="moon-icon" />,
   Monitor: () => <span data-testid="monitor-icon" />,
+  CheckIcon: () => <span data-testid="check-icon" />,
+  ChevronRightIcon: () => <span data-testid="chevron-right-icon" />,
+  CircleIcon: () => <span data-testid="circle-icon" />,
 }));
+
+// Static import — vi.mock is hoisted before imports, so mocks are
+// already in place when the module loads. This eliminates the
+// per-test dynamic-import overhead that caused flaky timeouts under load.
+import ThemeToggle from "../../src/components/navigation/ThemeToggle";
 
 describe("ThemeToggle", () => {
   beforeEach(() => {
@@ -45,36 +53,31 @@ describe("ThemeToggle", () => {
     mockSetTheme.mockReset();
   });
 
-  it("renders the toggle button with theme label", async () => {
-    const { default: ThemeToggle } = await import("../../src/components/navigation/ThemeToggle");
-
+  it("renders the toggle button with theme label", () => {
     renderWithIntl(<ThemeToggle />);
 
     const button = screen.getByRole("button", { name: /theme/i });
     expect(button).toBeInTheDocument();
   });
 
-  it("shows monitor icon in system mode", async () => {
+  it("shows monitor icon in system mode", () => {
     mockTheme = "system";
-    const { default: ThemeToggle } = await import("../../src/components/navigation/ThemeToggle");
 
     renderWithIntl(<ThemeToggle />);
 
     expect(screen.getByTestId("monitor-icon")).toBeInTheDocument();
   });
 
-  it("shows sun icon in light mode", async () => {
+  it("shows sun icon in light mode", () => {
     mockTheme = "light";
-    const { default: ThemeToggle } = await import("../../src/components/navigation/ThemeToggle");
 
     renderWithIntl(<ThemeToggle />);
 
     expect(screen.getByTestId("sun-icon")).toBeInTheDocument();
   });
 
-  it("shows moon icon in dark mode", async () => {
+  it("shows moon icon in dark mode", () => {
     mockTheme = "dark";
-    const { default: ThemeToggle } = await import("../../src/components/navigation/ThemeToggle");
 
     renderWithIntl(<ThemeToggle />);
 
@@ -83,7 +86,6 @@ describe("ThemeToggle", () => {
 
   it("opens dropdown and shows theme options", async () => {
     const user = userEvent.setup();
-    const { default: ThemeToggle } = await import("../../src/components/navigation/ThemeToggle");
 
     renderWithIntl(<ThemeToggle />);
 
@@ -97,7 +99,6 @@ describe("ThemeToggle", () => {
 
   it("changes theme when clicking dropdown options", async () => {
     const user = userEvent.setup();
-    const { default: ThemeToggle } = await import("../../src/components/navigation/ThemeToggle");
 
     renderWithIntl(<ThemeToggle />);
 
@@ -110,7 +111,7 @@ describe("ThemeToggle", () => {
     expect(mockSetTheme).toHaveBeenCalledWith("dark");
   });
 
-  it("sets up media query listener for system theme changes", async () => {
+  it("sets up media query listener for system theme changes", () => {
     const mockAddEventListener = vi.fn();
     const mockRemoveEventListener = vi.fn();
 
@@ -126,7 +127,6 @@ describe("ThemeToggle", () => {
     }));
 
     mockTheme = "system";
-    const { default: ThemeToggle } = await import("../../src/components/navigation/ThemeToggle");
 
     const { unmount } = renderWithIntl(<ThemeToggle />);
 
