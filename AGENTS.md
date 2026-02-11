@@ -4,25 +4,24 @@ Epstein Search — Next.js 16 app that searches, summarizes, and deep-analyzes 2
 
 ## Stack
 
-| Layer            | Tech                                                     |
-| ---------------- | -------------------------------------------------------- |
-| Framework        | Next.js 16.1 (App Router), React 19, TypeScript 5        |
-| Styling          | Tailwind CSS 4, shadcn/ui (new-york style)               |
-| State            | Zustand (persisted to localStorage)                      |
-| i18n             | next-intl — 6 locales: en, nl, fr, de, es, pt            |
-| Validation       | Zod 4                                                    |
-| AI               | Groq SDK → Llama 3.3 70B (streaming SSE)                 |
-| Cache/Rate-limit | Upstash Redis                                            |
-| Worker           | Express 5 + Playwright + pdf-parse (Docker on Render)    |
-| Testing          | Vitest 4 (unit) + Playwright (E2E), v8 coverage          |
-| CI/CD            | GitHub Actions (lint, typecheck, test, CodeQL, Gitleaks) |
-| Deploy           | Vercel (app) + Render (worker)                           |
-| DB               | Neon Postgres (consent logs)                             |
+| Layer            | Tech                                                                        |
+| ---------------- | --------------------------------------------------------------------------- |
+| Framework        | Next.js 16.1 (App Router), React 19, TypeScript 5                           |
+| Styling          | Tailwind CSS 4, shadcn/ui (new-york style)                                  |
+| State            | Zustand (persisted to localStorage)                                         |
+| i18n             | next-intl — 6 locales: en, nl, fr, de, es, pt                               |
+| Validation       | Zod 4                                                                       |
+| AI               | Groq SDK → Llama 3.3 70B (streaming SSE)                                    |
+| Cache/Rate-limit | Upstash Redis                                                               |
+| Worker           | Express 5 + Playwright + pdf-parse (Docker on Render)                       |
+| Testing          | Vitest 4 (unit) + Playwright (E2E), v8 coverage                             |
+| CI/CD            | GitHub Actions (lint, typecheck, test, CodeQL, Gitleaks, dependency-review) |
+| Deploy           | Vercel (app) + Render (worker)                                              |
+| DB               | Neon Postgres (consent logs)                                                |
 
 ## Environment
 
-- **OS**: Windows — terminal is PowerShell. Do NOT use bash syntax (`&&`, `export`, `#!/bin/bash`).
-- Use `;` to chain commands, `$env:VAR` for env vars.
+- **OS**: Linux — Bash terminal. Chain with `&&`, env vars via `export VAR=value`.
 
 ## Commands
 
@@ -35,166 +34,179 @@ npm test               # vitest watch
 npm run test:run       # vitest single-run (CI)
 npm run test:e2e       # playwright E2E
 npm run test:coverage  # vitest + v8 coverage
+npm run preflight      # lint + typecheck + test:run + test:coverage
 ```
 
 ## Git Workflow
 
-Follow this lifecycle for every task (feature, fix, refactor, test, docs, chore).
+Follow this lifecycle for every task. Full details in `.github/instructions/workflow.instructions.md`.
 
-### 1) Start a new branch (never work on `main`)
+### 0) Workspace check
 
-```powershell
-git checkout -b <type>/<short-description>   # e.g., feat/consent-export, fix/sse-encoding
+```bash
+git status
 ```
 
-### 2) Mandatory verification (before every commit)
+- **Clean**: `git checkout -b <type>/<desc>` from `main`
+- **Dirty**: isolate via worktree — `git worktree add ../<repo>-<desc> -b <type>/<desc> main && cd ../<repo>-<desc>`
 
-Run all of these in order. All must pass:
+Never work directly on `main`.
 
-```powershell
-npm run lint          # ESLint flat config (9.x)
-npm run typecheck     # tsc --noEmit (strict mode)
-npm run test:run      # Vitest single-run
-npm run test:e2e      # Playwright E2E (only if touching UI flows)
-npm run test:coverage # Vitest + v8 (lines ≥80%, statements ≥80%, functions ≥75%, branches ≥60%)
+### 1) Dependency sync
+
+```bash
+npm install                         # root — always
+cd worker && npm install && cd ..   # only if worker/ touched
 ```
 
-Optional shortcut:
+Commit lockfile changes. `npm ci` in CI/Docker fails on drift.
 
-```powershell
-npm run preflight
+### 2) Verify (before every commit — all must pass)
+
+```bash
+npm run lint && npm run typecheck && npm run test:run
+npm run test:e2e        # only if touching UI flows
+npm run test:coverage   # lines ≥80%, statements ≥80%, functions ≥75%, branches ≥60%
 ```
 
 ### 3) Commit (conventional commits)
 
-Use **conventional commits** (enforced by commitlint + husky):
-
-| Prefix      | When to use                                   |
-| ----------- | --------------------------------------------- |
-| `feat:`     | New feature or capability                     |
-| `fix:`      | Bug fix (always with regression test)         |
-| `test:`     | Test-only changes (new tests, test utilities) |
-| `refactor:` | Code restructuring, no behavior change        |
-| `docs:`     | Documentation updates                         |
-| `chore:`    | Build, CI, dependency, config changes         |
-
-**Default**: one commit per completed task. **Optional**: separate commits per logical step (test → implementation → refactor) for large changes.
-
-### 4) Push
-
-```powershell
-git push origin HEAD
+```bash
+git add -A && git commit -m "<type>: <description>"
 ```
 
-### 5) Create a pull request
+Prefixes: `feat` | `fix` | `test` | `refactor` | `docs` | `chore` (enforced by commitlint + husky).
 
-- Use GitHub UI or `gh pr create --fill`
-- Follow `.github/PULL_REQUEST_TEMPLATE.md`
-- Merge strategy: **squash and merge** (self-merge allowed after CI passes)
+### 4) Push & PR
 
-### 6) Cleanup (after PR is merged)
+```bash
+git push origin HEAD
+gh pr create --fill   # or GitHub UI — follow .github/PULL_REQUEST_TEMPLATE.md
+```
 
-```powershell
-git checkout main
-git pull origin main
-git branch -d <branch-name>
+Merge: **squash and merge** (self-merge allowed after CI).
+Human-in-the-loop: user reviews PRs — proceed without extra confirmations.
+
+### 5) Cleanup
+
+```bash
+git checkout main && git pull origin main && git branch -d <branch>
+git worktree remove ../<repo>-<desc>   # only if worktree was used
 ```
 
 ## Architecture (compressed)
 
 ```
-src/app/api/search/     → GET/POST → Zod validate → rate-limit → cache check → DOJ API proxy (fallback: worker) → dedupe → cache set → respond
-src/app/api/summarize/  → POST → Groq streaming SSE → locale-aware prompts
-src/app/api/deep-analyze/ → POST → rate-limit → validate → HMAC-sign → Render worker proxy → Groq deep summary → SSE
-src/app/api/consent/    → POST → rate-limit → validate → Neon Postgres INSERT (locale-specific table)
-worker/src/index.ts     → Express 5, HMAC auth, Playwright PDF fetch + pdf-parse, /search + /analyze + /health
+src/app/api/search/       → GET/POST → Zod → rate-limit → cache → DOJ API (fallback: worker) → dedupe → cache set → respond
+src/app/api/summarize/    → POST → Groq SSE → locale-aware prompts
+src/app/api/deep-analyze/ → POST → rate-limit → validate → HMAC-sign → worker proxy → Groq deep summary → SSE
+src/app/api/consent/      → POST → rate-limit → validate → Neon INSERT
+worker/src/index.ts       → Express 5, HMAC auth, Playwright PDF fetch + pdf-parse
 ```
 
-## Test-Driven Development (stratified by module type)
+## TDD (stratified by module type)
 
-| Module             | TDD Flow                                           | Test Location                                 |
-| ------------------ | -------------------------------------------------- | --------------------------------------------- |
-| `src/lib/*`        | Unit test first → implement → refactor             | `tests/lib/*.test.ts`                         |
-| `src/components/*` | Component test first (Testing Library) → implement | `tests/components/*.test.tsx`                 |
-| `src/app/api/*`    | Unit test (logic) + E2E (user flows) → implement   | `tests/lib/*.test.ts` + `tests/e2e/*.spec.ts` |
-| `worker/*`         | Unit test first → implement                        | `tests/worker/*.test.ts`                      |
+| Module             | Test first in                 | Runner                  | Notes                        |
+| ------------------ | ----------------------------- | ----------------------- | ---------------------------- |
+| `src/lib/*`        | `tests/lib/*.test.ts`         | `test:run`              | Unit → implement → refactor  |
+| `src/components/*` | `tests/components/*.test.tsx` | `test:run`              | Use `renderWithIntl` wrapper |
+| `src/app/api/*`    | `tests/lib/` + `tests/e2e/`   | `test:run` + `test:e2e` | Logic unit + E2E             |
+| `worker/*`         | `tests/worker/*.test.ts`      | `test:run`              | Unit → implement → refactor  |
 
 **Rule**: every new function, component, or route gets a test BEFORE implementation.
 
-## Coverage Thresholds (enforced by CI)
+## Coverage (CI-enforced)
 
-| Metric     | Minimum |
-| ---------- | ------- |
-| Lines      | 80%     |
-| Statements | 80%     |
-| Functions  | 75%     |
-| Branches   | 60%     |
+Lines ≥80% · Statements ≥80% · Functions ≥75% · Branches ≥60%
 
-## Security Checklist (verify on every PR)
+## Security
 
-- [ ] All external input validated through Zod schemas (`src/lib/validation.ts`)
-- [ ] Worker requests use HMAC-SHA256 + `verifyTimingSafe()` — never `===`
-- [ ] User-provided URLs checked against justice.gov whitelist + HTTPS enforcement
-- [ ] SSE chunks JSON-stringified — no direct user input interpolation
-- [ ] No `eval()`, `new Function()`, dynamic `require()`
-- [ ] `sanitizeError()` used in all production error responses
-- [ ] No secrets in logs, no `any` types, no disabled ESLint rules
+Canonical checklist: `.github/instructions/security-review.instructions.md`
 
-## Critical Conventions
+Key rules: Zod validate all input → HMAC `verifyTimingSafe()` (never `===`) → justice.gov URL whitelist + HTTPS → `JSON.stringify()` SSE chunks → `sanitizeError()` in prod → no `eval()`/`new Function()`/`any`
+
+## Conventions
 
 - **Path alias**: `@/*` → `./src/*`
-- **API routes**: `export const runtime = "nodejs"` (required for Upstash)
-- **Locale type**: `SupportedLocale = "en" | "nl" | "fr" | "de" | "es" | "pt"`
-- **Localized errors**: every API route has `ERROR_MESSAGES: Record<SupportedLocale, {...}>`
-- **Localized AI prompts**: `SUMMARY_PROMPTS` / `DEEP_ANALYSIS_PROMPTS` in `src/lib/groq.ts`
-- **Client components**: must have `"use client"` directive
+- **API routes**: `export const runtime = "nodejs"` — pattern in `api-route.instructions.md`
+- **Locale**: `SupportedLocale = "en"|"nl"|"fr"|"de"|"es"|"pt"` — `normalizeLocale()` + `ERROR_MESSAGES` (×6)
+- **Prompts**: `SUMMARY_PROMPTS` / `DEEP_ANALYSIS_PROMPTS` in `src/lib/groq.ts` — one per locale
+- **Components**: `"use client"` on line 1 — `useTranslations()` for all strings — all 6 locale JSONs
 - **Lazy init**: Redis, Groq, Postgres clients — avoids build-time env errors
-- **SSE streaming**: `data: {json}\n\n` format, terminated by `data: [DONE]\n\n`
-- **Cache**: 24h TTL, graceful degradation (never throws)
+- **Graceful degradation**: cache/rate-limit never throw — return null/pass-through
+- **SSE**: `data: {json}\n\n` terminated by `data: [DONE]\n\n`
 - **Rate limits**: search 10/10s, analyze 3/60s, consent 20/60s — pass-through if Redis missing
-- **Commits**: conventional commits enforced by commitlint + husky — see **Git Workflow** section above
+- **Commits**: conventional — enforced by commitlint + husky
+
+## Dependency Sync
+
+| Scope  | When                          | Command                                                        |
+| ------ | ----------------------------- | -------------------------------------------------------------- |
+| Root   | `package.json` changes        | `npm install` → commit `package-lock.json`                     |
+| Worker | `worker/package.json` changes | `cd worker && npm install` → commit `worker/package-lock.json` |
+
+Docker/CI uses `npm ci` — lockfile drift = build failure.
+
+## Worker Service
+
+- Express 5 + Helmet + CORS + JSON body limit (2mb)
+- HMAC auth: `X-Worker-Signature` or `Authorization: Bearer <sig>` → `crypto.timingSafeEqual()`
+- SSRF: `isAllowedJusticeGovHost()` blocks non-justice.gov, localhost, IPs
+- `/search`: Chromium → justice.gov (Akamai cookies, 2s wait) → XHR from page context → 3 retries (1.5s × n)
+- `/analyze`: Chromium → PDF URL → age-verify → cookies → `pdf-parse` → text + metadata
+- Rate limits: `/search` 50/15min, `/analyze` 60/15min
+
+## Agent Operating Style
+
+- Proceed without confirmation unless blocked by missing permissions or critical ambiguity
+- Provide clear checklists — note prerequisites, identify required tests
+- Human-in-the-loop: user reviews PRs — no unnecessary status questions
+- Act autonomously through the workflow defined in `workflow.instructions.md`
 
 ## Generated Files
 
-- NEVER create supporting markdown files (plans, logs, setup guides, fix notes) in the repository
-- If scratch documentation is needed during a task, create it under `temp/` (gitignored)
-- Claude Code CLI may create `tmpclaude*` marker files in the repo root; delete them if found (gitignored)
-- Only update existing docs in `docs/` when the documented behavior actually changes
-- Essential docs structure: `README.md`, `AGENTS.md` files, `docs/*.md`, `.github/*.md`
-
-## Worker Service Conventions
-
-- Express 5 with Helmet, CORS, JSON body limit (2mb)
-- HMAC signature verified via `X-Worker-Signature` or `Authorization: Bearer <sig>`
-- SSRF protection: `isAllowedJusticeGovHost()` blocks non-justice.gov, localhost, IPs
-- Playwright: launches headless Chromium, handles Akamai bot-detection cookies
-- `/search`: visits DOJ homepage first → XHR from page context → 3 retries
-- `/analyze`: navigates to PDF URL → handles age-verify → cookies → pdf-parse
-- Rate limiters: `/search` 50/15min, `/analyze` 60/15min
-- Worker dependencies are isolated: update `worker/package-lock.json` via `cd worker ; npm install` whenever `worker/package.json` changes (Docker `npm ci` requires parity)
+- NEVER create supporting .md files (plans, logs, setup guides) in the repository
+- Scratch docs → `temp/` (gitignored). Delete `tmpclaude*` files if found.
+- Only update existing `docs/` when documented behavior actually changes
 
 ## Environment Variables
 
 ```
-GROQ_API_KEY            # required — Groq console
-UPSTASH_REDIS_REST_URL  # required — Upstash/Vercel KV
+GROQ_API_KEY             # required — Groq console
+UPSTASH_REDIS_REST_URL   # required — Upstash/Vercel KV
 UPSTASH_REDIS_REST_TOKEN # required
-WORKER_SHARED_SECRET    # required — shared between Vercel + Render
-RENDER_WORKER_URL       # required for deep-analyze + search fallback
-NEXT_PUBLIC_BASE_URL    # optional — canonical URL
-NEON_DATABASE_URL       # required — Neon Postgres for consent logs
-CRON_SECRET             # required — shared secret for cleanup endpoint
+WORKER_SHARED_SECRET     # required — shared between Vercel + Render
+RENDER_WORKER_URL        # required for deep-analyze + search fallback
+NEXT_PUBLIC_BASE_URL     # optional — canonical URL
+NEON_DATABASE_URL        # required — Neon Postgres for consent logs
+CRON_SECRET              # required — shared secret for cleanup endpoint
 NEXT_PUBLIC_CONSENT_POLICY_VERSION # required — semver for consent policy
 ```
 
-## Detailed Docs (progressive disclosure)
+## Docs (progressive disclosure)
 
-| Topic              | File                                     |
-| ------------------ | ---------------------------------------- |
-| i18n patterns      | [docs/i18n.md](docs/i18n.md)             |
-| API route patterns | [docs/api-routes.md](docs/api-routes.md) |
-| Security model     | [docs/security.md](docs/security.md)     |
-| Testing patterns   | [docs/testing.md](docs/testing.md)       |
-| Worker service     | [docs/worker.md](docs/worker.md)         |
-| Deployment         | [docs/deployment.md](docs/deployment.md) |
-| UI components      | [docs/components.md](docs/components.md) |
+| Topic      | File                                     |
+| ---------- | ---------------------------------------- |
+| i18n       | [docs/i18n.md](docs/i18n.md)             |
+| API routes | [docs/api-routes.md](docs/api-routes.md) |
+| Security   | [docs/security.md](docs/security.md)     |
+| Testing    | [docs/testing.md](docs/testing.md)       |
+| Worker     | [docs/worker.md](docs/worker.md)         |
+| Deployment | [docs/deployment.md](docs/deployment.md) |
+| Components | [docs/components.md](docs/components.md) |
+
+## Key Files
+
+| Purpose        | File                             |
+| -------------- | -------------------------------- |
+| Shared types   | `src/lib/types.ts`               |
+| Zod schemas    | `src/lib/validation.ts`          |
+| Security utils | `src/lib/security.ts`            |
+| Groq client    | `src/lib/groq.ts`                |
+| Redis cache    | `src/lib/cache.ts`               |
+| Rate limiters  | `src/lib/ratelimit.ts`           |
+| DOJ API proxy  | `src/lib/doj-api.ts`             |
+| Neon DB pool   | `src/lib/db.ts`                  |
+| i18n routing   | `src/i18n/routing.ts`            |
+| Test setup     | `tests/setup.ts`                 |
+| Test helper    | `tests/utils/renderWithIntl.tsx` |
