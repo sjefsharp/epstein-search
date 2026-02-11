@@ -72,6 +72,32 @@ export function isAllowedJusticeGovHost(hostname: string): boolean {
   return lowerHost === "justice.gov" || lowerHost.endsWith(".justice.gov");
 }
 
+/**
+ * Validate and reconstruct a URL from its components to prevent SSRF.
+ * Breaks the taint chain by building the URL from validated host + path
+ * rather than passing the user-supplied string through directly.
+ * Strips any embedded credentials.
+ */
+export function buildSafeJusticeGovUrl(input: string): string {
+  const parsed = new URL(input);
+
+  if (parsed.protocol !== "https:") {
+    throw new Error("Only HTTPS URLs are allowed");
+  }
+
+  if (!isAllowedJusticeGovHost(parsed.hostname)) {
+    throw new Error("Only justice.gov hosts are allowed");
+  }
+
+  // Reconstruct from validated parts — no user-controlled string passes through
+  const safe = new URL(`https://${parsed.hostname}`);
+  safe.pathname = parsed.pathname;
+  safe.search = parsed.search;
+  safe.hash = parsed.hash;
+  // Credentials intentionally omitted
+  return safe.toString();
+}
+
 type LaunchedBrowser = Awaited<ReturnType<typeof chromium.launch>>;
 
 const createStealthContext = async (browser: LaunchedBrowser) => {
@@ -312,22 +338,15 @@ app.post("/analyze", analyzeLimiter, async (req: Request, res: Response) => {
   }
 
   // SSRF Protection: Only allow justice.gov domains over HTTPS
+  // buildSafeJusticeGovUrl reconstructs the URL from validated parts,
+  // breaking the user-input taint chain (CodeQL CWE-918).
   let safeUrl: string;
   try {
-    const url = new URL(fileUri);
-    if (url.protocol !== "https:") {
-      res.status(400).json({ error: "Only HTTPS URLs are allowed" });
-      return;
-    }
-    const hostname = url.hostname;
-    if (!isAllowedJusticeGovHost(hostname)) {
-      res.status(403).json({ error: "Only public justice.gov HTTPS URLs are allowed" });
-      return;
-    }
-    // Use the normalized, validated URL for all outbound requests
-    safeUrl = url.toString();
-  } catch {
-    res.status(400).json({ error: "Invalid URL" });
+    safeUrl = buildSafeJusticeGovUrl(fileUri);
+  } catch (urlError) {
+    const message = urlError instanceof Error ? urlError.message : "Invalid URL";
+    const status = message.includes("justice.gov") ? 403 : 400;
+    res.status(status).json({ error: message });
     return;
   }
 
@@ -369,6 +388,7 @@ app.post("/analyze", analyzeLimiter, async (req: Request, res: Response) => {
         "User-Agent": STEALTH_USER_AGENT,
         Accept: "application/pdf",
       },
+      redirect: "manual", // Prevent redirect-based SSRF to internal hosts
     });
 
     if (!pdfResponse.ok) {
