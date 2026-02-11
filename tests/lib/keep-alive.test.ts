@@ -22,11 +22,10 @@ describe("/api/keep-alive", () => {
   });
 
   it("pings both Neon and Render", async () => {
-    mockedRunQuery.mockResolvedValue({ rows: [{ "?column?": 1 }], rowCount: 1 } as ReturnType<
-      typeof runQuery
-    > extends Promise<infer R>
-      ? R
-      : never);
+    mockedRunQuery.mockResolvedValue({
+      rows: [{ "?column?": 1 }],
+      rowCount: 1,
+    } as unknown as Awaited<ReturnType<typeof runQuery>>);
     mockFetch.mockResolvedValue(new Response(JSON.stringify({ status: "ok" }), { status: 200 }));
 
     const { GET } = await import("@/app/api/keep-alive/route");
@@ -59,11 +58,10 @@ describe("/api/keep-alive", () => {
   });
 
   it("reports render error when worker ping fails", async () => {
-    mockedRunQuery.mockResolvedValue({ rows: [{ "?column?": 1 }], rowCount: 1 } as ReturnType<
-      typeof runQuery
-    > extends Promise<infer R>
-      ? R
-      : never);
+    mockedRunQuery.mockResolvedValue({
+      rows: [{ "?column?": 1 }],
+      rowCount: 1,
+    } as unknown as Awaited<ReturnType<typeof runQuery>>);
     mockFetch.mockRejectedValue(new Error("fetch failed"));
 
     const { GET } = await import("@/app/api/keep-alive/route");
@@ -90,11 +88,10 @@ describe("/api/keep-alive", () => {
 
   it("reports render error when RENDER_WORKER_URL is not set", async () => {
     delete process.env.RENDER_WORKER_URL;
-    mockedRunQuery.mockResolvedValue({ rows: [{ "?column?": 1 }], rowCount: 1 } as ReturnType<
-      typeof runQuery
-    > extends Promise<infer R>
-      ? R
-      : never);
+    mockedRunQuery.mockResolvedValue({
+      rows: [{ "?column?": 1 }],
+      rowCount: 1,
+    } as unknown as Awaited<ReturnType<typeof runQuery>>);
 
     const { GET } = await import("@/app/api/keep-alive/route");
     const res = await GET();
