@@ -46,4 +46,61 @@ describe("Worker stealth helpers", () => {
     expect(workerModule.isAllowedJusticeGovHost("127.0.0.1")).toBe(false);
     expect(workerModule.isAllowedJusticeGovHost("example.com")).toBe(false);
   });
+
+  describe("buildSafeJusticeGovUrl", () => {
+    it("returns a valid HTTPS URL for justice.gov hosts", () => {
+      const result = workerModule.buildSafeJusticeGovUrl(
+        "https://www.justice.gov/d9/2024-09/epstein-document.pdf",
+      );
+      expect(result).toBe("https://www.justice.gov/d9/2024-09/epstein-document.pdf");
+    });
+
+    it("preserves query parameters and hash", () => {
+      const result = workerModule.buildSafeJusticeGovUrl(
+        "https://www.justice.gov/path?foo=bar#section",
+      );
+      expect(result).toBe("https://www.justice.gov/path?foo=bar#section");
+    });
+
+    it("throws for non-HTTPS URLs", () => {
+      expect(() => workerModule.buildSafeJusticeGovUrl("http://www.justice.gov/file.pdf")).toThrow(
+        "Only HTTPS URLs are allowed",
+      );
+    });
+
+    it("throws for non-justice.gov hosts", () => {
+      expect(() => workerModule.buildSafeJusticeGovUrl("https://evil.com/file.pdf")).toThrow(
+        "Only justice.gov hosts are allowed",
+      );
+    });
+
+    it("throws for localhost bypass attempts", () => {
+      expect(() => workerModule.buildSafeJusticeGovUrl("https://localhost/file.pdf")).toThrow(
+        "Only justice.gov hosts are allowed",
+      );
+    });
+
+    it("throws for IP address bypass attempts", () => {
+      expect(() => workerModule.buildSafeJusticeGovUrl("https://127.0.0.1/file.pdf")).toThrow(
+        "Only justice.gov hosts are allowed",
+      );
+    });
+
+    it("throws for invalid URLs", () => {
+      expect(() => workerModule.buildSafeJusticeGovUrl("not-a-url")).toThrow();
+    });
+
+    it("blocks credential injection in URL", () => {
+      expect(() =>
+        workerModule.buildSafeJusticeGovUrl("https://user:pass@evil.com/file.pdf"),
+      ).toThrow("Only justice.gov hosts are allowed");
+    });
+
+    it("strips credentials from justice.gov URLs", () => {
+      const result = workerModule.buildSafeJusticeGovUrl(
+        "https://user:pass@www.justice.gov/file.pdf",
+      );
+      expect(result).toBe("https://www.justice.gov/file.pdf");
+    });
+  });
 });
