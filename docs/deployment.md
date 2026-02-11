@@ -54,6 +54,23 @@ ALLOWED_ORIGINS        # optional — comma-separated, defaults to Vercel app UR
 4. Deploy Next.js app to Vercel
 5. Verify: `curl <RENDER_WORKER_URL>/health` → `{"status":"healthy"}`
 
+## Keep-Alive (Preventing Cold Starts)
+
+Neon Postgres (free tier) suspends compute after ~5 min idle, and Render (free tier) spins down after ~15 min. A `/api/keep-alive` endpoint pings both services to prevent cold starts.
+
+- **Vercel cron**: `vercel.json` includes an hourly cron (`0 * * * *`) hitting `/api/keep-alive` — this is the Hobby plan maximum.
+- **External monitor (recommended)**: Use [UptimeRobot](https://uptimerobot.com/) (free, 5-min intervals) or [cron-job.org](https://cron-job.org/) to ping the keep-alive endpoint every 5 minutes.
+- **No auth required**: The endpoint is read-only and returns no sensitive data — safe to expose publicly.
+- **Upstash Redis**: No keep-alive needed — HTTP REST API with no cold start.
+
+### External monitor setup (UptimeRobot)
+
+1. Create an account at [uptimerobot.com](https://uptimerobot.com/)
+2. Add a new HTTP(S) monitor:
+   - URL: `https://<your-domain>/api/keep-alive`
+   - Monitoring interval: 5 minutes
+3. Save — both Neon and Render will stay warm
+
 ## Quick Reference
 
 | Command                      | Purpose                             |
