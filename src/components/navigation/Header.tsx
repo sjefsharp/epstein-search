@@ -14,7 +14,7 @@ export default function Header() {
           <MobileNav />
           <MainNav />
         </div>
-        <div className="flex items-center gap-4 md:gap-6">
+        <div className="flex items-center gap-2 sm:gap-3 md:gap-6">
           <ThemeToggle />
           <CookiePreferencesButton />
           <LanguageSwitcher />

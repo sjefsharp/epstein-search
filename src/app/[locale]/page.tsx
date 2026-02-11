@@ -10,7 +10,7 @@ export default function Home() {
   const tAbout = useTranslations("AboutCard");
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(17,24,39,0.15),_transparent_55%),linear-gradient(180deg,_#f8fafc_0%,_#eef2f6_40%,_#e5e7eb_100%)] dark:bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.08),_transparent_50%),linear-gradient(180deg,_#0f172a_0%,_#0b1120_100%)]">
+    <div className="bg-[radial-gradient(circle_at_top,_rgba(17,24,39,0.15),_transparent_55%),linear-gradient(180deg,_#f8fafc_0%,_#eef2f6_40%,_#e5e7eb_100%)] dark:bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.08),_transparent_50%),linear-gradient(180deg,_#0f172a_0%,_#0b1120_100%)]">
       <div className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 sm:py-6">
         <header className="mb-4 flex flex-col gap-3 sm:mb-5">
           <p className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground sm:text-xs">
