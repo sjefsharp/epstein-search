@@ -56,13 +56,33 @@ Follow this lifecycle for every task. Full details in `.github/instructions/work
 ### 0) Workspace check
 
 ```bash
-git status
+git rev-parse --abbrev-ref HEAD   # know which branch you're on
+git status                        # check for uncommitted changes
 ```
 
 - **Clean**: `git checkout -b <type>/<desc>` from `main`
+- **Clean, on another branch (unrelated to this task)**: `git checkout main && git checkout -b <type>/<desc>`
 - **Dirty**: isolate via worktree — `git worktree add ../<repo>-<desc> -b <type>/<desc> main && cd ../<repo>-<desc>`
 
 Never work directly on `main`.
+
+> **⚠ IMPORTANT — Editor/Terminal Divergence**
+>
+> Terminal `cd` does NOT change the VS Code editor's workspace root.
+> After `cd ../<repo>-<desc>`, file-edit tools and diagnostics still target the
+> original directory. To avoid editing files on the wrong branch:
+>
+> 1. All `git` and `npm` commands MUST run in the worktree directory.
+> 2. All file-edit tool paths MUST use the worktree's absolute path
+>    (e.g., `/home/user/<repo>-<desc>/src/...`), not the original repo path.
+> 3. Alternatively, open the worktree as a VS Code workspace folder so the
+>    editor tracks the correct branch.
+
+### Rules
+
+- **NEVER** `git checkout` to switch away from a branch that has uncommitted work.
+- **NEVER** work directly on `main`.
+- **NEVER** assume the terminal branch matches the editor workspace — always verify.
 
 ### 1) Dependency sync
 
@@ -88,7 +108,9 @@ If your change affects documented behavior (API contracts, env vars, deploy step
 ### 3) Commit
 
 ```bash
+git rev-parse --abbrev-ref HEAD   # ← verify branch BEFORE committing
 git add -A && git commit -m "<type>: <description>"
+git log --oneline -1              # ← verify commit landed correctly
 ```
 
 Prefixes: `feat` | `fix` | `test` | `refactor` | `docs` | `chore` (commitlint + husky enforced).
@@ -108,6 +130,8 @@ Merge: **squash and merge** (self-merge after CI). Human-in-the-loop: user revie
 git checkout main && git pull origin main && git branch -d <branch>
 git worktree remove ../<repo>-<desc>   # only if worktree was used
 ```
+
+Verify terminal CWD is back in the main workspace: `pwd` should show the original repo path.
 
 ## Security Guidelines
 
