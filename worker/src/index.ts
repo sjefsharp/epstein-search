@@ -1,6 +1,13 @@
 import express from "express";
 import type { Request, Response } from "express";
-import { chromium, type BrowserContextOptions, type LaunchOptions, type Page } from "playwright";
+import {
+  chromium,
+  type Browser,
+  type BrowserContext,
+  type BrowserContextOptions,
+  type LaunchOptions,
+  type Page,
+} from "playwright";
 import * as pdfParseModule from "pdf-parse";
 import helmet from "helmet";
 import cors from "cors";
@@ -15,38 +22,104 @@ type PdfParseResult = {
   info?: unknown;
 };
 
-export const STEALTH_USER_AGENT =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
-export const PREWARM_WAIT_UNTIL = "domcontentloaded" as const;
-const STEALTH_HEADERS = {
-  "Accept-Language": "en-US,en;q=0.9",
-  "sec-ch-ua": '"Chromium";v="131", "Google Chrome";v="131", "Not_A Brand";v="24"',
-  "sec-ch-ua-mobile": "?0",
-  "sec-ch-ua-platform": '"Windows"',
-} as const;
-const STEALTH_VIEWPORT = { width: 1920, height: 1080 } as const;
-const STEALTH_LOCALE = "en-US";
-const STEALTH_TIMEZONE = "America/New_York";
+// ---------------------------------------------------------------------------
+// Stealth fingerprint pool — rotated per browser session to avoid clustering
+// ---------------------------------------------------------------------------
+
+const USER_AGENTS = [
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+] as const;
+
+const CLIENT_HINTS: ReadonlyArray<{ ua: string; platform: string }> = [
+  {
+    ua: '"Chromium";v="131", "Google Chrome";v="131", "Not_A Brand";v="24"',
+    platform: '"Windows"',
+  },
+  {
+    ua: '"Chromium";v="132", "Google Chrome";v="132", "Not_A Brand";v="24"',
+    platform: '"Windows"',
+  },
+  {
+    ua: '"Chromium";v="131", "Google Chrome";v="131", "Not_A Brand";v="24"',
+    platform: '"macOS"',
+  },
+  {
+    ua: '"Chromium";v="132", "Google Chrome";v="132", "Not_A Brand";v="24"',
+    platform: '"macOS"',
+  },
+  {
+    ua: '"Chromium";v="131", "Google Chrome";v="131", "Not_A Brand";v="24"',
+    platform: '"Linux"',
+  },
+];
+
+const TIMEZONES = [
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+] as const;
+
+/** Pick a random element from an array. */
+export const pickRandom = <T>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.length)];
+
+/** Build a randomised stealth fingerprint for a new session. */
+export function buildFingerprint() {
+  const ua = pickRandom(USER_AGENTS);
+  const hints = pickRandom(CLIENT_HINTS);
+  const timezone = pickRandom(TIMEZONES);
+  const width = 1900 + Math.floor(Math.random() * 21); // 1900–1920
+  const height = 1060 + Math.floor(Math.random() * 21); // 1060–1080
+
+  return {
+    userAgent: ua,
+    headers: {
+      "Accept-Language": "en-US,en;q=0.9",
+      "sec-ch-ua": hints.ua,
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": hints.platform,
+    } as Record<string, string>,
+    viewport: { width, height },
+    locale: "en-US" as const,
+    timezone,
+  };
+}
+
+export type StealthFingerprint = ReturnType<typeof buildFingerprint>;
+
+// Legacy export kept for backward-compatibility with tests
+export const STEALTH_USER_AGENT = USER_AGENTS[0];
+export const PREWARM_WAIT_UNTIL = "networkidle" as const;
+
 const STEALTH_LAUNCH_ARGS = [
   "--disable-blink-features=AutomationControlled",
   "--no-sandbox",
   "--disable-dev-shm-usage",
+  "--disable-infobars",
+  "--window-size=1920,1080",
 ] as const;
 
-export const buildAkamaiDelayMs = (): number => 2000 + Math.floor(Math.random() * 2000);
+export const buildAkamaiDelayMs = (): number => 3000 + Math.floor(Math.random() * 3000);
 
 export const getStealthLaunchOptions = (): LaunchOptions => ({
   headless: true,
   args: [...STEALTH_LAUNCH_ARGS],
 });
 
-export const getStealthContextOptions = (): BrowserContextOptions => ({
-  userAgent: STEALTH_USER_AGENT,
-  extraHTTPHeaders: STEALTH_HEADERS,
-  viewport: STEALTH_VIEWPORT,
-  locale: STEALTH_LOCALE,
-  timezoneId: STEALTH_TIMEZONE,
-});
+export const getStealthContextOptions = (fp?: StealthFingerprint): BrowserContextOptions => {
+  const f = fp ?? buildFingerprint();
+  return {
+    userAgent: f.userAgent,
+    extraHTTPHeaders: f.headers,
+    viewport: f.viewport,
+    locale: f.locale,
+    timezoneId: f.timezone,
+  };
+};
 
 function isIpAddress(hostname: string): boolean {
   return net.isIP(hostname) !== 0;
@@ -148,12 +221,30 @@ export function buildSafeJusticeGovUrl(input: string): string {
 
 type LaunchedBrowser = Awaited<ReturnType<typeof chromium.launch>>;
 
-const createStealthContext = async (browser: LaunchedBrowser) => {
-  const context = await browser.newContext(getStealthContextOptions());
+const createStealthContext = async (browser: LaunchedBrowser, fp?: StealthFingerprint) => {
+  const context = await browser.newContext(getStealthContextOptions(fp));
   await context.addInitScript(() => {
+    // Hide webdriver property
     Object.defineProperty(navigator, "webdriver", {
       get: () => undefined,
     });
+    // Spoof plugins array (headless Chrome has empty plugins)
+    Object.defineProperty(navigator, "plugins", {
+      get: () => [1, 2, 3, 4, 5],
+    });
+    // Spoof languages
+    Object.defineProperty(navigator, "languages", {
+      get: () => ["en-US", "en"],
+    });
+    // Spoof chrome.runtime to look like a real extension environment
+    const w = window as unknown as Record<string, unknown>;
+    if (!w.chrome) {
+      w.chrome = {};
+    }
+    const c = w.chrome as Record<string, unknown>;
+    if (!c.runtime) {
+      c.runtime = {};
+    }
   });
   return context;
 };
@@ -164,8 +255,98 @@ const prewarmAkamai = async (page: Page) => {
     timeout: 30000,
   });
 
+  // Simulate minimal human interaction to satisfy behavioral checks
+  await page.mouse.move(300 + Math.random() * 400, 200 + Math.random() * 300);
+  await page.evaluate(() => window.scrollBy(0, 100 + Math.random() * 200));
+
   await page.waitForTimeout(buildAkamaiDelayMs());
 };
+
+// ---------------------------------------------------------------------------
+// Persistent browser pool — keeps a warm Chromium + Akamai session
+// ---------------------------------------------------------------------------
+
+/** How often to re-prewarm the shared context (ms). */
+const PREWARM_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+
+interface BrowserPool {
+  browser: Browser;
+  context: BrowserContext;
+  fingerprint: StealthFingerprint;
+  lastPrewarm: number;
+}
+
+let _pool: BrowserPool | null = null;
+let _prewarmTimer: ReturnType<typeof setInterval> | null = null;
+
+/** Initialise (or re-initialise) the global browser pool. */
+export async function initBrowserPool(): Promise<BrowserPool> {
+  // Tear down any previous pool
+  await destroyBrowserPool();
+
+  const fp = buildFingerprint();
+  const browser = await chromium.launch(getStealthLaunchOptions());
+  const context = await createStealthContext(browser, fp);
+
+  // Prewarm the context so Akamai cookies are ready
+  const page = await context.newPage();
+  try {
+    await prewarmAkamai(page);
+  } finally {
+    await page.close().catch(() => {});
+  }
+
+  _pool = { browser, context, fingerprint: fp, lastPrewarm: Date.now() };
+
+  // Schedule periodic re-prewarm to keep cookies fresh
+  _prewarmTimer = setInterval(async () => {
+    if (!_pool) return;
+    const p = await _pool.context.newPage();
+    try {
+      await prewarmAkamai(p);
+      _pool.lastPrewarm = Date.now();
+    } catch (err) {
+      process.stderr.write(
+        `[worker] prewarm refresh failed: ${err instanceof Error ? err.message : "unknown"}\n`,
+      );
+    } finally {
+      await p.close().catch(() => {});
+    }
+  }, PREWARM_INTERVAL_MS);
+
+  process.stdout.write(
+    `[worker] browser pool initialised (fingerprint: ${fp.userAgent.slice(-30)})\n`,
+  );
+  return _pool;
+}
+
+/** Destroy the global browser pool. */
+export async function destroyBrowserPool(): Promise<void> {
+  if (_prewarmTimer) {
+    clearInterval(_prewarmTimer);
+    _prewarmTimer = null;
+  }
+  if (_pool) {
+    await _pool.context.close().catch(() => {});
+    await _pool.browser.close().catch(() => {});
+    _pool = null;
+  }
+}
+
+/**
+ * Get a healthy browser pool, re-initialising if necessary.
+ * Falls back to a fresh pool if the existing one is unhealthy.
+ */
+async function getPool(): Promise<BrowserPool> {
+  if (_pool) {
+    // Check if browser is still connected
+    if (_pool.browser.isConnected()) {
+      return _pool;
+    }
+    process.stderr.write("[worker] browser disconnected — reinitialising pool\n");
+  }
+  return initBrowserPool();
+}
 
 type PdfParseFn = (data: Buffer | Uint8Array) => Promise<PdfParseResult>;
 
@@ -300,11 +481,8 @@ app.post("/search", searchLimiter, async (req: Request, res: Response) => {
     return;
   }
 
-  let browser: Awaited<ReturnType<typeof chromium.launch>> | null = null;
-
   try {
-    browser = await chromium.launch(getStealthLaunchOptions());
-    const context = await createStealthContext(browser);
+    const pool = await getPool();
 
     // Build the DOJ search URL
     const searchUrl = new URL("https://www.justice.gov/multimedia-search");
@@ -316,12 +494,14 @@ app.post("/search", searchLimiter, async (req: Request, res: Response) => {
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= 3; attempt++) {
-      const page = await context.newPage();
+      const page = await pool.context.newPage();
       try {
-        // Step 1: Visit the DOJ homepage to acquire Akamai session cookies
-        await prewarmAkamai(page);
+        // If this is a retry, re-prewarm on the new page to refresh cookies
+        if (attempt > 1) {
+          await prewarmAkamai(page);
+        }
 
-        // Step 2: Make the API call from WITHIN the page context as an XHR.
+        // Make the API call from WITHIN the page context as an XHR.
         // This carries all Akamai cookies/tokens, matching a real browser flow.
         const result = await page.evaluate(async (url: string) => {
           const resp = await fetch(url, {
@@ -370,10 +550,6 @@ app.post("/search", searchLimiter, async (req: Request, res: Response) => {
     const message = error instanceof Error ? error.message : "Unknown error";
     res.status(500).json({ error: message });
     return;
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
   }
 });
 
@@ -406,78 +582,112 @@ app.post("/analyze", analyzeLimiter, async (req: Request, res: Response) => {
     return;
   }
 
-  let browser: Awaited<ReturnType<typeof chromium.launch>> | null = null;
-
   try {
-    browser = await chromium.launch(getStealthLaunchOptions());
-    const context = await createStealthContext(browser);
-    const page = await context.newPage();
+    const pool = await getPool();
+    const page = await pool.context.newPage();
 
-    await prewarmAkamai(page);
-    await page.goto(safeUrl, {
-      waitUntil: "domcontentloaded",
-      timeout: 60000,
-    });
-    if (page.url().includes("/age-verify")) {
-      const button = page.getByRole("button", {
-        name: /I am 18|I am 18 years|I am 18 years of age/i,
+    try {
+      await page.goto(safeUrl, {
+        waitUntil: "domcontentloaded",
+        timeout: 60000,
       });
+      if (page.url().includes("/age-verify")) {
+        const button = page.getByRole("button", {
+          name: /I am 18|I am 18 years|I am 18 years of age/i,
+        });
 
-      try {
-        await button.click({ timeout: 15000 });
-        await page.waitForLoadState("domcontentloaded");
-        await page.waitForURL(/\.pdf/i, { timeout: 30000 });
-      } catch {
-        // If button not found, proceed with cookies anyway
+        try {
+          await button.click({ timeout: 15000 });
+          await page.waitForLoadState("domcontentloaded");
+          await page.waitForURL(/\.pdf/i, { timeout: 30000 });
+        } catch {
+          // If button not found, proceed anyway
+        }
       }
+
+      // Download the PDF INSIDE the browser context to retain Akamai
+      // session cookies and JS challenge tokens. The previous approach of
+      // extracting cookies and using Node.js fetch() lost the JS-based
+      // Akamai fingerprint, causing 403 errors.
+      const pdfBase64 = await page.evaluate(async (url: string) => {
+        const resp = await fetch(url, {
+          headers: { Accept: "application/pdf" },
+          credentials: "same-origin",
+        });
+        if (!resp.ok) {
+          return {
+            error: true as const,
+            status: resp.status,
+            statusText: resp.statusText,
+          };
+        }
+        const buf = await resp.arrayBuffer();
+        // Convert to base64 to transfer binary data out of browser context
+        const bytes = new Uint8Array(buf);
+        let binary = "";
+        for (let i = 0; i < bytes.length; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        return { error: false as const, data: btoa(binary) };
+      }, safeUrl);
+
+      if (pdfBase64.error) {
+        throw new Error(`PDF download failed: ${pdfBase64.status} ${pdfBase64.statusText}`);
+      }
+
+      const buffer = Buffer.from(pdfBase64.data, "base64");
+      const parsed = await pdfParse(buffer);
+
+      res.json({
+        text: parsed.text || "",
+        pages: parsed.numpages || 0,
+        metadata: {
+          fileSize: buffer.length,
+          extractedAt: new Date().toISOString(),
+          info: parsed.info || null,
+        },
+      });
+      return;
+    } finally {
+      await page.close().catch(() => {});
     }
-
-    const cookies = (await context.cookies()) as Array<{
-      name: string;
-      value: string;
-    }>;
-    const cookieHeader = cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join("; ");
-
-    const pdfResponse = await fetch(safeUrl, {
-      headers: {
-        Cookie: cookieHeader,
-        "User-Agent": STEALTH_USER_AGENT,
-        Accept: "application/pdf",
-      },
-      redirect: "manual", // Prevent redirect-based SSRF to internal hosts
-    });
-
-    if (!pdfResponse.ok) {
-      throw new Error(`PDF download failed: ${pdfResponse.status} ${pdfResponse.statusText}`);
-    }
-
-    const buffer = Buffer.from(await pdfResponse.arrayBuffer());
-    const parsed = await pdfParse(buffer);
-
-    res.json({
-      text: parsed.text || "",
-      pages: parsed.numpages || 0,
-      metadata: {
-        fileSize: buffer.length,
-        extractedAt: new Date().toISOString(),
-        info: parsed.info || null,
-      },
-    });
-    return;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     res.status(500).json({ error: message });
     return;
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
   }
 });
 
+// Export app for testing
+export { app };
+
 const port = Number(process.env.PORT) || 3000;
 if (process.env.NODE_ENV !== "test") {
-  app.listen(port, () => {
-    process.stdout.write(`PDF worker listening on :${port}\n`);
-  });
+  // Initialise the browser pool before accepting requests
+  initBrowserPool()
+    .then(() => {
+      app.listen(port, () => {
+        process.stdout.write(`PDF worker listening on :${port}\n`);
+      });
+    })
+    .catch((err) => {
+      process.stderr.write(
+        `[worker] failed to init browser pool: ${err instanceof Error ? err.message : "unknown"}\n`,
+      );
+      // Start server anyway — pool will init on first request
+      app.listen(port, () => {
+        process.stdout.write(
+          `PDF worker listening on :${port} (pool init failed, will retry on first request)\n`,
+        );
+      });
+    });
+
+  // Graceful shutdown
+  const shutdown = async (signal: string) => {
+    process.stdout.write(`[worker] received ${signal}, shutting down...\n`);
+    await destroyBrowserPool();
+    process.exit(0);
+  };
+  process.on("SIGTERM", () => void shutdown("SIGTERM"));
+  process.on("SIGINT", () => void shutdown("SIGINT"));
 }

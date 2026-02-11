@@ -7,11 +7,11 @@ beforeAll(async () => {
 });
 
 describe("Worker stealth helpers", () => {
-  it("buildAkamaiDelayMs returns a value within 2000-3999ms", () => {
+  it("buildAkamaiDelayMs returns a value within 3000-5999ms", () => {
     for (let i = 0; i < 50; i += 1) {
       const delay = workerModule.buildAkamaiDelayMs();
-      expect(delay).toBeGreaterThanOrEqual(2000);
-      expect(delay).toBeLessThan(4000);
+      expect(delay).toBeGreaterThanOrEqual(3000);
+      expect(delay).toBeLessThan(6000);
     }
   });
 
@@ -21,12 +21,49 @@ describe("Worker stealth helpers", () => {
     expect(ua).not.toContain("bot");
   });
 
-  it("stealth context options include UA and client hints", () => {
+  it("PREWARM_WAIT_UNTIL uses networkidle", () => {
+    expect(workerModule.PREWARM_WAIT_UNTIL).toBe("networkidle");
+  });
+
+  describe("buildFingerprint", () => {
+    it("returns a valid fingerprint with all required fields", () => {
+      const fp = workerModule.buildFingerprint();
+      expect(fp.userAgent).toContain("Chrome/");
+      expect(fp.headers["sec-ch-ua"]).toContain("Chromium");
+      expect(fp.headers["sec-ch-ua-mobile"]).toBe("?0");
+      expect(fp.headers["sec-ch-ua-platform"]).toMatch(/"(Windows|macOS|Linux)"/);
+      expect(fp.headers["Accept-Language"]).toBe("en-US,en;q=0.9");
+      expect(fp.viewport.width).toBeGreaterThanOrEqual(1900);
+      expect(fp.viewport.width).toBeLessThanOrEqual(1920);
+      expect(fp.viewport.height).toBeGreaterThanOrEqual(1060);
+      expect(fp.viewport.height).toBeLessThanOrEqual(1080);
+      expect(fp.locale).toBe("en-US");
+      expect(fp.timezone).toMatch(/^America\//);
+    });
+
+    it("produces varied fingerprints across multiple calls", () => {
+      const fps = Array.from({ length: 30 }, () => workerModule.buildFingerprint());
+      const uas = new Set(fps.map((f) => f.userAgent));
+      const tzs = new Set(fps.map((f) => f.timezone));
+      // With 30 samples from 5 UAs and 4 timezones, expect at least 2 unique each
+      expect(uas.size).toBeGreaterThanOrEqual(2);
+      expect(tzs.size).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  it("stealth context options accept a custom fingerprint", () => {
+    const fp = workerModule.buildFingerprint();
+    const options = workerModule.getStealthContextOptions(fp);
+    expect(options.userAgent).toBe(fp.userAgent);
+    expect(options.extraHTTPHeaders?.["sec-ch-ua"]).toBe(fp.headers["sec-ch-ua"]);
+    expect(options.viewport).toEqual(fp.viewport);
+    expect(options.timezoneId).toBe(fp.timezone);
+  });
+
+  it("stealth context options use defaults when no fingerprint is provided", () => {
     const options = workerModule.getStealthContextOptions();
-    expect(options.userAgent).toContain("Chrome/131");
+    expect(options.userAgent).toContain("Chrome/");
     expect(options.extraHTTPHeaders?.["sec-ch-ua"]).toContain("Chromium");
-    expect(options.extraHTTPHeaders?.["sec-ch-ua-mobile"]).toBe("?0");
-    expect(options.extraHTTPHeaders?.["sec-ch-ua-platform"]).toBe('"Windows"');
   });
 
   it("stealth launch options include anti-detect arguments", () => {
@@ -36,8 +73,16 @@ describe("Worker stealth helpers", () => {
         "--disable-blink-features=AutomationControlled",
         "--no-sandbox",
         "--disable-dev-shm-usage",
+        "--disable-infobars",
       ]),
     );
+  });
+
+  it("pickRandom selects from the array", () => {
+    const arr = [1, 2, 3, 4, 5];
+    for (let i = 0; i < 20; i++) {
+      expect(arr).toContain(workerModule.pickRandom(arr));
+    }
   });
 
   it("isAllowedJusticeGovHost only allows public justice.gov hosts", () => {
@@ -117,6 +162,13 @@ describe("Worker stealth helpers", () => {
         "https://user:pass@www.justice.gov/file.pdf",
       );
       expect(result).toBe("https://www.justice.gov/file.pdf");
+    });
+  });
+
+  describe("browser pool exports", () => {
+    it("exports initBrowserPool and destroyBrowserPool functions", () => {
+      expect(typeof workerModule.initBrowserPool).toBe("function");
+      expect(typeof workerModule.destroyBrowserPool).toBe("function");
     });
   });
 });
