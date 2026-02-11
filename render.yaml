@@ -2,7 +2,7 @@ services:
   - type: web
     name: epstein-worker
     runtime: docker
-    region: frankfurt
+    region: oregon
     plan: free
     branch: main
     dockerfilePath: ./worker/Dockerfile
