@@ -1,5 +1,5 @@
 import express from "express";
-import type { Express, Request, Response } from "express";
+import type { Request, Response } from "express";
 import { chromium, type BrowserContextOptions, type LaunchOptions, type Page } from "playwright";
 import * as pdfParseModule from "pdf-parse";
 import helmet from "helmet";
@@ -14,21 +14,6 @@ type PdfParseResult = {
   numpages: number;
   info?: unknown;
 };
-
-/**
- * Structured error type for justice.gov URL validation failures.
- * This lets callers distinguish between "forbidden host" and
- * generic bad-input errors without relying on substring checks.
- */
-class JusticeGovUrlError extends Error {
-  public readonly reason: "UNALLOWED_HOST" | "INVALID_URL" | "OTHER";
-
-  constructor(message: string, reason: "UNALLOWED_HOST" | "INVALID_URL" | "OTHER" = "OTHER") {
-    super(message);
-    this.name = "JusticeGovUrlError";
-    this.reason = reason;
-  }
-}
 
 export const STEALTH_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
@@ -141,7 +126,7 @@ export function buildSafeJusticeGovUrl(input: string): string {
   const isIPv4 = /^[0-9.]+$/.test(hostname);
   const isBracketedIPv6 = /^\[.*\]$/.test(hostname);
   if (isIPv4 || isBracketedIPv6) {
-    throw new JusticeGovUrlError("IP addresses are not allowed", "DISALLOWED_IP");
+    throw new JusticeGovUrlError("Only justice.gov hosts are allowed", "DISALLOWED_IP");
   }
 
   // Ensure the hostname is an allowed justice.gov host.
@@ -190,11 +175,15 @@ const pdfParse =
 
 const app = express();
 
-export const applyTrustProxy = (target: Pick<Express, "set">) => {
+type TrustProxyTarget = {
+  set: (setting: string, value: unknown) => unknown;
+};
+
+export const applyTrustProxy = (target: TrustProxyTarget) => {
   target.set("trust proxy", 1);
 };
 
-applyTrustProxy(app);
+applyTrustProxy(app as unknown as TrustProxyTarget);
 
 const analyzeLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
