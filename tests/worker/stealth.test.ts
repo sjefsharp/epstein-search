@@ -1,3 +1,5 @@
+import { describe, expect, it } from "vitest";
+
 let workerModule: typeof import("../../worker/src/index");
 
 beforeAll(async () => {
@@ -72,6 +74,20 @@ describe("Worker stealth helpers", () => {
       expect(() => workerModule.buildSafeJusticeGovUrl("https://evil.com/file.pdf")).toThrow(
         "Only justice.gov hosts are allowed",
       );
+    });
+
+    it("labels unallowed host errors with a reason", () => {
+      try {
+        workerModule.buildSafeJusticeGovUrl("https://evil.com/file.pdf");
+      } catch (error) {
+        expect(error).toBeInstanceOf(workerModule.JusticeGovUrlError);
+        if (error instanceof workerModule.JusticeGovUrlError) {
+          expect(error.reason).toBe("UNALLOWED_HOST");
+        }
+        return;
+      }
+
+      throw new Error("Expected buildSafeJusticeGovUrl to throw");
     });
 
     it("throws for localhost bypass attempts", () => {
