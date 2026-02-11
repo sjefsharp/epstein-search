@@ -7,6 +7,7 @@ import { routing } from "@/i18n/routing";
 import Header from "@/components/navigation/Header";
 import Footer from "@/components/navigation/Footer";
 import ConsentBanner from "@/components/consent/ConsentBanner";
+import ConsentBottomSpacer from "@/components/consent/ConsentBottomSpacer";
 import AdSenseLoader from "@/components/consent/AdSenseLoader";
 import "./globals.css";
 
@@ -201,7 +202,9 @@ export default async function LocaleLayout({
           }}
         />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden flex min-h-screen flex-col`}
+      >
         <NextIntlClientProvider messages={messages}>
           <a
             href="#main-content"
@@ -210,10 +213,11 @@ export default async function LocaleLayout({
             {t("skipToMain")}
           </a>
           <Header />
-          <main id="main-content" className="relative z-0">
+          <main id="main-content" className="relative z-0 flex-1">
             {children}
           </main>
           <Footer />
+          <ConsentBottomSpacer enabled={Boolean(adsenseId)} />
           {adsenseId ? (
             <ConsentBanner locale={locale} policyVersion={consentPolicyVersion} />
           ) : null}
