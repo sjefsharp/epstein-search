@@ -81,6 +81,10 @@ npm run test:coverage   # lines ≥80%, statements ≥80%, functions ≥75%, bra
 
 Shortcut: `npm run preflight`
 
+### 2b) Doc sync
+
+If your change affects documented behavior (API contracts, env vars, deploy steps, component API, worker endpoints), update the relevant `docs/` file and `README.md` **before** committing. `docs/` is the single source of truth for human-readable project documentation.
+
 ### 3) Commit
 
 ```bash

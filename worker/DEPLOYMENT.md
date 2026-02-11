@@ -1,116 +1,61 @@
 # Worker Deployment Guide
 
-## ✅ Deployed via Render MCP
-
-Your worker service is already deployed!
-
-**Service Details:**
+## Deployed via Render
 
 - **URL**: https://epstein-worker.onrender.com
 - **Region**: Frankfurt
 - **Plan**: Free (750 hours/month)
-- **Auto-deploy**: Enabled (deploys on git push)
+- **Auto-deploy**: Enabled (deploys on push to `main`)
 
-## Deployment Status
-
-Check deployment status:
+## Health Check
 
 ```bash
-# Health check (wait until build completes)
 curl https://epstein-worker.onrender.com/health
-
-# Expected response:
 # {"status":"healthy","service":"epstein-pdf-worker","timestamp":"..."}
 ```
 
 ## Build Process
 
-The build command automatically:
+Automatic on deploy:
 
-1. `cd worker` - Navigate to worker directory
-2. `npm install` - Install dependencies
-3. `npx playwright install chromium --with-deps` - Install browser + dependencies
-4. `npm run build` - Compile TypeScript
+1. `cd worker` → `npm install` → `npx playwright install chromium --with-deps` → `npm run build`
+2. Build time: 5–10 minutes (first deploy)
 
-**Build time**: 5-10 minutes (first time)
+## Environment Variables
 
-## Monitoring
-
-**Render Dashboard**: https://dashboard.render.com/web/srv-d61r9vsr85hc7399matg
-
-View:
-
-- Build logs
-- Runtime logs
-- Metrics (CPU, Memory)
-- Environment variables
+| Variable               | Required | Purpose                                                                                          |
+| ---------------------- | -------- | ------------------------------------------------------------------------------------------------ |
+| `WORKER_SHARED_SECRET` | **Yes**  | HMAC shared secret — must match Vercel value. Without this, all authenticated requests will 401. |
+| `NODE_ENV`             | Yes      | Set to `production`                                                                              |
+| `PORT`                 | Auto     | Set by Render (default: `10000`)                                                                 |
+| `ALLOWED_ORIGINS`      | No       | Comma-separated CORS origins (defaults to Vercel app URL)                                        |
 
 ## Testing
 
-Once deployed, test the `/analyze` endpoint:
+Test the `/analyze` endpoint (requires HMAC signature):
 
 ```bash
+# Generate HMAC signature for the request body
+BODY='{"fileUri":"https://www.justice.gov/d9/2024-07/maxwell_001.pdf"}'
+SIG=$(echo -n "$BODY" | openssl dgst -sha256 -hmac "$WORKER_SHARED_SECRET" | awk '{print $2}')
+
 curl -X POST https://epstein-worker.onrender.com/analyze \
   -H "Content-Type: application/json" \
-  -d '{"fileUri":"https://www.justice.gov/d9/2024-07/maxwell_001.pdf"}'
-```
-
-Expected response:
-
-```json
-{
-  "text": "...extracted PDF content...",
-  "pages": 42,
-  "metadata": {
-    "extractedAt": "2026-02-04T...",
-    "source": "playwright-text-extraction"
-  }
-}
+  -H "X-Worker-Signature: $SIG" \
+  -d "$BODY"
 ```
 
 ## Troubleshooting
 
-### Build fails
+| Issue                 | Fix                                                                            |
+| --------------------- | ------------------------------------------------------------------------------ |
+| Build fails           | Check build logs in Render dashboard — verify Playwright version compatibility |
+| 401 on all requests   | `WORKER_SHARED_SECRET` not set or doesn't match Vercel value                   |
+| Worker times out      | Free tier has 512MB RAM — large PDFs may exceed limits                         |
+| Age-gate bypass fails | Worker tries multiple selectors automatically — check runtime logs             |
 
-- Check build logs in Render dashboard
-- Verify `package.json` has correct dependencies
-- Ensure Playwright version is compatible
+## Monitoring
 
-### Worker times out
+View build logs, runtime logs, and metrics in the [Render dashboard](https://dashboard.render.com).
 
-- Free tier has 512MB RAM
-- Large PDFs may exceed limits
-- Consider pagination or upgrading plan
-
-### Age-gate bypass fails
-
-- Worker tries multiple selectors automatically
-- Some PDFs may not have age gates
-- Check runtime logs for details
-
-## Updates
-
-Push to GitHub `main` branch to trigger automatic redeployment:
-
-```bash
-git add .
-git commit -m "Update worker"
-git push origin main
-# Render auto-deploys in 2-5 minutes
-```
-
-## Environment Variables
-
-No secrets needed for worker. Optional:
-
-- `PORT` - Auto-set by Render (default: 10000)
-- `NODE_ENV` - Set to `production`
-
-## Next Steps
-
-1. ✅ Worker deployed
-2. ✅ URL configured in `.env.local`
-3. → Wait for build to complete (5-10 min)
-4. → Test health endpoint
-5. → Deploy Next.js app to Vercel
-6. → Test full flow (search → summarize → deep analyze)
+See [docs/worker.md](../docs/worker.md) for architecture details and [docs/deployment.md](../docs/deployment.md) for full deploy order.
