@@ -106,3 +106,24 @@ Tests health, search, and analyze endpoints with expected status codes.
 2. Import from `@/lib/...` using path alias
 3. Group with `describe()`/`it()`
 4. If new env vars needed, add to `tests/setup.ts`
+
+## Chrome Dev Tools (extra guardrail)
+
+When a browser is available (local dev or remote debugging), use Chrome Dev Tools **alongside** automated tests:
+
+| Panel                      | What to check                                              |
+| -------------------------- | ---------------------------------------------------------- |
+| Console                    | Runtime errors, unhandled rejections, deprecation warnings |
+| Network                    | API status codes, payloads, CORS issues                    |
+| Elements                   | DOM structure, computed styles, layout                     |
+| Lighthouse / Accessibility | a11y score regressions, missing ARIA roles                 |
+
+### Remote debugging
+
+When investigating a deployed environment without direct browser access:
+
+1. Capture screenshots and/or Console output from the remote host
+2. Analyze Dev Tools feedback and correlate with test results
+3. Report findings inline with the commit or PR description
+
+> **Advisory**: Chrome Dev Tools checks are non-blocking. Automated tests (`test:run`, `test:e2e`, `test:coverage`) remain the hard gate.

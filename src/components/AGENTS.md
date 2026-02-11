@@ -43,6 +43,19 @@ EVERY component file MUST start with `"use client"` on line 1. Non-negotiable �
 - Test user behavior, NOT implementation — prefer `getByRole`, `getByLabelText`, `getByText` over `getByTestId`
 - Test a11y: `aria-label`, roles, keyboard navigation
 
+### Chrome Dev Tools
+
+When a browser is available, verify component changes with Chrome Dev Tools:
+
+- **Console** — no runtime errors or warnings from the component
+- **Elements** — inspect rendered DOM, computed styles, layout
+- **Accessibility** — check ARIA roles/labels via the Accessibility pane
+- **Network** — confirm any API calls from the component succeed
+
+For remote debugging: capture Dev Tools output → analyze → report in commit/PR.
+
+> Advisory — automated tests remain the hard gate.
+
 ### Performance
 
 - `memo()` for stable-callback/large-list components — `useCallback()` for handler props

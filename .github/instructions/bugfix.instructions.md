@@ -13,7 +13,8 @@ applyTo: "src/**,worker/**,tests/**"
 3. **Fix the bug** — minimum code change only
 4. **Confirm it passes**: `npm run test:run`
 5. **Verify no regressions**: `npm run lint && npm run typecheck && npm run test:run` (+ `test:e2e` if UI, + `test:coverage`)
-6. **Commit & push** per `AGENTS.md § Git Workflow`
+6. **Chrome Dev Tools check** (when browser is available) — Console errors, Network failures, Elements layout, Lighthouse a11y. For remote debugging: capture and analyze Dev Tools output. Advisory — automated tests remain the hard gate.
+7. **Commit & push** per `AGENTS.md § Git Workflow`
 
 ## Rules
 
