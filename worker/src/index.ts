@@ -15,6 +15,21 @@ type PdfParseResult = {
   info?: unknown;
 };
 
+/**
+ * Structured error type for justice.gov URL validation failures.
+ * This lets callers distinguish between "forbidden host" and
+ * generic bad-input errors without relying on substring checks.
+ */
+class JusticeGovUrlError extends Error {
+  public readonly reason: "UNALLOWED_HOST" | "INVALID_URL" | "OTHER";
+
+  constructor(message: string, reason: "UNALLOWED_HOST" | "INVALID_URL" | "OTHER" = "OTHER") {
+    super(message);
+    this.name = "JusticeGovUrlError";
+    this.reason = reason;
+  }
+}
+
 export const STEALTH_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 export const PREWARM_WAIT_UNTIL = "domcontentloaded" as const;
@@ -345,7 +360,11 @@ app.post("/analyze", analyzeLimiter, async (req: Request, res: Response) => {
     safeUrl = buildSafeJusticeGovUrl(fileUri);
   } catch (urlError) {
     const message = urlError instanceof Error ? urlError.message : "Invalid URL";
-    const status = message.includes("justice.gov") ? 403 : 400;
+    let status = 400;
+    if (urlError instanceof JusticeGovUrlError && urlError.reason === "UNALLOWED_HOST") {
+      // Explicitly mark requests that fail justice.gov host checks as forbidden
+      status = 403;
+    }
     res.status(status).json({ error: message });
     return;
   }
