@@ -37,7 +37,8 @@ async function pingRender(): Promise<"ok" | "error"> {
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10_000);
+    // Render free-tier cold starts can take 30-60s — allow up to 55s
+    const timeout = setTimeout(() => controller.abort(), 55_000);
 
     try {
       const res = await fetch(`${workerUrl}/health`, {
