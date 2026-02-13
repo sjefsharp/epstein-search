@@ -116,11 +116,19 @@ const searchLimiter = rateLimit({
   message: { error: "Too many search requests, please try again later." },
 });
 
+const refreshLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // limit each IP/client to 10 refresh requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many refresh requests, please try again later." },
+});
+
 app.post("/search", searchLimiter, requireWorkerSignature, createSearchHandler());
 
 app.post("/analyze", analyzeLimiter, requireWorkerSignature, createAnalyzeHandler(pdfParse));
 
-app.post("/refresh", requireWorkerSignature, createRefreshHandler());
+app.post("/refresh", refreshLimiter, requireWorkerSignature, createRefreshHandler());
 
 // Export app for testing
 export { app };
