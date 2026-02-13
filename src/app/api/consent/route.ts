@@ -3,8 +3,10 @@ import { consentLogSchema } from "@/lib/validation";
 import { checkRateLimit, consentRatelimit, getClientIp } from "@/lib/ratelimit";
 import { runQuery } from "@/lib/db";
 import { sanitizeError } from "@/lib/security";
-
-type SupportedLocale = "en" | "nl" | "fr" | "de" | "es" | "pt";
+import { normalizeLocale } from "@/lib/locale";
+import { CONSENT_ERROR_MESSAGES } from "@/lib/error-messages";
+import type { SupportedLocale } from "@/lib/types";
+import { createRateLimitResponse, withJsonErrorHandling } from "@/lib/api-handler";
 
 const CONSENT_TABLES: Record<SupportedLocale, string> = {
   en: "consent_events_en",
@@ -15,57 +17,21 @@ const CONSENT_TABLES: Record<SupportedLocale, string> = {
   pt: "consent_events_pt",
 };
 
-const ERROR_MESSAGES: Record<
-  SupportedLocale,
-  { rateLimit: string; invalidInput: string; serverError: string }
-> = {
-  en: {
-    rateLimit: "Rate limit exceeded. Please try again later.",
-    invalidInput: "Invalid input",
-    serverError: "Unable to record consent",
-  },
-  nl: {
-    rateLimit: "Rate limit bereikt. Probeer het later opnieuw.",
-    invalidInput: "Ongeldige invoer",
-    serverError: "Kan toestemming niet opslaan",
-  },
-  fr: {
-    rateLimit: "Limite de débit dépassée. Veuillez réessayer plus tard.",
-    invalidInput: "Entrée invalide",
-    serverError: "Impossible d'enregistrer le consentement",
-  },
-  de: {
-    rateLimit: "Rate-Limit überschritten. Bitte später erneut versuchen.",
-    invalidInput: "Ungültige Eingabe",
-    serverError: "Zustimmung konnte nicht gespeichert werden",
-  },
-  es: {
-    rateLimit: "Límite de velocidad excedido. Por favor intente más tarde.",
-    invalidInput: "Entrada inválida",
-    serverError: "No se pudo guardar el consentimiento",
-  },
-  pt: {
-    rateLimit: "Limite de taxa excedido. Por favor tente mais tarde.",
-    invalidInput: "Entrada inválida",
-    serverError: "Não foi possível salvar o consentimento",
-  },
-};
-
 const getErrorMessages = (locale: SupportedLocale) => {
   switch (locale) {
     case "nl":
-      return ERROR_MESSAGES.nl;
+      return CONSENT_ERROR_MESSAGES.nl;
     case "fr":
-      return ERROR_MESSAGES.fr;
+      return CONSENT_ERROR_MESSAGES.fr;
     case "de":
-      return ERROR_MESSAGES.de;
+      return CONSENT_ERROR_MESSAGES.de;
     case "es":
-      return ERROR_MESSAGES.es;
+      return CONSENT_ERROR_MESSAGES.es;
     case "pt":
-      return ERROR_MESSAGES.pt;
+      return CONSENT_ERROR_MESSAGES.pt;
     case "en":
     default:
-      return ERROR_MESSAGES.en;
+      return CONSENT_ERROR_MESSAGES.en;
   }
 };
 
@@ -89,34 +55,13 @@ const getConsentTable = (locale: SupportedLocale) => {
 
 export const runtime = "nodejs";
 
-const normalizeLocale = (locale?: string): SupportedLocale => {
-  if (!locale) return "en";
-  const normalized = locale.toLowerCase();
-  if (normalized.startsWith("nl")) return "nl";
-  if (normalized.startsWith("fr")) return "fr";
-  if (normalized.startsWith("de")) return "de";
-  if (normalized.startsWith("es")) return "es";
-  if (normalized.startsWith("pt")) return "pt";
-  return "en";
-};
-
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withJsonErrorHandling(
+  async (request: NextRequest) => {
     const ip = getClientIp(request);
     const rateLimitResult = await checkRateLimit(ip, consentRatelimit);
 
     if (!rateLimitResult.success) {
-      return NextResponse.json(
-        { error: ERROR_MESSAGES.en.rateLimit },
-        {
-          status: 429,
-          headers: {
-            "X-RateLimit-Limit": rateLimitResult.limit.toString(),
-            "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
-            "X-RateLimit-Reset": new Date(rateLimitResult.reset).toISOString(),
-          },
-        },
-      );
+      return createRateLimitResponse(CONSENT_ERROR_MESSAGES.en.rateLimit, rateLimitResult);
     }
 
     const body = await request.json();
@@ -160,19 +105,12 @@ export async function POST(request: NextRequest) {
     ]);
 
     return NextResponse.json({ ok: true, id: result.rows[0]?.id });
-  } catch (error) {
-    process.stderr.write(
-      `Consent API error: ${
-        error instanceof Error ? (error.stack ?? error.message) : String(error)
-      }\n`,
-    );
-    const errorBody = sanitizeError(error, process.env.NODE_ENV === "development");
-    return NextResponse.json(
-      {
-        error: ERROR_MESSAGES.en.serverError,
-        details: errorBody,
-      },
-      { status: 500 },
-    );
-  }
-}
+  },
+  {
+    routeName: "Consent",
+    buildErrorBody: (error) => ({
+      error: CONSENT_ERROR_MESSAGES.en.serverError,
+      details: sanitizeError(error, process.env.NODE_ENV === "development"),
+    }),
+  },
+);

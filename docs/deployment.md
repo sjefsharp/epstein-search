@@ -21,7 +21,7 @@ GROQ_API_KEY                        # Groq console
 UPSTASH_REDIS_REST_URL              # Upstash dashboard
 UPSTASH_REDIS_REST_TOKEN            # Upstash dashboard
 WORKER_SHARED_SECRET                # shared with Render — HMAC auth
-RENDER_WORKER_URL                   # Render service URL
+WORKER_URL                          # Worker service URL
 NEON_DATABASE_URL                   # Neon Postgres connection string
 CRON_SECRET                         # shared secret for cleanup cron
 NEXT_PUBLIC_CONSENT_POLICY_VERSION  # semver (e.g. 1.0.0)
@@ -40,19 +40,21 @@ NEXT_PUBLIC_ADSENSE_ID              # optional — Google AdSense
 - Auto-deploy on push to `main`
 
 ```
-WORKER_SHARED_SECRET   # REQUIRED — must match Vercel value
-NODE_ENV=production    # required
-PORT=10000             # Render default
-ALLOWED_ORIGINS        # optional — comma-separated, defaults to Vercel app URL
+WORKER_SHARED_SECRET      # REQUIRED — must match Vercel value
+NODE_ENV=production       # required
+PORT=10000                # Render default
+ALLOWED_ORIGINS           # optional — comma-separated, defaults to Vercel app URL
+PROXY_URL                 # optional — HTTP proxy to bypass Akamai IP blocks
+PREWARM_INTERVAL_MINUTES  # optional — defaults to 0 (disabled) when PROXY_URL set
 ```
 
 ## Deploy Order
 
 1. Deploy worker to Render first (or simultaneously)
 2. Copy Render worker URL
-3. Set `RENDER_WORKER_URL` in Vercel env vars
+3. Set `WORKER_URL` in Vercel env vars
 4. Deploy Next.js app to Vercel
-5. Verify: `curl <RENDER_WORKER_URL>/health` → `{"status":"healthy"}`
+5. Verify: `curl <WORKER_URL>/health` → `{"status":"healthy"}`
 
 ## Keep-Alive (Preventing Cold Starts)
 

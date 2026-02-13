@@ -6,13 +6,14 @@ All API routes must export `export const runtime = "nodejs"` — required for Up
 
 ## Routes
 
-| Route                  | Method   | Purpose                                                                                            |
-| ---------------------- | -------- | -------------------------------------------------------------------------------------------------- |
-| `/api/search`          | GET/POST | Zod validate → rate-limit → cache check → DOJ proxy (fallback: worker) → dedupe → cache set → JSON |
-| `/api/summarize`       | POST     | Parse body → Groq streaming → SSE response                                                         |
-| `/api/deep-analyze`    | POST     | Rate-limit → Zod validate → HMAC-sign → Render worker proxy → Groq deep summary → SSE              |
-| `/api/consent`         | POST     | Rate-limit → Zod validate → Neon INSERT (consent log)                                              |
-| `/api/consent/cleanup` | POST     | Cron-triggered → `CRON_SECRET` auth → delete expired consent records                               |
+| Route                    | Method   | Purpose                                                                                                         |
+| ------------------------ | -------- | --------------------------------------------------------------------------------------------------------------- |
+| `/api/search`            | GET/POST | Zod validate → rate-limit → Redis cache → **Neon cache** → DOJ proxy (fallback: worker) → dedupe → cache → JSON |
+| `/api/summarize`         | POST     | Parse body → Groq streaming → SSE response                                                                      |
+| `/api/deep-analyze`      | POST     | Rate-limit → Zod validate → HMAC-sign → Render worker proxy → Groq deep summary → SSE                           |
+| `/api/consent`           | POST     | Rate-limit → Zod validate → Neon INSERT (consent log)                                                           |
+| `/api/consent/cleanup`   | POST     | Cron-triggered → `CRON_SECRET` auth → delete expired consent records                                            |
+| `/api/cron/refresh-docs` | GET/POST | Cron-triggered → `CRON_SECRET` auth → re-crawl DOJ metadata into Neon cache                                     |
 
 ## SSE Streaming Format
 

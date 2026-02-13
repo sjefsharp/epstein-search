@@ -18,7 +18,7 @@ describe("/api/keep-alive", () => {
     vi.resetModules();
     mockedRunQuery.mockReset();
     mockFetch.mockReset();
-    process.env.RENDER_WORKER_URL = "http://localhost:10000";
+    process.env.WORKER_URL = "http://localhost:10000";
   });
 
   it("pings both Neon and Render", async () => {
@@ -86,8 +86,8 @@ describe("/api/keep-alive", () => {
     expect(body.render).toBe("error");
   });
 
-  it("reports render error when RENDER_WORKER_URL is not set", async () => {
-    delete process.env.RENDER_WORKER_URL;
+  it("reports render error when WORKER_URL is not set", async () => {
+    delete process.env.WORKER_URL;
     mockedRunQuery.mockResolvedValue({
       rows: [{ "?column?": 1 }],
       rowCount: 1,

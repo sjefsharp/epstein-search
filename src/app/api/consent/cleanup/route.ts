@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runQuery } from "@/lib/db";
+import { sanitizeError } from "@/lib/security";
+import { withJsonErrorHandling } from "@/lib/api-handler";
 
 const CONSENT_TABLES = [
   "consent_events_en",
@@ -44,26 +46,44 @@ const runCleanup = async () => {
   return Object.fromEntries(results);
 };
 
-export async function POST(request: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) {
-    return NextResponse.json({ error: "CRON_SECRET is not configured" }, { status: 500 });
-  }
+export const POST = withJsonErrorHandling(
+  async (request: NextRequest) => {
+    const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret) {
+      return NextResponse.json({ error: "CRON_SECRET is not configured" }, { status: 500 });
+    }
 
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const results = await runCleanup();
+    if (!isAuthorized(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const results = await runCleanup();
 
-  return NextResponse.json({ ok: true, deleted: results });
-}
+    return NextResponse.json({ ok: true, deleted: results });
+  },
+  {
+    routeName: "Consent cleanup POST",
+    buildErrorBody: (error) => ({
+      error: "Cleanup failed",
+      details: sanitizeError(error, process.env.NODE_ENV === "development"),
+    }),
+  },
+);
 
-export async function GET(request: NextRequest) {
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export const GET = withJsonErrorHandling(
+  async (request: NextRequest) => {
+    if (!isAuthorized(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const results = await runCleanup();
+    const results = await runCleanup();
 
-  return NextResponse.json({ ok: true, deleted: results });
-}
+    return NextResponse.json({ ok: true, deleted: results });
+  },
+  {
+    routeName: "Consent cleanup GET",
+    buildErrorBody: (error) => ({
+      error: "Cleanup failed",
+      details: sanitizeError(error, process.env.NODE_ENV === "development"),
+    }),
+  },
+);

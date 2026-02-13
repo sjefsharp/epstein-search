@@ -30,9 +30,17 @@ HMAC-SHA256 signature in `X-Worker-Signature` or `Authorization: Bearer <sig>` �
 
 All outbound URLs validated by `isAllowedJusticeGovHost()` — allows only `*.justice.gov` over HTTPS. Blocks localhost, private IPs, and non-justice.gov domains.
 
+## Proxy Support
+
+When `PROXY_URL` is set, all Chromium traffic routes through an HTTP proxy (e.g. Webshare free tier) to avoid Akamai IP blocking. The proxy URL format is `http://user:pass@host:port`.
+
+- Periodic prewarm is **disabled by default** when proxied (`PREWARM_INTERVAL_MINUTES=0`) to conserve proxy bandwidth (Webshare free = 1GB/mo).
+- Prewarm still runs at startup and on 403 retries (on-demand).
+- Resource blocking (images/fonts/media) is enabled when proxied to reduce bandwidth.
+
 ## Playwright Patterns
 
-- **Browser pool**: A persistent Chromium instance is launched at server startup with a shared context pre-warmed against Akamai. Cookies are refreshed every 10 minutes. Each request creates a new page in the shared context (fast — no cold start).
+- **Browser pool**: A persistent Chromium instance is launched at server startup with a shared context pre-warmed against Akamai. When not proxied, cookies are refreshed every 10 minutes. Each request creates a new page in the shared context (fast — no cold start).
 - **Fingerprint rotation**: Each browser session uses a randomised fingerprint (User-Agent, viewport, timezone, client hints) to prevent Akamai from clustering and blocking a static signature.
 - `/search`: Shared context → new page → in-page XHR from page context → 3 retries (1.5s × n backoff). Retries re-prewarm to refresh cookies.
 - `/analyze`: Shared context → new page → navigate to PDF URL → age-verify interstitial (button click) → **in-page `fetch()`** to download PDF (retains Akamai JS tokens) → `pdf-parse` → text + metadata
@@ -68,9 +76,11 @@ services:
 ## Environment Variables
 
 ```
-WORKER_SHARED_SECRET  # REQUIRED — HMAC shared secret (must match Vercel)
-PORT                  # Optional — defaults to 10000 on Render, 3000 locally
-ALLOWED_ORIGINS       # Optional — comma-separated, defaults to Vercel app URL
+WORKER_SHARED_SECRET      # REQUIRED — HMAC shared secret (must match Vercel)
+PORT                      # Optional — defaults to 10000 on Render, 3000 locally
+ALLOWED_ORIGINS           # Optional — comma-separated, defaults to Vercel app URL
+PROXY_URL                 # Optional — HTTP proxy (e.g. http://user:pass@host:port)
+PREWARM_INTERVAL_MINUTES  # Optional — prewarm period (default: 0 when PROXY_URL set, 10 otherwise)
 ```
 
 ## Worker Package

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { runQuery } from "@/lib/db";
+import { resolveWorkerUrl } from "@/lib/worker-url";
 
 export const runtime = "nodejs";
 
@@ -31,7 +32,7 @@ async function pingNeon(): Promise<"ok" | "error"> {
 
 async function pingRender(): Promise<"ok" | "error"> {
   try {
-    const workerUrl = process.env.RENDER_WORKER_URL;
+    const workerUrl = resolveWorkerUrl();
     if (!workerUrl) {
       return "error";
     }

@@ -1,5 +1,7 @@
 // Groq AI client for generating summaries
 import Groq from "groq-sdk";
+import { normalizeLocale } from "@/lib/locale";
+import type { SupportedLocale } from "@/lib/types";
 
 // Lazy initialization to avoid build-time errors
 let groqClient: Groq | null = null;
@@ -19,8 +21,6 @@ function getGroqClient(): Groq {
 export const groq = getGroqClient;
 
 export const GROQ_MODEL = "llama-3.3-70b-versatile";
-
-type SupportedLocale = "en" | "nl" | "fr" | "de" | "es" | "pt";
 
 const SUMMARY_PROMPTS: Record<
   SupportedLocale,
@@ -275,17 +275,6 @@ Produza uma análise detalhada em português com:
 Seja completo e factual. Cite passagens específicas quando relevante.`,
 };
 
-const normalizeLocale = (locale?: string): SupportedLocale => {
-  if (!locale) return "en";
-  const normalized = locale.toLowerCase();
-  if (normalized.startsWith("nl")) return "nl";
-  if (normalized.startsWith("fr")) return "fr";
-  if (normalized.startsWith("de")) return "de";
-  if (normalized.startsWith("es")) return "es";
-  if (normalized.startsWith("pt")) return "pt";
-  return "en";
-};
-
 /**
  * Generate a Dutch summary of DOJ search results
  */
@@ -305,50 +294,32 @@ export async function generateSummary(
     .join("\n\n---\n\n");
 
   const selectedLocale = normalizeLocale(locale);
-  let prompt = "";
+  const summaryInput = {
+    searchTerm,
+    documentsCount: documents.length,
+    context,
+  };
+
+  let prompt: string;
   switch (selectedLocale) {
     case "nl":
-      prompt = SUMMARY_PROMPTS.nl({
-        searchTerm,
-        documentsCount: documents.length,
-        context,
-      });
+      prompt = SUMMARY_PROMPTS.nl(summaryInput);
       break;
     case "fr":
-      prompt = SUMMARY_PROMPTS.fr({
-        searchTerm,
-        documentsCount: documents.length,
-        context,
-      });
+      prompt = SUMMARY_PROMPTS.fr(summaryInput);
       break;
     case "de":
-      prompt = SUMMARY_PROMPTS.de({
-        searchTerm,
-        documentsCount: documents.length,
-        context,
-      });
+      prompt = SUMMARY_PROMPTS.de(summaryInput);
       break;
     case "es":
-      prompt = SUMMARY_PROMPTS.es({
-        searchTerm,
-        documentsCount: documents.length,
-        context,
-      });
+      prompt = SUMMARY_PROMPTS.es(summaryInput);
       break;
     case "pt":
-      prompt = SUMMARY_PROMPTS.pt({
-        searchTerm,
-        documentsCount: documents.length,
-        context,
-      });
+      prompt = SUMMARY_PROMPTS.pt(summaryInput);
       break;
     case "en":
     default:
-      prompt = SUMMARY_PROMPTS.en({
-        searchTerm,
-        documentsCount: documents.length,
-        context,
-      });
+      prompt = SUMMARY_PROMPTS.en(summaryInput);
       break;
   }
 
@@ -406,50 +377,32 @@ export async function generateDeepSummary(
   const textPreview = fullText.substring(0, 8000); // Limit to ~8K chars to fit token budget
 
   const selectedLocale = normalizeLocale(locale);
-  let prompt = "";
+  const deepAnalysisInput = {
+    fileName,
+    searchTerm,
+    textPreview,
+  };
+
+  let prompt: string;
   switch (selectedLocale) {
     case "nl":
-      prompt = DEEP_ANALYSIS_PROMPTS.nl({
-        fileName,
-        searchTerm,
-        textPreview,
-      });
+      prompt = DEEP_ANALYSIS_PROMPTS.nl(deepAnalysisInput);
       break;
     case "fr":
-      prompt = DEEP_ANALYSIS_PROMPTS.fr({
-        fileName,
-        searchTerm,
-        textPreview,
-      });
+      prompt = DEEP_ANALYSIS_PROMPTS.fr(deepAnalysisInput);
       break;
     case "de":
-      prompt = DEEP_ANALYSIS_PROMPTS.de({
-        fileName,
-        searchTerm,
-        textPreview,
-      });
+      prompt = DEEP_ANALYSIS_PROMPTS.de(deepAnalysisInput);
       break;
     case "es":
-      prompt = DEEP_ANALYSIS_PROMPTS.es({
-        fileName,
-        searchTerm,
-        textPreview,
-      });
+      prompt = DEEP_ANALYSIS_PROMPTS.es(deepAnalysisInput);
       break;
     case "pt":
-      prompt = DEEP_ANALYSIS_PROMPTS.pt({
-        fileName,
-        searchTerm,
-        textPreview,
-      });
+      prompt = DEEP_ANALYSIS_PROMPTS.pt(deepAnalysisInput);
       break;
     case "en":
     default:
-      prompt = DEEP_ANALYSIS_PROMPTS.en({
-        fileName,
-        searchTerm,
-        textPreview,
-      });
+      prompt = DEEP_ANALYSIS_PROMPTS.en(deepAnalysisInput);
       break;
   }
 

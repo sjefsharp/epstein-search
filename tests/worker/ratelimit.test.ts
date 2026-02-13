@@ -25,7 +25,7 @@ describe("Worker rate-limit proxy config", () => {
     expect(app.get("trust proxy")).toBe(1);
   });
 
-  it("prewarm uses networkidle to allow Akamai scripts to execute", () => {
-    expect(PREWARM_WAIT_UNTIL).toBe("networkidle");
+  it("prewarm uses domcontentloaded to avoid Akamai timeout hangs", () => {
+    expect(PREWARM_WAIT_UNTIL).toBe("domcontentloaded");
   });
 });

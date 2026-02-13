@@ -140,15 +140,19 @@ Docker/CI uses `npm ci` — lockfile drift = build failure.
 ## Environment Variables
 
 ```
-GROQ_API_KEY             # required — Groq console
-UPSTASH_REDIS_REST_URL   # required — Upstash Redis
-UPSTASH_REDIS_REST_TOKEN # required
-WORKER_SHARED_SECRET     # required — shared between Vercel + Render
-RENDER_WORKER_URL        # required for deep-analyze + search fallback
-NEXT_PUBLIC_BASE_URL     # optional — canonical URL
-NEON_DATABASE_URL        # required — Neon Postgres for consent logs
-CRON_SECRET              # required — shared secret for cleanup endpoint
-NEXT_PUBLIC_CONSENT_POLICY_VERSION # required — semver for consent policy
+GROQ_API_KEY                        # required — Groq console
+UPSTASH_REDIS_REST_URL              # required — Upstash Redis
+UPSTASH_REDIS_REST_TOKEN            # required
+WORKER_SHARED_SECRET                # required — shared between Vercel + Render
+WORKER_URL                          # required — worker service URL
+NEON_DATABASE_URL                   # required — Neon Postgres (consent + doc cache)
+CRON_SECRET                         # required — cron endpoint auth
+NEXT_PUBLIC_CONSENT_POLICY_VERSION  # required — semver for consent policy
+PROXY_URL                           # optional — HTTP proxy for worker + crawl script
+NEXT_PUBLIC_BASE_URL                # optional — canonical URL
+NEXT_PUBLIC_ADSENSE_ID              # optional — Google AdSense publisher ID
+NEXT_PUBLIC_BTC_ADDRESS             # optional — Bitcoin donation address
+NEXT_PUBLIC_ETH_ADDRESS             # optional — Ethereum donation address
 ```
 
 ## Docs (progressive disclosure)

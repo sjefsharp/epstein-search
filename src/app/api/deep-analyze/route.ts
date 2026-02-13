@@ -3,6 +3,11 @@ import { NextRequest } from "next/server";
 import { generateDeepSummary } from "@/lib/groq";
 import { analyzeRatelimit, getClientIp, checkRateLimit } from "@/lib/ratelimit";
 import { analyzeSchema } from "@/lib/validation";
+import { normalizeLocale } from "@/lib/locale";
+import { DEEP_ANALYZE_ERROR_MESSAGES } from "@/lib/error-messages";
+import { createSSEResponse } from "@/lib/sse";
+import { resolveWorkerUrl } from "@/lib/worker-url";
+import type { SupportedLocale } from "@/lib/types";
 import {
   generateWorkerSignature,
   getWorkerSecret,
@@ -12,81 +17,21 @@ import {
 
 export const runtime = "nodejs"; // Node.js runtime for worker proxy
 
-type SupportedLocale = "en" | "nl" | "fr" | "de" | "es" | "pt";
-
-const normalizeLocale = (locale?: string): SupportedLocale => {
-  if (!locale) return "en";
-  const normalized = locale.toLowerCase();
-  if (normalized.startsWith("nl")) return "nl";
-  if (normalized.startsWith("fr")) return "fr";
-  if (normalized.startsWith("de")) return "de";
-  if (normalized.startsWith("es")) return "es";
-  if (normalized.startsWith("pt")) return "pt";
-  return "en";
-};
-
-const ERROR_MESSAGES: Record<
-  SupportedLocale,
-  {
-    rateLimit: string;
-    invalidInput: string;
-    workerMissing: string;
-    analyzeFailed: string;
-  }
-> = {
-  en: {
-    rateLimit: "Rate limit exceeded. Please try again later.",
-    invalidInput: "Invalid input",
-    workerMissing: "RENDER_WORKER_URL is not set",
-    analyzeFailed: "Analysis failed",
-  },
-  nl: {
-    rateLimit: "Rate limit bereikt. Probeer het later opnieuw.",
-    invalidInput: "Ongeldige invoer",
-    workerMissing: "RENDER_WORKER_URL is niet ingesteld",
-    analyzeFailed: "Analyse mislukt",
-  },
-  fr: {
-    rateLimit: "Limite de débit dépassée. Veuillez réessayer plus tard.",
-    invalidInput: "Entrée invalide",
-    workerMissing: "RENDER_WORKER_URL n'est pas défini",
-    analyzeFailed: "Échec de l'analyse",
-  },
-  de: {
-    rateLimit: "Rate-Limit überschritten. Bitte später erneut versuchen.",
-    invalidInput: "Ungültige Eingabe",
-    workerMissing: "RENDER_WORKER_URL ist nicht gesetzt",
-    analyzeFailed: "Analyse fehlgeschlagen",
-  },
-  es: {
-    rateLimit: "Límite de velocidad excedido. Por favor intente más tarde.",
-    invalidInput: "Entrada inválida",
-    workerMissing: "RENDER_WORKER_URL no está configurado",
-    analyzeFailed: "Análisis fallido",
-  },
-  pt: {
-    rateLimit: "Limite de taxa excedido. Por favor tente mais tarde.",
-    invalidInput: "Entrada inválida",
-    workerMissing: "RENDER_WORKER_URL não está definido",
-    analyzeFailed: "Análise falhou",
-  },
-};
-
 const getErrorMessages = (locale: SupportedLocale) => {
   switch (locale) {
     case "nl":
-      return ERROR_MESSAGES.nl;
+      return DEEP_ANALYZE_ERROR_MESSAGES.nl;
     case "fr":
-      return ERROR_MESSAGES.fr;
+      return DEEP_ANALYZE_ERROR_MESSAGES.fr;
     case "de":
-      return ERROR_MESSAGES.de;
+      return DEEP_ANALYZE_ERROR_MESSAGES.de;
     case "es":
-      return ERROR_MESSAGES.es;
+      return DEEP_ANALYZE_ERROR_MESSAGES.es;
     case "pt":
-      return ERROR_MESSAGES.pt;
+      return DEEP_ANALYZE_ERROR_MESSAGES.pt;
     case "en":
     default:
-      return ERROR_MESSAGES.en;
+      return DEEP_ANALYZE_ERROR_MESSAGES.en;
   }
 };
 
@@ -133,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     const { fileUri, fileName, searchTerm } = validation.data;
 
-    const workerUrl = process.env.RENDER_WORKER_URL;
+    const workerUrl = resolveWorkerUrl();
     if (!workerUrl) {
       return new Response(JSON.stringify({ error: messages.workerMissing }), {
         status: 500,
@@ -173,39 +118,15 @@ export async function POST(request: NextRequest) {
       metadata: { fileSize: number; extractedAt: string };
     };
 
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          await generateDeepSummary(
-            fileName,
-            workerData.text,
-            searchTerm,
-            selectedLocale,
-            (text) => {
-              const chunk = encoder.encode(`data: ${JSON.stringify({ text })}\n\n`);
-              controller.enqueue(chunk);
-            },
-          );
-
-          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-          controller.close();
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : messages.analyzeFailed;
-          const errorChunk = encoder.encode(`data: ${JSON.stringify({ error: errorMessage })}\n\n`);
-          controller.enqueue(errorChunk);
-          controller.close();
-        }
+    return createSSEResponse(
+      async (emitText) => {
+        await generateDeepSummary(fileName, workerData.text, searchTerm, selectedLocale, emitText);
       },
-    });
-
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
+      {
+        getErrorMessage: (error) =>
+          error instanceof Error ? error.message : messages.analyzeFailed,
       },
-    });
+    );
   } catch (error) {
     process.stderr.write(
       `Deep analyze API error: ${

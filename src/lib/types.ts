@@ -1,5 +1,7 @@
 // TypeScript types for DOJ documents and search results
 
+export type SupportedLocale = "en" | "nl" | "fr" | "de" | "es" | "pt";
+
 export interface DOJSearchParams {
   query: string;
   from?: number;
@@ -75,20 +77,4 @@ export interface ChatState {
   searchMode: "fast" | "deep";
   isLoading: boolean;
   currentQuery: string;
-}
-
-export interface PDFAnalysisResult {
-  fileName: string;
-  fileUri: string;
-  text: string;
-  pages: number;
-  metadata: {
-    fileSize: number;
-    extractedAt: string;
-  };
-}
-
-export interface DeepAnalysisResult {
-  pdfAnalysis: PDFAnalysisResult;
-  summary: string;
 }

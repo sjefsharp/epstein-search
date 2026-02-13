@@ -39,20 +39,23 @@ npm run dev                         # http://localhost:3000
 
 ## Environment Variables
 
-| Variable                             | Required | Source                                       |
-| ------------------------------------ | -------- | -------------------------------------------- |
-| `GROQ_API_KEY`                       | Yes      | [console.groq.com](https://console.groq.com) |
-| `UPSTASH_REDIS_REST_URL`             | Yes      | Upstash dashboard                            |
-| `UPSTASH_REDIS_REST_TOKEN`           | Yes      | Upstash dashboard                            |
-| `WORKER_SHARED_SECRET`               | Yes      | Shared between Vercel + Render (HMAC auth)   |
-| `RENDER_WORKER_URL`                  | Yes      | Render service URL after deploying worker    |
-| `NEON_DATABASE_URL`                  | Yes      | Neon Postgres connection string              |
-| `CRON_SECRET`                        | Yes      | Shared secret for consent cleanup endpoint   |
-| `NEXT_PUBLIC_CONSENT_POLICY_VERSION` | Yes      | Semver (e.g. `1.0.0`)                        |
-| `NEXT_PUBLIC_BASE_URL`               | No       | Canonical URL (defaults to Vercel URL)       |
-| `NEXT_PUBLIC_BTC_ADDRESS`            | No       | Bitcoin donation address                     |
-| `NEXT_PUBLIC_ETH_ADDRESS`            | No       | Ethereum donation address                    |
-| `NEXT_PUBLIC_ADSENSE_ID`             | No       | Google AdSense publisher ID                  |
+| Variable                             | Required | Source                                                     |
+| ------------------------------------ | -------- | ---------------------------------------------------------- |
+| `GROQ_API_KEY`                       | Yes      | [console.groq.com](https://console.groq.com)               |
+| `UPSTASH_REDIS_REST_URL`             | Yes      | Upstash dashboard                                          |
+| `UPSTASH_REDIS_REST_TOKEN`           | Yes      | Upstash dashboard                                          |
+| `WORKER_SHARED_SECRET`               | Yes      | `openssl rand -hex 32` — shared between Vercel + Render    |
+| `WORKER_URL`                         | Yes      | Worker service URL                                         |
+| `NEON_DATABASE_URL`                  | Yes      | Neon Postgres connection string                            |
+| `CRON_SECRET`                        | Yes      | `openssl rand -base64 32` — cron endpoint auth             |
+| `NEXT_PUBLIC_CONSENT_POLICY_VERSION` | Yes      | Semver (e.g. `1.0.0`)                                      |
+| `PROXY_URL`                          | No       | HTTP proxy for worker/crawl (`http://user:pass@host:port`) |
+| `NEXT_PUBLIC_BASE_URL`               | No       | Canonical URL (defaults to Vercel URL)                     |
+| `NEXT_PUBLIC_BTC_ADDRESS`            | No       | Bitcoin donation address                                   |
+| `NEXT_PUBLIC_ETH_ADDRESS`            | No       | Ethereum donation address                                  |
+| `NEXT_PUBLIC_ADSENSE_ID`             | No       | Google AdSense publisher ID                                |
+
+See [`.env.local.example`](.env.local.example) for full documentation and setup instructions.
 
 ## Documentation
 
