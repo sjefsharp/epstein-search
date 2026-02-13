@@ -45,8 +45,7 @@ npm run dev                         # http://localhost:3000
 | `UPSTASH_REDIS_REST_URL`             | Yes      | Upstash dashboard                                          |
 | `UPSTASH_REDIS_REST_TOKEN`           | Yes      | Upstash dashboard                                          |
 | `WORKER_SHARED_SECRET`               | Yes      | `openssl rand -hex 32` — shared between Vercel + Render    |
-| `WORKER_URL`                         | Yes      | Worker service URL (preferred over `RENDER_WORKER_URL`)    |
-| `RENDER_WORKER_URL`                  | Yes\*    | Legacy — falls back if `WORKER_URL` is not set             |
+| `WORKER_URL`                         | Yes      | Worker service URL                                         |
 | `NEON_DATABASE_URL`                  | Yes      | Neon Postgres connection string                            |
 | `CRON_SECRET`                        | Yes      | `openssl rand -base64 32` — cron endpoint auth             |
 | `NEXT_PUBLIC_CONSENT_POLICY_VERSION` | Yes      | Semver (e.g. `1.0.0`)                                      |

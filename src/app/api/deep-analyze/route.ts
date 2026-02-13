@@ -6,6 +6,7 @@ import { analyzeSchema } from "@/lib/validation";
 import { normalizeLocale } from "@/lib/locale";
 import { DEEP_ANALYZE_ERROR_MESSAGES } from "@/lib/error-messages";
 import { createSSEResponse } from "@/lib/sse";
+import { resolveWorkerUrl } from "@/lib/worker-url";
 import type { SupportedLocale } from "@/lib/types";
 import {
   generateWorkerSignature,
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     const { fileUri, fileName, searchTerm } = validation.data;
 
-    const workerUrl = process.env.WORKER_URL || process.env.RENDER_WORKER_URL;
+    const workerUrl = resolveWorkerUrl();
     if (!workerUrl) {
       return new Response(JSON.stringify({ error: messages.workerMissing }), {
         status: 500,

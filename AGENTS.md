@@ -144,8 +144,7 @@ GROQ_API_KEY                        # required — Groq console
 UPSTASH_REDIS_REST_URL              # required — Upstash Redis
 UPSTASH_REDIS_REST_TOKEN            # required
 WORKER_SHARED_SECRET                # required — shared between Vercel + Render
-WORKER_URL                          # required — worker service URL (preferred)
-RENDER_WORKER_URL                   # required — legacy fallback for WORKER_URL
+WORKER_URL                          # required — worker service URL
 NEON_DATABASE_URL                   # required — Neon Postgres (consent + doc cache)
 CRON_SECRET                         # required — cron endpoint auth
 NEXT_PUBLIC_CONSENT_POLICY_VERSION  # required — semver for consent policy

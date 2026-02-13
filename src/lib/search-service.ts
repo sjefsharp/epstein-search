@@ -2,6 +2,7 @@ import { getCacheKey, deduplicateDocuments, transformDOJHits } from "@/lib/doj-a
 import { getCachedSearch, setCachedSearch, trackCacheEvent } from "@/lib/cache";
 import { searchDocumentsLocal } from "@/lib/documents";
 import { enforceHttps, generateWorkerSignature, getWorkerSecret } from "@/lib/security";
+import { resolveWorkerUrl } from "@/lib/worker-url";
 import type { DOJAPIResponse } from "@/lib/types";
 
 const EPSTEIN_REGEX = /\bepstein\b/i;
@@ -82,8 +83,7 @@ async function fetchDOJDirect(
 }
 
 async function fetchViaWorker(query: string, from: number, size: number): Promise<DOJAPIResponse> {
-  const workerUrl =
-    process.env.WORKER_URL || process.env.RENDER_WORKER_URL || "http://localhost:10000";
+  const workerUrl = resolveWorkerUrl("http://localhost:10000");
 
   if (process.env.NODE_ENV === "production") {
     enforceHttps(workerUrl);
