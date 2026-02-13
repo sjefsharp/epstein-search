@@ -21,8 +21,8 @@ describe("Worker stealth helpers", () => {
     expect(ua).not.toContain("bot");
   });
 
-  it("PREWARM_WAIT_UNTIL uses networkidle", () => {
-    expect(workerModule.PREWARM_WAIT_UNTIL).toBe("networkidle");
+  it("PREWARM_WAIT_UNTIL uses domcontentloaded", () => {
+    expect(workerModule.PREWARM_WAIT_UNTIL).toBe("domcontentloaded");
   });
 
   describe("buildFingerprint", () => {

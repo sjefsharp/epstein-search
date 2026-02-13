@@ -36,19 +36,14 @@ async function pingRender(): Promise<"ok" | "error"> {
       return "error";
     }
 
-    const controller = new AbortController();
-    // Render free-tier cold starts can take 30-60s — allow up to 55s
-    const timeout = setTimeout(() => controller.abort(), 55_000);
-
-    try {
-      const res = await fetch(`${workerUrl}/health`, {
-        signal: controller.signal,
-      });
-      if (!res.ok) return "error";
-      return "ok";
-    } finally {
-      clearTimeout(timeout);
-    }
+    // Use AbortSignal.timeout() instead of manual AbortController +
+    // setTimeout to avoid Node.js SECURITY deprecation warnings.
+    // Render free-tier cold starts can take 30-60s — allow up to 55s.
+    const res = await fetch(`${workerUrl}/health`, {
+      signal: AbortSignal.timeout(55_000),
+    });
+    if (!res.ok) return "error";
+    return "ok";
   } catch {
     return "error";
   }

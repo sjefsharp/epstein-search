@@ -93,7 +93,10 @@ export type StealthFingerprint = ReturnType<typeof buildFingerprint>;
 
 // Legacy export kept for backward-compatibility with tests
 export const STEALTH_USER_AGENT = USER_AGENTS[0];
-export const PREWARM_WAIT_UNTIL = "networkidle" as const;
+// Use domcontentloaded instead of networkidle — justice.gov has persistent
+// analytics/tracker connections that prevent networkidle from ever settling,
+// causing 30s timeouts on every prewarm cycle.
+export const PREWARM_WAIT_UNTIL = "domcontentloaded" as const;
 
 const STEALTH_LAUNCH_ARGS = [
   "--disable-blink-features=AutomationControlled",
@@ -250,9 +253,16 @@ const createStealthContext = async (browser: LaunchedBrowser, fp?: StealthFinger
 };
 
 const prewarmAkamai = async (page: Page) => {
+  // Block heavy resources during prewarm — Akamai cookies are set by JS
+  // execution, not by downloading images/fonts/CSS. This speeds up the
+  // page load and avoids tracker connections that caused networkidle timeouts.
+  await page.route("**/*.{png,jpg,jpeg,gif,svg,webp,woff,woff2,ttf,eot,css}", (route) =>
+    route.abort(),
+  );
+
   await page.goto("https://www.justice.gov/", {
     waitUntil: PREWARM_WAIT_UNTIL,
-    timeout: 30000,
+    timeout: 15000,
   });
 
   // Simulate minimal human interaction to satisfy behavioral checks
@@ -267,7 +277,7 @@ const prewarmAkamai = async (page: Page) => {
 // ---------------------------------------------------------------------------
 
 /** How often to re-prewarm the shared context (ms). */
-const PREWARM_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+const PREWARM_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
 
 interface BrowserPool {
   browser: Browser;
@@ -442,7 +452,11 @@ const verifySignature = (req: Request, res: Response): boolean => {
 };
 
 app.get("/health", (_req: Request, res: Response) => {
-  res.json({ status: "ok" });
+  res.json({
+    status: "ok",
+    lastPrewarm: _pool ? new Date(_pool.lastPrewarm).toISOString() : null,
+    prewarmAgeMs: _pool ? Date.now() - _pool.lastPrewarm : null,
+  });
 });
 
 app.get("/", (_req: Request, res: Response) => {
@@ -496,9 +510,18 @@ app.post("/search", searchLimiter, async (req: Request, res: Response) => {
     for (let attempt = 1; attempt <= 3; attempt++) {
       const page = await pool.context.newPage();
       try {
-        // If this is a retry, re-prewarm on the new page to refresh cookies
+        // If this is a retry, try to re-prewarm to refresh cookies.
+        // If prewarm fails (e.g. timeout), proceed anyway — stale cookies may still work.
         if (attempt > 1) {
-          await prewarmAkamai(page);
+          try {
+            await prewarmAkamai(page);
+          } catch (prewarmErr) {
+            process.stderr.write(
+              `[worker] search retry ${attempt} prewarm failed: ${
+                prewarmErr instanceof Error ? prewarmErr.message : "unknown"
+              }, proceeding with existing cookies\n`,
+            );
+          }
         }
 
         // Make the API call from WITHIN the page context as an XHR.
