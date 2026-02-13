@@ -58,7 +58,9 @@ Signature = HMAC-SHA256 of `JSON.stringify(req.body)` using `WORKER_SHARED_SECRE
 ## Environment Variables
 
 ```
-WORKER_SHARED_SECRET  # Required — HMAC shared secret
-PORT                  # Optional — defaults to 3000
-ALLOWED_ORIGINS       # Optional — comma-separated, defaults to Vercel app URL
+WORKER_SHARED_SECRET      # Required — HMAC shared secret (must match Vercel)
+PORT                      # Optional — defaults to 10000 on Render, 3000 locally
+ALLOWED_ORIGINS           # Optional — comma-separated, defaults to Vercel app URL
+PROXY_URL                 # Optional — HTTP proxy (http://user:pass@host:port)
+PREWARM_INTERVAL_MINUTES  # Optional — defaults to 0 when PROXY_URL set, 10 otherwise
 ```
