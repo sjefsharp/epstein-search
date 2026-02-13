@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { searchDOJ, deduplicateDocuments } from "@/lib/doj-api";
 import { ensureDocumentsTable, upsertDocuments, getDocumentStats } from "@/lib/documents";
 import type { DOJDocument } from "@/lib/types";
+import { sanitizeError } from "@/lib/security";
+import { withJsonErrorHandling } from "@/lib/api-handler";
 
 export const runtime = "nodejs";
 
@@ -70,37 +72,55 @@ async function refreshDocuments(): Promise<{
   return { ok: true, upserted, total: unique.length };
 }
 
-export async function POST(request: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) {
-    return NextResponse.json({ error: "CRON_SECRET is not configured" }, { status: 500 });
-  }
+export const POST = withJsonErrorHandling(
+  async (request: NextRequest) => {
+    const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret) {
+      return NextResponse.json({ error: "CRON_SECRET is not configured" }, { status: 500 });
+    }
 
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    if (!isAuthorized(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const result = await refreshDocuments();
-  const stats = await getDocumentStats();
+    const result = await refreshDocuments();
+    const stats = await getDocumentStats();
 
-  return NextResponse.json({
-    ...result,
-    stats,
-    timestamp: new Date().toISOString(),
-  });
-}
+    return NextResponse.json({
+      ...result,
+      stats,
+      timestamp: new Date().toISOString(),
+    });
+  },
+  {
+    routeName: "Refresh docs POST",
+    buildErrorBody: (error) => ({
+      error: "Refresh docs failed",
+      details: sanitizeError(error, process.env.NODE_ENV === "development"),
+    }),
+  },
+);
 
-export async function GET(request: NextRequest) {
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export const GET = withJsonErrorHandling(
+  async (request: NextRequest) => {
+    if (!isAuthorized(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const result = await refreshDocuments();
-  const stats = await getDocumentStats();
+    const result = await refreshDocuments();
+    const stats = await getDocumentStats();
 
-  return NextResponse.json({
-    ...result,
-    stats,
-    timestamp: new Date().toISOString(),
-  });
-}
+    return NextResponse.json({
+      ...result,
+      stats,
+      timestamp: new Date().toISOString(),
+    });
+  },
+  {
+    routeName: "Refresh docs GET",
+    buildErrorBody: (error) => ({
+      error: "Refresh docs failed",
+      details: sanitizeError(error, process.env.NODE_ENV === "development"),
+    }),
+  },
+);

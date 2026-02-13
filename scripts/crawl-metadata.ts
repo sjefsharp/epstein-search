@@ -28,6 +28,14 @@ import { deduplicateDocuments } from "../src/lib/doj-api";
 import { ensureDocumentsTable, upsertDocuments, getDocumentStats } from "../src/lib/documents";
 import type { DOJDocument, DOJAPIResponse } from "../src/lib/types";
 
+const writeOut = (message: string) => {
+  process.stdout.write(`${message}\n`);
+};
+
+const writeErr = (message: string) => {
+  process.stderr.write(`${message}\n`);
+};
+
 // ---------------------------------------------------------------------------
 // Configuration
 // ---------------------------------------------------------------------------
@@ -158,7 +166,7 @@ async function browserSearch(
 // ---------------------------------------------------------------------------
 
 async function main() {
-  console.log("🔍 Starting DOJ metadata crawl (Playwright + recursive queries)...\n");
+  writeOut("🔍 Starting DOJ metadata crawl (Playwright + recursive queries)...\n");
 
   const proxyUrl = process.env.PROXY_URL;
   const launchOptions: Parameters<typeof chromium.launch>[0] = {
@@ -179,9 +187,9 @@ async function main() {
       username: proxy.username,
       password: proxy.password,
     };
-    console.log(`🌐 Proxy enabled: ${maskProxy(proxyUrl)}`);
+    writeOut(`🌐 Proxy enabled: ${maskProxy(proxyUrl)}`);
   } else {
-    console.log("⚠️  No PROXY_URL set — connecting directly");
+    writeOut("⚠️  No PROXY_URL set — connecting directly");
   }
 
   const browser = await chromium.launch(launchOptions);
@@ -199,12 +207,12 @@ async function main() {
       Object.defineProperty(navigator, "webdriver", { get: () => undefined });
     });
 
-    console.log("🔑 Prewarming Akamai bot detection...");
+    writeOut("🔑 Prewarming Akamai bot detection...");
     const page = await context.newPage();
     await prewarmAkamai(page);
-    console.log("✅ Akamai prewarm complete\n");
+    writeOut("✅ Akamai prewarm complete\n");
 
-    console.log("📦 Ensuring documents table exists...");
+    writeOut("📦 Ensuring documents table exists...");
     await ensureDocumentsTable();
 
     // -----------------------------------------------------------------------
@@ -219,7 +227,7 @@ async function main() {
       if (pendingUpsert.length === 0) return;
       const batch = pendingUpsert.splice(0);
       const count = await upsertDocuments(batch);
-      console.log(`  💾 Upserted batch of ${count} documents (total in DB pending sync)`);
+      writeOut(`  💾 Upserted batch of ${count} documents (total in DB pending sync)`);
     }
 
     async function crawlPrefix(prefix: string, depth: number): Promise<void> {
@@ -241,7 +249,7 @@ async function main() {
 
         // Progress logging
         if (queryCount % 25 === 0 || newCount > 0) {
-          console.log(
+          writeOut(
             `  [${queryCount} queries] "${prefix}" → ${result.documents.length}/${result.total} hits, +${newCount} new, ${allDocs.size} total unique`,
           );
         }
@@ -260,11 +268,11 @@ async function main() {
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        console.error(`  ❌ Query "${prefix}" failed: ${msg}`);
+        writeErr(`  ❌ Query "${prefix}" failed: ${msg}`);
 
         // On 403, re-prewarm (Akamai session may have expired)
         if (msg.includes("403")) {
-          console.log("  🔄 Re-prewarming Akamai...");
+          writeOut("  🔄 Re-prewarming Akamai...");
           await prewarmAkamai(page);
           await new Promise((r) => setTimeout(r, 2_000));
         }
@@ -272,14 +280,14 @@ async function main() {
     }
 
     // Phase 1: Crawl EFTA prefixes (primary document naming scheme)
-    console.log("\n📂 Phase 1: Crawling EFTA document prefixes...");
+    writeOut("\n📂 Phase 1: Crawling EFTA document prefixes...");
     for (const prefix of ["EFTA0", "EFTA1", "EFTA2"]) {
-      console.log(`\n  --- Prefix "${prefix}" ---`);
+      writeOut(`\n  --- Prefix "${prefix}" ---`);
       await crawlPrefix(prefix, 1);
     }
 
     // Phase 2: Broader keyword queries for non-EFTA documents
-    console.log("\n📂 Phase 2: Keyword queries for additional documents...");
+    writeOut("\n📂 Phase 2: Keyword queries for additional documents...");
     for (const query of EXTRA_QUERIES) {
       try {
         queryCount++;
@@ -292,12 +300,12 @@ async function main() {
             newCount++;
           }
         }
-        console.log(
+        writeOut(
           `  "${query}": ${result.documents.length} hits, +${newCount} new, ${allDocs.size} total unique`,
         );
         await new Promise((r) => setTimeout(r, DELAY_MS));
       } catch (err) {
-        console.error(`  ❌ Query "${query}" failed: ${err}`);
+        writeErr(`  ❌ Query "${query}" failed: ${err}`);
       }
     }
 
@@ -309,12 +317,12 @@ async function main() {
     // -----------------------------------------------------------------------
 
     const unique = deduplicateDocuments([...allDocs.values()]);
-    console.log(`\n📄 Discovered ${unique.length} unique documents in ${queryCount} queries`);
+    writeOut(`\n📄 Discovered ${unique.length} unique documents in ${queryCount} queries`);
 
     const stats = await getDocumentStats();
-    console.log(`📊 Database stats: ${stats.count} documents, last crawl: ${stats.lastCrawl}`);
+    writeOut(`📊 Database stats: ${stats.count} documents, last crawl: ${stats.lastCrawl}`);
 
-    console.log("\n🎉 Crawl complete!");
+    writeOut("\n🎉 Crawl complete!");
   } finally {
     if (context) await context.close();
     await browser.close();
@@ -322,6 +330,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("❌ Crawl failed:", err);
+  writeErr(`❌ Crawl failed: ${err instanceof Error ? err.message : String(err)}`);
   process.exit(1);
 });

@@ -70,12 +70,14 @@ describe("Worker stealth helpers", () => {
     const options = workerModule.getStealthLaunchOptions();
     expect(options.args).toEqual(
       expect.arrayContaining([
+        "--headless=new",
         "--disable-blink-features=AutomationControlled",
         "--no-sandbox",
         "--disable-dev-shm-usage",
         "--disable-infobars",
       ]),
     );
+    expect(options.channel).toBe("chromium");
   });
 
   it("stealth launch options have no proxy when PROXY_URL is unset", () => {

@@ -13,17 +13,49 @@ Optional flags:
 type Args = Record<string, string | undefined>;
 
 const parseArgs = (argv: string[]): Args => {
-  const args: Args = {};
+  const args: Args = {
+    baseUrl: undefined,
+    header: undefined,
+    query: undefined,
+    from: undefined,
+    size: undefined,
+    fileUri: undefined,
+    fileuri: undefined,
+  };
   for (let i = 0; i < argv.length; i += 1) {
+    // eslint-disable-next-line security/detect-object-injection
     const value = argv[i];
     if (value.startsWith("--")) {
-      const key = value.slice(2);
       const next = argv[i + 1];
+      const parsedValue = next && !next.startsWith("--") ? next : "true";
+      switch (value) {
+        case "--baseUrl":
+          args.baseUrl = parsedValue;
+          break;
+        case "--header":
+          args.header = parsedValue;
+          break;
+        case "--query":
+          args.query = parsedValue;
+          break;
+        case "--from":
+          args.from = parsedValue;
+          break;
+        case "--size":
+          args.size = parsedValue;
+          break;
+        case "--fileUri":
+          args.fileUri = parsedValue;
+          break;
+        case "--fileuri":
+          args.fileuri = parsedValue;
+          break;
+        default:
+          break;
+      }
+
       if (next && !next.startsWith("--")) {
-        args[key] = next;
         i += 1;
-      } else {
-        args[key] = "true";
       }
     }
   }
@@ -74,15 +106,16 @@ const main = async () => {
 
   const payload = JSON.stringify(body);
   const signature = crypto.createHmac("sha256", sharedSecret).update(payload).digest("hex");
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-
-  if (headerMode === "X-Worker-Signature") {
-    headers["X-Worker-Signature"] = signature;
-  } else {
-    headers.Authorization = `Bearer ${signature}`;
-  }
+  const headers: Record<string, string> =
+    headerMode === "X-Worker-Signature"
+      ? {
+          "Content-Type": "application/json",
+          "X-Worker-Signature": signature,
+        }
+      : {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${signature}`,
+        };
 
   const response = await fetch(`${baseUrl.replace(/\/$/, "")}/${endpoint}`, {
     method: "POST",

@@ -1,71 +1,26 @@
 // API Route: Generate AI summary using Groq
 import { NextRequest } from "next/server";
 import { generateSummary } from "@/lib/groq";
-
-type SupportedLocale = "en" | "nl" | "fr" | "de" | "es" | "pt";
-
-const normalizeLocale = (locale?: string): SupportedLocale => {
-  if (!locale) return "en";
-  const normalized = locale.toLowerCase();
-  if (normalized.startsWith("nl")) return "nl";
-  if (normalized.startsWith("fr")) return "fr";
-  if (normalized.startsWith("de")) return "de";
-  if (normalized.startsWith("es")) return "es";
-  if (normalized.startsWith("pt")) return "pt";
-  return "en";
-};
-
-const ERROR_MESSAGES: Record<
-  SupportedLocale,
-  { required: string; summaryFailed: string; unknown: string }
-> = {
-  en: {
-    required: "searchTerm and documents array are required",
-    summaryFailed: "Summary generation failed",
-    unknown: "Unknown error occurred",
-  },
-  nl: {
-    required: "searchTerm en documents array zijn verplicht",
-    summaryFailed: "Samenvatting genereren mislukt",
-    unknown: "Onbekende fout opgetreden",
-  },
-  fr: {
-    required: "searchTerm et documents array sont requis",
-    summaryFailed: "Échec de la génération du résumé",
-    unknown: "Erreur inconnue",
-  },
-  de: {
-    required: "searchTerm und documents array sind erforderlich",
-    summaryFailed: "Zusammenfassungserstellung fehlgeschlagen",
-    unknown: "Unbekannter Fehler",
-  },
-  es: {
-    required: "searchTerm y documents array son obligatorios",
-    summaryFailed: "Fallo al generar el resumen",
-    unknown: "Ocurrió un error desconocido",
-  },
-  pt: {
-    required: "searchTerm e documents array são obrigatórios",
-    summaryFailed: "Falha na geração do resumo",
-    unknown: "Erro desconhecido",
-  },
-};
+import { normalizeLocale } from "@/lib/locale";
+import { SUMMARIZE_ERROR_MESSAGES } from "@/lib/error-messages";
+import { createSSEResponse } from "@/lib/sse";
+import type { SupportedLocale } from "@/lib/types";
 
 const getErrorMessages = (locale: SupportedLocale) => {
   switch (locale) {
     case "nl":
-      return ERROR_MESSAGES.nl;
+      return SUMMARIZE_ERROR_MESSAGES.nl;
     case "fr":
-      return ERROR_MESSAGES.fr;
+      return SUMMARIZE_ERROR_MESSAGES.fr;
     case "de":
-      return ERROR_MESSAGES.de;
+      return SUMMARIZE_ERROR_MESSAGES.de;
     case "es":
-      return ERROR_MESSAGES.es;
+      return SUMMARIZE_ERROR_MESSAGES.es;
     case "pt":
-      return ERROR_MESSAGES.pt;
+      return SUMMARIZE_ERROR_MESSAGES.pt;
     case "en":
     default:
-      return ERROR_MESSAGES.en;
+      return SUMMARIZE_ERROR_MESSAGES.en;
   }
 };
 
@@ -76,7 +31,6 @@ export async function POST(request: NextRequest) {
   let messages = getErrorMessages(selectedLocale);
 
   try {
-    const encoder = new TextEncoder();
     const body = await request.json();
     const { searchTerm, documents, locale } = body;
     selectedLocale = normalizeLocale(locale);
@@ -94,35 +48,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create a streaming response
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          await generateSummary(searchTerm, documents, selectedLocale, (text) => {
-            // Stream each chunk as it arrives
-            const chunk = encoder.encode(`data: ${JSON.stringify({ text })}\n\n`);
-            controller.enqueue(chunk);
-          });
-
-          // Send completion signal
-          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-          controller.close();
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : messages.summaryFailed;
-          const errorChunk = encoder.encode(`data: ${JSON.stringify({ error: errorMessage })}\n\n`);
-          controller.enqueue(errorChunk);
-          controller.close();
-        }
+    return createSSEResponse(
+      async (emitText) => {
+        await generateSummary(searchTerm, documents, selectedLocale, emitText);
       },
-    });
-
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
+      {
+        getErrorMessage: (error) =>
+          error instanceof Error ? error.message : messages.summaryFailed,
       },
-    });
+    );
   } catch (error) {
     process.stderr.write(
       `Summarize API error: ${
