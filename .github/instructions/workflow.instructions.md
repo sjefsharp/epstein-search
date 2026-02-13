@@ -7,33 +7,53 @@ applyTo: "**"
 > **This file is the single source of truth for the git workflow.**
 > `AGENTS.md` and `copilot-instructions.md` reference this file — do not duplicate git steps there.
 
-## Step 0 — Workspace Check
+---
+
+## ⛔ MANDATORY — Every Task Has Three Phases
+
+> **Agents MUST execute all three phases. Skipping any phase is a workflow violation.**
+
+| Phase       | Script                                        | When                                    |
+| ----------- | --------------------------------------------- | --------------------------------------- |
+| **START**   | `bash scripts/start-task.sh <type> <desc>`    | **BEFORE any file edit or code change** |
+| **WORK**    | Implement → Verify → Commit (see steps below) | During implementation                   |
+| **FINISH**  | `bash scripts/finish-task.sh`                 | **AFTER all verification passes**       |
+| **CLEANUP** | `bash scripts/cleanup-task.sh [branch]`       | **AFTER the PR is merged**              |
+
+### Agent Rules (non-negotiable)
+
+1. **You MUST run `bash scripts/start-task.sh <type> <desc>` BEFORE making ANY file changes.** No exceptions.
+2. **You MUST run `bash scripts/finish-task.sh` AFTER verification passes.** This pushes to origin and creates a PR.
+3. **You MUST run `bash scripts/cleanup-task.sh` AFTER the PR is merged.** This deletes the local branch and returns to main.
+4. **You MUST NEVER work directly on `main`.** The start script enforces this.
+5. **You MUST NEVER skip the push and PR creation step.** Every task ends with a remote push and PR.
+6. **You MUST NEVER leave stale local branches.** Cleanup removes them.
+7. **If the workspace is dirty (another session has uncommitted changes), the start script automatically creates a worktree.** Follow the worktree instructions it prints.
+
+---
+
+## Phase 1 — START
 
 ```bash
-git rev-parse --abbrev-ref HEAD   # know which branch you're on
-git status                        # check for uncommitted changes
+bash scripts/start-task.sh <type> <desc>
 ```
 
-### Decision tree
+Types: `feat` | `fix` | `test` | `refactor` | `docs` | `chore`
 
-| Workspace state                                          | Action                                               |
-| -------------------------------------------------------- | ---------------------------------------------------- |
-| Clean, on `main`                                         | `git checkout -b <type>/<desc>`                      |
-| Clean, on another branch (unrelated to this task)        | `git checkout main && git checkout -b <type>/<desc>` |
-| **Dirty** (uncommitted/staged changes from another task) | **MUST use worktree** — see below                    |
+The script handles all branching logic automatically:
 
-### Worktree (required when workspace is dirty)
+- **Clean on `main`** → creates `<type>/<desc>` branch
+- **Clean on another branch** → switches to `main` first, then creates branch
+- **Dirty workspace** → creates a **git worktree** and prints the worktree path
 
-```bash
-git worktree add ../<repo>-<desc> -b <type>/<desc> main
-cd ../<repo>-<desc>
-```
+### Worktree — When Another Session Has Uncommitted Work
+
+If a separate agent/chat session is already working in this repo with uncommitted changes, the start script detects dirty state and creates a worktree automatically.
 
 > **⚠ IMPORTANT — Editor/Terminal Divergence**
 >
 > Terminal `cd` does NOT change the VS Code editor's workspace root.
-> After `cd ../<repo>-<desc>`, file-edit tools and diagnostics still target the
-> original directory. To avoid editing files on the wrong branch:
+> After the script creates a worktree:
 >
 > 1. All `git` and `npm` commands MUST run in the worktree directory.
 > 2. All file-edit tool paths MUST use the worktree's absolute path
@@ -41,15 +61,13 @@ cd ../<repo>-<desc>
 > 3. Alternatively, open the worktree as a VS Code workspace folder so the
 >    editor tracks the correct branch.
 
-### Rules
+---
 
-- **NEVER** `git checkout` to switch away from a branch that has uncommitted work.
-- **NEVER** work directly on `main`.
-- **NEVER** assume the terminal branch matches the editor workspace — always verify.
+## Phase 2 — WORK
 
-## Step 0b — Branch Verification
+### Step 1 — Branch Verification
 
-Before ANY implementation or commit, confirm you are on the correct branch:
+Before ANY implementation, confirm the start script succeeded:
 
 ```bash
 git rev-parse --abbrev-ref HEAD   # must match your task's branch name
@@ -57,28 +75,15 @@ git rev-parse --abbrev-ref HEAD   # must match your task's branch name
 
 If it does not match: **STOP**. Resolve before proceeding (see Recovery section).
 
-## Step 1 — Dependency Sync
-
-```bash
-npm install                         # root lockfile
-cd worker && npm install && cd ..   # only if worker/ is touched
-```
-
-Commit any lockfile changes — `npm ci` in CI/Docker fails on drift.
-
-> If using a worktree, run `npm install` **inside the worktree directory**, not
-> the original repo. The worktree has its own working tree but shares `.git` —
-> `node_modules` must be installed separately.
-
-## Step 2 — Implement
+### Step 2 — Implement
 
 Follow TDD per module type (see `AGENTS.md § TDD`). Write the test first, confirm red, implement, confirm green.
 
-## Step 2b — Doc Sync
+### Step 3 — Doc Sync
 
 If your change affects documented behavior (API contracts, env vars, deploy steps, component API, worker endpoints), update the relevant `docs/` file and `README.md` **before** moving to verify. `docs/` is the single source of truth for human-readable project documentation.
 
-## Step 3 — Verify (all must pass)
+### Step 4 — Verify (all must pass)
 
 ```bash
 npm run lint && npm run typecheck && npm run test:run
@@ -88,7 +93,7 @@ npm run test:coverage   # lines ≥80%, statements ≥80%, functions ≥75%, bra
 
 Shortcut: `npm run preflight`
 
-## Step 3b — Chrome Dev Tools Check (when browser is available)
+### Step 4b — Chrome Dev Tools Check (when browser is available)
 
 If you have access to a browser (local dev or remote debugging), open Chrome Dev Tools as an **extra guardrail** alongside automated tests:
 
@@ -105,9 +110,9 @@ For **remote debugging** (e.g. when investigating a deployed environment):
 3. Report findings inline with the commit or PR description
 ```
 
-> **Non-blocking**: Chrome Dev Tools checks are advisory. Automated tests (Step 3) remain the hard gate — do NOT skip them.
+> **Non-blocking**: Chrome Dev Tools checks are advisory. Automated tests (Step 4) remain the hard gate — do NOT skip them.
 
-## Step 4 — Commit
+### Step 5 — Commit
 
 ```bash
 git rev-parse --abbrev-ref HEAD   # ← verify branch BEFORE committing
@@ -117,31 +122,45 @@ git log --oneline -1              # ← verify commit landed correctly
 
 Prefixes: `feat` | `fix` | `test` | `refactor` | `docs` | `chore` (enforced by commitlint + husky).
 
-## Step 5 — Push & PR
+---
+
+## Phase 3 — FINISH (push + PR)
 
 ```bash
-git push origin HEAD
-gh pr create --fill   # or GitHub UI
+bash scripts/finish-task.sh
 ```
 
-- Follow `.github/PULL_REQUEST_TEMPLATE.md`
+The script:
+
+1. Verifies you are NOT on `main`
+2. Commits any remaining uncommitted changes
+3. Pushes the branch to `origin`
+4. Creates a PR via `gh pr create --fill` (follows `.github/PULL_REQUEST_TEMPLATE.md`)
+5. Prints the PR URL
+
 - Merge strategy: **squash and merge**
 - Human-in-the-loop: user reviews PRs — proceed without asking for extra confirmations
 
-## Step 6 — Cleanup
+> **⛔ You MUST run this script. Do NOT end a task without pushing and creating a PR.**
+
+---
+
+## Phase 4 — CLEANUP (after PR merge)
 
 ```bash
-git checkout main && git pull origin main && git branch -d <branch>
+bash scripts/cleanup-task.sh [branch-name]
 ```
 
-If a worktree was used:
+The script:
 
-```bash
-cd /home/user/<original-repo>     # return to original repo directory first
-git worktree remove ../<repo>-<desc>
-```
+1. Removes any worktree associated with the branch
+2. Switches to `main` and pulls latest
+3. Deletes the local task branch
+4. Verifies CWD is back in the main workspace
 
-Verify terminal CWD is back in the main workspace: `pwd` should show the original repo path.
+> **⛔ You MUST run cleanup after the PR is merged. Do NOT leave stale local branches.**
+
+---
 
 ## Recovery — Wrong Branch
 
@@ -185,13 +204,16 @@ git log --oneline -3              # correct commit history?
 git diff --stat                   # no unintended changes?
 ```
 
+---
+
 ## Operating Rules
 
 - Never on `main` — always a feature/fix/refactor branch
 - Root + worker lockfiles must be in sync before push
-- All verify gates (Step 3) must pass before push
+- All verify gates (Step 4) must pass before push
 - No new .md files outside `temp/` (gitignored) or existing `docs/`
 - `docs/` is the single source of truth — keep it current with every behavior change
 - Proceed autonomously — only pause for missing permissions or critical ambiguity
 - Verify branch name before every commit (`git rev-parse --abbrev-ref HEAD`)
 - When using a worktree, all commands and file paths target the worktree directory
+- **Every task must complete all phases: START → WORK → FINISH → CLEANUP**

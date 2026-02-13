@@ -37,17 +37,29 @@ npm run test:coverage  # vitest + v8 coverage
 npm run preflight      # lint + typecheck + test:run + test:coverage
 ```
 
-## Git Workflow
+## Git Workflow (MANDATORY)
 
 Full lifecycle: `.github/instructions/workflow.instructions.md` (authoritative source).
 
-Key rules:
+**⛔ Every task MUST follow all four phases:**
 
-- **Never on `main`** — always a feature/fix/refactor branch
-- **Dirty workspace → worktree** — never `git checkout` away from uncommitted work
-- **Verify branch before every commit** — `git rev-parse --abbrev-ref HEAD`
-- **Conventional commits** — `feat` | `fix` | `test` | `refactor` | `docs` | `chore` (commitlint + husky)
-- **Squash and merge** — human reviews PRs
+| Phase       | Command                                    | When                                    |
+| ----------- | ------------------------------------------ | --------------------------------------- |
+| **START**   | `bash scripts/start-task.sh <type> <desc>` | **BEFORE any file edit or code change** |
+| **WORK**    | Implement → Verify → Commit                | During implementation                   |
+| **FINISH**  | `bash scripts/finish-task.sh`              | **AFTER all verification passes**       |
+| **CLEANUP** | `bash scripts/cleanup-task.sh [branch]`    | **AFTER the PR is merged**              |
+
+### Agent Rules (non-negotiable)
+
+1. You MUST run `start-task.sh` BEFORE making ANY file changes — it creates the branch or worktree.
+2. You MUST run `finish-task.sh` AFTER verification — it pushes to origin and creates a PR.
+3. You MUST run `cleanup-task.sh` AFTER the PR is merged — it deletes the branch and returns to main.
+4. You MUST NEVER work directly on `main`. The start script enforces this.
+5. You MUST NEVER end a task without pushing and creating a PR.
+6. If workspace is dirty (another session has uncommitted changes), `start-task.sh` creates a worktree automatically.
+7. **Conventional commits** — `feat` | `fix` | `test` | `refactor` | `docs` | `chore` (commitlint + husky)
+8. **Squash and merge** — human reviews PRs
 
 ## Chrome Dev Tools (extra guardrail)
 
