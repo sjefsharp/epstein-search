@@ -4,7 +4,8 @@ applyTo: "src/**,worker/**"
 
 # Feature Development Instructions
 
-**Prerequisite**: Follow `workflow.instructions.md` for workspace check, deps sync, and post-push lifecycle.
+**⛔ BEFORE starting**: Run `bash scripts/start-task.sh feat <desc>` to create the branch. See `workflow.instructions.md`.
+**⛔ AFTER step 7**: Run `bash scripts/finish-task.sh` to push and create a PR.
 
 ## TDD Workflow (mandatory)
 
@@ -14,7 +15,8 @@ applyTo: "src/**,worker/**"
 4. **Refactor** while keeping tests green
 5. **Verify**: `npm run lint && npm run typecheck && npm run test:run` (+ `test:e2e` if UI, + `test:coverage`)
 6. **Chrome Dev Tools check** (when browser is available) — Console errors, Network failures, Elements layout, Lighthouse a11y. For remote debugging: capture and analyze Dev Tools output. Advisory — automated tests remain the hard gate.
-7. **Commit & push** per `AGENTS.md § Git Workflow`
+7. **Commit**: `git add -A && git commit -m "feat: <description>"`
+8. **Finish**: `bash scripts/finish-task.sh` (pushes + creates PR)
 
 ## i18n Requirement
 

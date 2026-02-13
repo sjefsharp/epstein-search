@@ -49,102 +49,36 @@ Every code change follows TDD. Strategy depends on module type:
 - Unit/component: `*.test.ts` / `*.test.tsx` — E2E: `*.spec.ts`
 - Tests live in `tests/`, mirroring `src/` structure (NOT `__tests__/`)
 
-## Git Workflow (before every push)
+## Git Workflow (MANDATORY — every task)
 
-Follow this lifecycle for every task. Full details in `.github/instructions/workflow.instructions.md`.
+> Full details and recovery procedures: `.github/instructions/workflow.instructions.md`
 
-### 0) Workspace check
+**⛔ Every task MUST follow all four phases. Skipping any phase is a violation.**
 
-```bash
-git rev-parse --abbrev-ref HEAD   # know which branch you're on
-git status                        # check for uncommitted changes
-```
+| Phase       | Command                                    | When                                    |
+| ----------- | ------------------------------------------ | --------------------------------------- |
+| **START**   | `bash scripts/start-task.sh <type> <desc>` | **BEFORE any file edit or code change** |
+| **WORK**    | Implement → Verify → Commit (see below)    | During implementation                   |
+| **FINISH**  | `bash scripts/finish-task.sh`              | **AFTER all verification passes**       |
+| **CLEANUP** | `bash scripts/cleanup-task.sh [branch]`    | **AFTER the PR is merged**              |
 
-- **Clean**: `git checkout -b <type>/<desc>` from `main`
-- **Clean, on another branch (unrelated to this task)**: `git checkout main && git checkout -b <type>/<desc>`
-- **Dirty**: isolate via worktree — `git worktree add ../<repo>-<desc> -b <type>/<desc> main && cd ../<repo>-<desc>`
+### Agent Rules (non-negotiable)
 
-Never work directly on `main`.
+1. You MUST run `start-task.sh` BEFORE making ANY file changes. It creates the branch (or worktree if dirty).
+2. You MUST run `finish-task.sh` AFTER verification. It pushes and creates a PR.
+3. You MUST run `cleanup-task.sh` AFTER the PR is merged. It deletes the branch and returns to main.
+4. You MUST NEVER work directly on `main`.
+5. You MUST NEVER end a task without pushing and creating a PR.
+6. If workspace is dirty (another session has uncommitted changes), `start-task.sh` creates a worktree automatically.
 
-> **⚠ IMPORTANT — Editor/Terminal Divergence**
->
-> Terminal `cd` does NOT change the VS Code editor's workspace root.
-> After `cd ../<repo>-<desc>`, file-edit tools and diagnostics still target the
-> original directory. To avoid editing files on the wrong branch:
->
-> 1. All `git` and `npm` commands MUST run in the worktree directory.
-> 2. All file-edit tool paths MUST use the worktree's absolute path
->    (e.g., `/home/user/<repo>-<desc>/src/...`), not the original repo path.
-> 3. Alternatively, open the worktree as a VS Code workspace folder so the
->    editor tracks the correct branch.
+### WORK phase steps
 
-### Rules
-
-- **NEVER** `git checkout` to switch away from a branch that has uncommitted work.
-- **NEVER** work directly on `main`.
-- **NEVER** assume the terminal branch matches the editor workspace — always verify.
-
-### 1) Dependency sync
-
-```bash
-npm install                         # root — always
-cd worker && npm install && cd ..   # only if worker/ touched
-```
-
-### 2) Verify (all must pass)
-
-```bash
-npm run lint && npm run typecheck && npm run test:run
-npm run test:e2e        # only if touching UI flows
-npm run test:coverage   # lines ≥80%, statements ≥80%, functions ≥75%, branches ≥60%
-```
-
-Shortcut: `npm run preflight`
-
-### 2a) Chrome Dev Tools check (when browser is available)
-
-If you have access to a browser, open Chrome Dev Tools as an **extra guardrail**:
-
-- **Console** — runtime errors, unhandled rejections, deprecation warnings
-- **Network** — API status codes, payloads, CORS issues
-- **Elements** — DOM/layout inspection
-- **Lighthouse / Accessibility** — quick a11y audit
-
-For remote debugging: capture Dev Tools output → analyze → report in commit/PR.
-
-> Advisory — automated tests (step 2) remain the hard gate.
-
-### 2b) Doc sync
-
-If your change affects documented behavior (API contracts, env vars, deploy steps, component API, worker endpoints), update the relevant `docs/` file and `README.md` **before** committing. `docs/` is the single source of truth for human-readable project documentation.
-
-### 3) Commit
-
-```bash
-git rev-parse --abbrev-ref HEAD   # ← verify branch BEFORE committing
-git add -A && git commit -m "<type>: <description>"
-git log --oneline -1              # ← verify commit landed correctly
-```
-
-Prefixes: `feat` | `fix` | `test` | `refactor` | `docs` | `chore` (commitlint + husky enforced).
-
-### 4) Push & PR
-
-```bash
-git push origin HEAD
-gh pr create --fill   # follow .github/PULL_REQUEST_TEMPLATE.md
-```
-
-Merge: **squash and merge** (self-merge after CI). Human-in-the-loop: user reviews PRs.
-
-### 5) Cleanup
-
-```bash
-git checkout main && git pull origin main && git branch -d <branch>
-git worktree remove ../<repo>-<desc>   # only if worktree was used
-```
-
-Verify terminal CWD is back in the main workspace: `pwd` should show the original repo path.
+1. **Verify branch**: `git rev-parse --abbrev-ref HEAD`
+2. **Implement**: TDD per module type (see `AGENTS.md § TDD`)
+3. **Doc sync**: update `docs/` if behavior changes
+4. **Verify**: `npm run lint && npm run typecheck && npm run test:run` (+ `test:e2e` if UI, + `test:coverage`). Shortcut: `npm run preflight`
+5. **Chrome Dev Tools** (advisory, when browser available): Console, Network, Elements, Lighthouse
+6. **Commit**: `git add -A && git commit -m "<type>: <description>"` — verify branch before and after
 
 ## Security Guidelines
 

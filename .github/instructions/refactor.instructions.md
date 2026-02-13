@@ -4,7 +4,8 @@ applyTo: "src/**,worker/**"
 
 # Refactor Instructions
 
-**Prerequisite**: Follow `workflow.instructions.md` for workspace check, deps sync, and post-push lifecycle.
+**⛔ BEFORE starting**: Run `bash scripts/start-task.sh refactor <desc>` to create the branch. See `workflow.instructions.md`.
+**⛔ AFTER step 3**: Run `bash scripts/finish-task.sh` to push and create a PR.
 
 ## No-Behavior-Change Rule
 

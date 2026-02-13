@@ -4,7 +4,8 @@ applyTo: "src/**,worker/**,tests/**"
 
 # Bug Fix Instructions
 
-**Prerequisite**: Follow `workflow.instructions.md` for workspace check, deps sync, and post-push lifecycle.
+**⛔ BEFORE starting**: Run `bash scripts/start-task.sh fix <desc>` to create the branch. See `workflow.instructions.md`.
+**⛔ AFTER step 7**: Run `bash scripts/finish-task.sh` to push and create a PR.
 
 ## Reproduce-First Workflow
 
@@ -14,7 +15,8 @@ applyTo: "src/**,worker/**,tests/**"
 4. **Confirm it passes**: `npm run test:run`
 5. **Verify no regressions**: `npm run lint && npm run typecheck && npm run test:run` (+ `test:e2e` if UI, + `test:coverage`)
 6. **Chrome Dev Tools check** (when browser is available) — Console errors, Network failures, Elements layout, Lighthouse a11y. For remote debugging: capture and analyze Dev Tools output. Advisory — automated tests remain the hard gate.
-7. **Commit & push** per `AGENTS.md § Git Workflow`
+7. **Commit**: `git add -A && git commit -m "fix: <description>"`
+8. **Finish**: `bash scripts/finish-task.sh` (pushes + creates PR)
 
 ## Rules
 
