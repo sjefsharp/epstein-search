@@ -84,6 +84,9 @@ async function fetchDOJDirect(
 
 async function fetchViaWorker(query: string, from: number, size: number): Promise<DOJAPIResponse> {
   const workerUrl = resolveWorkerUrl("http://localhost:10000");
+  if (!workerUrl) {
+    throw new Error("Worker URL not configured");
+  }
 
   if (process.env.NODE_ENV === "production") {
     enforceHttps(workerUrl);

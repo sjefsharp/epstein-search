@@ -21,8 +21,8 @@ describe("Worker stealth helpers", () => {
     expect(ua).not.toContain("bot");
   });
 
-  it("PREWARM_WAIT_UNTIL uses networkidle", () => {
-    expect(workerModule.PREWARM_WAIT_UNTIL).toBe("networkidle");
+  it("PREWARM_WAIT_UNTIL uses domcontentloaded to avoid timeout hangs", () => {
+    expect(workerModule.PREWARM_WAIT_UNTIL).toBe("domcontentloaded");
   });
 
   describe("buildFingerprint", () => {
@@ -140,10 +140,10 @@ describe("Worker stealth helpers", () => {
       delete process.env.PROXY_URL;
     });
 
-    it("returns 10 minutes when no proxy and no env override", () => {
+    it("returns 15 minutes when no proxy and no env override", () => {
       delete process.env.PROXY_URL;
       delete process.env.PREWARM_INTERVAL_MINUTES;
-      expect(workerModule.getPrewarmIntervalMs()).toBe(10 * 60 * 1000);
+      expect(workerModule.getPrewarmIntervalMs()).toBe(15 * 60 * 1000);
     });
 
     it("respects PREWARM_INTERVAL_MINUTES env var", () => {

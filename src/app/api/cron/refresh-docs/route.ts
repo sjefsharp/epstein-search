@@ -1,16 +1,21 @@
 // API Route: Cron-triggered refresh of the Neon document metadata cache.
-// Attempts a direct DOJ API fetch. If blocked (403), logs and skips — cached data stays valid.
+// Calls the Render worker (Playwright) to paginate through DOJ search results,
+// then upserts all discovered documents into the Neon database.
+// The worker bypasses Akamai bot protection, which blocks direct server-side fetch.
 import { NextRequest, NextResponse } from "next/server";
-import { searchDOJ, deduplicateDocuments } from "@/lib/doj-api";
+import { deduplicateDocuments, transformDOJHits } from "@/lib/doj-api";
 import { ensureDocumentsTable, upsertDocuments, getDocumentStats } from "@/lib/documents";
-import type { DOJDocument } from "@/lib/types";
-import { sanitizeError } from "@/lib/security";
+import {
+  enforceHttps,
+  generateWorkerSignature,
+  getWorkerSecret,
+  sanitizeError,
+} from "@/lib/security";
+import { resolveWorkerUrl } from "@/lib/worker-url";
 import { withJsonErrorHandling } from "@/lib/api-handler";
+import type { DOJAPIResponse } from "@/lib/types";
 
 export const runtime = "nodejs";
-
-const BATCH_SIZE = 100;
-const DELAY_MS = 200;
 
 /**
  * Auth check — same pattern as consent/cleanup.
@@ -26,50 +31,99 @@ function isAuthorized(request: NextRequest): boolean {
 }
 
 /**
- * Paginate through DOJ API and upsert all document metadata into Neon.
- * Returns stats on success, or an error message if DOJ is blocked.
+ * Call the worker /refresh endpoint to paginate through all DOJ search results
+ * via Playwright (bypasses Akamai). Then transform + deduplicate + upsert into Neon.
  */
-async function refreshDocuments(): Promise<{
+async function refreshViaWorker(): Promise<{
   ok: boolean;
   upserted: number;
   total: number;
+  batches: number;
   error?: string;
 }> {
   await ensureDocumentsTable();
 
-  const allDocuments: DOJDocument[] = [];
-  let from = 0;
-  let total = Infinity;
-
-  try {
-    while (from < total) {
-      const batch = await searchDOJ({ query: "epstein", from, size: BATCH_SIZE });
-      total = batch.total;
-      allDocuments.push(...batch.documents);
-      from += BATCH_SIZE;
-
-      if (from < total) {
-        await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
-      }
-    }
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    // If DOJ is blocked, report but don't fail — cached data is still valid
-    process.stderr.write(`[refresh-docs] DOJ fetch stopped: ${message}\n`);
-
-    if (allDocuments.length === 0) {
-      return { ok: false, upserted: 0, total: 0, error: message };
-    }
-    // Partial success — upsert what we got
-    process.stdout.write(
-      `[refresh-docs] Partial fetch: ${allDocuments.length} chunks before error\n`,
-    );
+  const workerUrl = resolveWorkerUrl("http://localhost:10000");
+  if (!workerUrl) {
+    return { ok: false, upserted: 0, total: 0, batches: 0, error: "Worker URL not configured" };
   }
 
-  const unique = deduplicateDocuments(allDocuments);
+  if (process.env.NODE_ENV === "production") {
+    enforceHttps(workerUrl);
+  }
+
+  const workerSecret = getWorkerSecret();
+  const payload = JSON.stringify({ query: "epstein", batchSize: 100 });
+  const signature = generateWorkerSignature(payload, workerSecret);
+
+  const response = await fetch(`${workerUrl}/refresh`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Worker-Signature": signature,
+      Authorization: `Bearer ${signature}`,
+    },
+    body: payload,
+    // Allow up to 5 minutes for full crawl (500+ documents with pagination delays)
+    signal: AbortSignal.timeout(300_000),
+  });
+
+  if (!response.ok) {
+    let detail = "";
+    try {
+      const errorJson = (await response.json()) as { error?: string };
+      detail = errorJson?.error ? ` — ${errorJson.error}` : "";
+    } catch {
+      detail = "";
+    }
+    return {
+      ok: false,
+      upserted: 0,
+      total: 0,
+      batches: 0,
+      error: `Worker returned ${response.status}${detail}`,
+    };
+  }
+
+  const data = (await response.json()) as {
+    total: number;
+    documents: DOJAPIResponse["hits"]["hits"];
+    batches: number;
+    error?: string;
+  };
+
+  if (!data.documents || data.documents.length === 0) {
+    return {
+      ok: false,
+      upserted: 0,
+      total: data.total ?? 0,
+      batches: data.batches ?? 0,
+      error: data.error ?? "No documents returned from worker",
+    };
+  }
+
+  // Transform raw DOJ hits into our document format
+  const apiResponse: DOJAPIResponse = {
+    hits: {
+      total: { value: data.total },
+      hits: data.documents,
+    },
+  };
+  const documents = transformDOJHits(apiResponse);
+  const unique = deduplicateDocuments(documents);
   const upserted = await upsertDocuments(unique);
 
-  return { ok: true, upserted, total: unique.length };
+  process.stdout.write(
+    `[refresh-docs] Worker returned ${data.total} hits in ${data.batches} batches, upserted ${upserted} unique documents\n`,
+  );
+
+  return {
+    ok: true,
+    upserted,
+    total: unique.length,
+    batches: data.batches,
+    error: data.error,
+  };
 }
 
 export const POST = withJsonErrorHandling(
@@ -83,7 +137,7 @@ export const POST = withJsonErrorHandling(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const result = await refreshDocuments();
+    const result = await refreshViaWorker();
     const stats = await getDocumentStats();
 
     return NextResponse.json({
@@ -107,7 +161,7 @@ export const GET = withJsonErrorHandling(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const result = await refreshDocuments();
+    const result = await refreshViaWorker();
     const stats = await getDocumentStats();
 
     return NextResponse.json({

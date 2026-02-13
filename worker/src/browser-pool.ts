@@ -47,18 +47,16 @@ const createStealthContext = async (browser: LaunchedBrowser, fp?: StealthFinger
 };
 
 export const prewarmAkamai = async (page: Page) => {
-  // When proxied, use domcontentloaded and block heavy resources to save bandwidth.
+  // Block heavy resources for ALL prewarming (proxied or not).
   // Akamai cookies are set by JS execution, not by downloading images/fonts.
-  const proxied = isProxyEnabled();
-  if (proxied) {
-    await page.route("**/*.{png,jpg,jpeg,gif,svg,webp,woff,woff2,ttf,eot,css}", (route) =>
-      route.abort(),
-    );
-  }
+  // This avoids networkidle hangs caused by persistent analytics connections.
+  await page.route("**/*.{png,jpg,jpeg,gif,svg,webp,woff,woff2,ttf,eot,css}", (route) =>
+    route.abort(),
+  );
 
   await page.goto("https://www.justice.gov/", {
-    waitUntil: proxied ? "domcontentloaded" : PREWARM_WAIT_UNTIL,
-    timeout: 30000,
+    waitUntil: PREWARM_WAIT_UNTIL,
+    timeout: 15000,
   });
 
   // Simulate minimal human interaction to satisfy behavioral checks
@@ -80,8 +78,8 @@ export const getPrewarmIntervalMs = (): number => {
     const mins = parseInt(envMinutes, 10);
     if (!isNaN(mins) && mins >= 0) return mins * 60 * 1000;
   }
-  // Default: disabled when proxied (saves bandwidth), 10 min otherwise
-  return isProxyEnabled() ? 0 : 10 * 60 * 1000;
+  // Default: disabled when proxied (saves bandwidth), 15 min otherwise
+  return isProxyEnabled() ? 0 : 15 * 60 * 1000;
 };
 
 let pool: BrowserPool | null = null;
@@ -117,10 +115,12 @@ export async function initBrowserPool(): Promise<BrowserPool> {
       try {
         await prewarmAkamai(p);
         pool.lastPrewarm = Date.now();
+        process.stdout.write(`[worker] prewarm refreshed at ${new Date().toISOString()}\n`);
       } catch (err) {
         process.stderr.write(
           `[worker] prewarm refresh failed: ${err instanceof Error ? err.message : "unknown"}\n`,
         );
+        // Continue with existing cookies — don't propagate the error
       } finally {
         await p.close().catch(() => {});
       }
@@ -162,4 +162,9 @@ export async function getPool(): Promise<BrowserPool> {
     process.stderr.write("[worker] browser disconnected — reinitialising pool\n");
   }
   return initBrowserPool();
+}
+
+/** Get the timestamp of the last successful prewarm, or null. */
+export function getLastPrewarm(): number | null {
+  return pool?.lastPrewarm ?? null;
 }

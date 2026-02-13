@@ -67,7 +67,7 @@ export type StealthFingerprint = ReturnType<typeof buildFingerprint>;
 
 // Legacy export kept for backward-compatibility with tests
 export const STEALTH_USER_AGENT = USER_AGENTS[0];
-export const PREWARM_WAIT_UNTIL = "networkidle" as const;
+export const PREWARM_WAIT_UNTIL = "domcontentloaded" as const;
 
 const STEALTH_LAUNCH_ARGS = [
   "--headless=new",

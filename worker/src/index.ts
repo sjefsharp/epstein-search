@@ -5,8 +5,8 @@ import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import { requireWorkerSignature } from "./auth";
-import { createAnalyzeHandler, createSearchHandler } from "./routes";
-import { destroyBrowserPool, initBrowserPool } from "./browser-pool";
+import { createAnalyzeHandler, createRefreshHandler, createSearchHandler } from "./routes";
+import { destroyBrowserPool, getLastPrewarm, initBrowserPool } from "./browser-pool";
 export {
   buildAkamaiDelayMs,
   buildFingerprint,
@@ -27,6 +27,7 @@ export {
 } from "./auth";
 export {
   destroyBrowserPool,
+  getLastPrewarm,
   getPool,
   getPrewarmIntervalMs,
   initBrowserPool,
@@ -91,14 +92,19 @@ app.use(
 app.use(express.json({ limit: "2mb" }));
 
 app.get("/health", (_req: Request, res: Response) => {
-  res.json({ status: "ok" });
+  const lastPrewarm = getLastPrewarm();
+  res.json({
+    status: "ok",
+    lastPrewarm: lastPrewarm ? new Date(lastPrewarm).toISOString() : null,
+    prewarmAgeMs: lastPrewarm ? Date.now() - lastPrewarm : null,
+  });
 });
 
 app.get("/", (_req: Request, res: Response) => {
   res.json({
     status: "ok",
     service: "epstein-worker",
-    endpoints: ["/health", "/search", "/analyze"],
+    endpoints: ["/health", "/search", "/analyze", "/refresh"],
   });
 });
 
@@ -113,6 +119,8 @@ const searchLimiter = rateLimit({
 app.post("/search", searchLimiter, requireWorkerSignature, createSearchHandler());
 
 app.post("/analyze", analyzeLimiter, requireWorkerSignature, createAnalyzeHandler(pdfParse));
+
+app.post("/refresh", requireWorkerSignature, createRefreshHandler());
 
 // Export app for testing
 export { app };

@@ -41,9 +41,16 @@ export const createSearchHandler = () => async (req: Request, res: Response) => 
     for (let attempt = 1; attempt <= 3; attempt++) {
       const page = await pool.context.newPage();
       try {
-        // If this is a retry, re-prewarm on the new page to refresh cookies
+        // If this is a retry, re-prewarm on the new page to refresh cookies.
+        // Wrapped in try/catch — proceed with existing cookies if prewarm fails.
         if (attempt > 1) {
-          await prewarmAkamai(page);
+          try {
+            await prewarmAkamai(page);
+          } catch (prewarmErr) {
+            process.stderr.write(
+              `[worker] retry prewarm failed (attempt ${attempt}): ${prewarmErr instanceof Error ? prewarmErr.message : "unknown"}, proceeding with existing cookies\n`,
+            );
+          }
         }
 
         // Make the API call from WITHIN the page context as an XHR.
@@ -199,3 +206,98 @@ export const createAnalyzeHandler =
       return;
     }
   };
+
+/**
+ * Handler for POST /refresh — paginate through DOJ search results via Playwright.
+ * Returns all document metadata as a single JSON response for Neon upsert.
+ *
+ * Request body: { query?: string, batchSize?: number }
+ * Response: { total, documents: DOJHit[], batches, error?: string }
+ */
+export const createRefreshHandler = () => async (req: Request, res: Response) => {
+  const { query = "epstein", batchSize = 100 } = req.body as {
+    query?: string;
+    batchSize?: number;
+  };
+
+  const size = Math.min(batchSize, 100);
+  const DELAY_MS = 200;
+
+  try {
+    const pool = await getPool();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allHits: any[] = [];
+    let from = 0;
+    let total = Infinity;
+    let batches = 0;
+
+    while (from < total) {
+      const searchUrl = new URL("https://www.justice.gov/multimedia-search");
+      searchUrl.searchParams.set("keys", query);
+      searchUrl.searchParams.set("from", from.toString());
+      searchUrl.searchParams.set("size", size.toString());
+      const searchUrlStr = searchUrl.toString();
+
+      const page = await pool.context.newPage();
+      try {
+        const result = await page.evaluate(async (url: string) => {
+          const resp = await fetch(url, {
+            method: "GET",
+            headers: {
+              Accept: "application/json, text/javascript, */*; q=0.01",
+              "X-Requested-With": "XMLHttpRequest",
+            },
+            credentials: "same-origin",
+          });
+          if (!resp.ok) {
+            const body = await resp.text();
+            return {
+              error: true as const,
+              status: resp.status,
+              statusText: resp.statusText,
+              body: body.slice(0, 500),
+            };
+          }
+          const json = await resp.json();
+          return { error: false as const, data: json };
+        }, searchUrlStr);
+
+        if (result.error) {
+          const msg = `DOJ returned ${result.status} at from=${from}`;
+          process.stderr.write(`[worker] refresh: ${msg}\n`);
+          // Return partial results — whatever we've collected so far
+          if (allHits.length === 0) {
+            res.status(502).json({ error: msg, total: 0, documents: [], batches });
+            return;
+          }
+          break;
+        }
+
+        const data = result.data as {
+          hits?: { total?: { value?: number }; hits?: unknown[] };
+        };
+        const hits = data?.hits?.hits ?? [];
+        total = data?.hits?.total?.value ?? 0;
+        allHits.push(...hits);
+        batches++;
+        from += size;
+
+        process.stdout.write(
+          `[worker] refresh batch ${batches}: ${hits.length} hits, ${allHits.length}/${total} total\n`,
+        );
+
+        if (from < total) {
+          await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
+        }
+      } finally {
+        await page.close().catch(() => {});
+      }
+    }
+
+    res.json({ total, documents: allHits, batches });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ error: message });
+  }
+};
